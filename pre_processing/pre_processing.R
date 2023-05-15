@@ -27,7 +27,7 @@ df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", h
          bmi = BMIVal,
          id = SerialA,
          psu = PSU_SCR,
-         strata = cluster194) %>% 
+         strata = cluster94) %>% 
   dplyr::select(id, weight, height, age, sex, bmi, wt_int, psu, strata )  %>% # select variables needed
   mutate(pal = 1.6,
          rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
@@ -38,6 +38,7 @@ df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", h
                                bmi >= 30 & bmi < 40 ~ "obese",
                                bmi >= 40 ~ "morbidly obese",
                                TRUE ~ "NA")) %>% 
-  mutate(intake = pal*rmr)
+  mutate(intake = pal*rmr) %>% 
+  mutate(sex = ifelse(sex == 1, "male", "female"))
 
 write_csv(df2019, here("inputs/processed/hse.2019"))
