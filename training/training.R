@@ -10,11 +10,14 @@ browseVignettes("bw")
 # replicate some of the example in the vignettes
 
 female_model2 <- adult_weight(bw = 80, ht = 1.8, age = 40, sex = "female", 
-                              EIchange = rep(-250, 365))
+                              EIchange = rep(-250, 365*10), NAchange = rep(0, 365*10), days = 365*10) 
 
 model_plot(female_model2, "Body_Weight")
 
 model_plot(female_model2, "Energy_Intake")
+
+model_plot(female_model2, "Body_Mass_Index")
+
 
 # from EI to weight
 
@@ -34,6 +37,10 @@ model_plot(model_weight, "Body_Weight")
 model_plot(model_weight, "Energy_Intake")
 
 # just for example - not actual
+
+library(survey)
+
+
 design <-  svydesign(ids=~df$psu, 
                      nest = T,
                      data=df,

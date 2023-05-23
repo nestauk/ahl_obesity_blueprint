@@ -7,14 +7,16 @@ library(survey)
 
 source(here("utils/find_EI.R"))
 
-df <- read_csv(here("inputs/processed/hse.2019"))
+df <- read_csv(here("inputs/processed/hse_2019.csv"))
 
 
 # 2.2 kg changes 12 month weight change
 
 # assumption: everyone loses 2.2kg
 
-df_lost <- df %>% mutate(new_weight = weight - 2.2)
+df_lost <- df %>% 
+  mutate(new_weight = weight - 2.2) %>% 
+  mutate(sex = ifelse(sex == 1, "male", "female"))
 
 ei_estimate <- list(id = df_lost$id,
      bw = df_lost$weight,
