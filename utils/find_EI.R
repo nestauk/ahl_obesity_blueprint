@@ -5,7 +5,6 @@ library(tidyverse)
 library(here)
 library(reshape2)
 library(furrr)
-library(tictoc)
 library(beepr)
 
 find_EI <- function(id, bw, ht, age, sex,weight_goal, days, ei_limit, pal){

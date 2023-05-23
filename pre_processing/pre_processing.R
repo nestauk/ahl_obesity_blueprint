@@ -38,7 +38,6 @@ df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", h
                                bmi >= 30 & bmi < 40 ~ "obese",
                                bmi >= 40 ~ "morbidly obese",
                                TRUE ~ "NA")) %>% 
-  mutate(intake = pal*rmr) %>% 
-  mutate(sex = ifelse(sex == 1, "male", "female"))
+  mutate(intake = pal*rmr) 
 
 write_csv(df2019, here("inputs/processed/hse_2019.csv"))
