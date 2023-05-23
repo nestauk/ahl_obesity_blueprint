@@ -40,4 +40,4 @@ df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", h
                                TRUE ~ "NA")) %>% 
   mutate(intake = pal*rmr)
 
-write_csv(df2019, here("inputs/processed/hse.2019"))
+write_csv(df2019, here("inputs/processed/hse_2019.csv"))
