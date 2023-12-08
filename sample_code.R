@@ -7,6 +7,12 @@
 
 
 
+design <-  svydesign(ids=~df$psu, 
+                     nest = T,
+                     data=df,
+                     weights=df$wt_int)
+
+
 
 
 test_1_1 = calculate_fat_mass(weight = 20.5, 

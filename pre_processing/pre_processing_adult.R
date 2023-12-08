@@ -5,7 +5,7 @@ library(tidyverse)
 
 df_2019_adult <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", header = TRUE) %>% 
   filter(WtVal>0 & HtVal>0 & Age35g >7 ) %>% # remove missing height and weight and children
-  mutate(age = case_when(Age35g == 7 ~ (16+19)/2,
+  mutate(age = case_when(#Age35g == 7 ~ (16+19)/2,
                          Age35g == 8 ~ (20+24)/2,
                          Age35g == 9 ~ (25+29)/2,
                          Age35g == 10 ~ (30+34)/2,

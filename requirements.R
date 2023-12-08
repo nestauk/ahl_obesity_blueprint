@@ -27,5 +27,9 @@ pkgLoad <- function( packages = "favourites" ) {
 
 
 pkgLoad()
-devtools::install_github("INSP-RH/bw", force = TRUE)
+devtools::install_github("INSP-RH/bw")
+
+
+
+
 
