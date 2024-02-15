@@ -15,6 +15,7 @@ library(survey)
 
 # variable for change in intake as a result of the policy
 intake_change = -22
+implmnt_duration = 365*5
 
 # Reading the processed HSE 2019 data that contains energy intake, BMI weight class and other variables
 # created during the pre-processing stage.
@@ -27,15 +28,15 @@ df_adult <- read_csv(here("inputs/processed/hse_2019.csv")) %>%
 # (converting it into type numeric), then creating a vector, which essentially repeats the intake diff
 # value 365*5 times (i.e. for a five year period), which is then transposed to match the input requirements
 # of the Hall Calorie Weight Model.
-eichange <- t(apply(df_adult, 1, function(x) rep(as.numeric(x["intake_diff"]), 365*5)))
+eichange <- t(apply(df_adult, 1, function(x) rep(as.numeric(x["intake_diff"]), implmnt_duration)))
 
 # A matrix of change in salt consumption set to zero is another input to the model. This is set to zero as
 # information on change in salt consumption is not available from our rapid reviews
-nachange <- t(apply(df_adult, 1, function(x) rep(0, 365*5)))
+nachange <- t(apply(df_adult, 1, function(x) rep(0, implmnt_duration)))
 
 # the bw package has a function called [adult_weight] that takes the following inputs:
 # baseline body weight, height (in meters), age, sex and change in energy intake (for a five year period)
-model_weight <- adult_weight(df_adult$weight, df_adult$height/100, df_adult$age, df_adult$sex, eichange, nachange, days = 365*5)
+# model_weight <- adult_weight(df_adult$weight, df_adult$height/100, df_adult$age, df_adult$sex, eichange, nachange, days = 365*5)
 
 model_weight <- adult_weight(bw = df_adult$weight,
                              ht = df_adult$height/100,
@@ -43,7 +44,7 @@ model_weight <- adult_weight(bw = df_adult$weight,
                              sex = df_adult$sex,
                              EIchange = eichange,
                              NAchange = nachange,
-                             days = 365*5)
+                             days = implmnt_duration)
 
 # Extracting BMI values from the model and joining them to the HSE dataset for further analysis 
 # and output generation. 'bmi_model' is a matrix of day wise change in BMI of the population as a result of
@@ -153,12 +154,16 @@ adult_bar_plot = bmi_change %>%
   theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
   theme(legend.position = "top")
 
-ggsave(here("outputs/figures/adult_bmi_distrib_policy4a.png"), plot = adult_bar_plot, width = 10, height = 6, bg='#ffffff')
+adult_bar_plot
+ggsave(here("outputs/figures/adult_bmi_distrib_sc_policy4a.png"), plot = adult_bar_plot, width = 10, height = 6, bg='#ffffff')
 
 # Output 2: Table of year wise prevalence of obesity
 bmi_change_year = bmi_change %>%
   select(-c(n)) %>%
-  pivot_wider(., names_from = BMI, values_from = freq)
+  pivot_wider(., names_from = BMI, values_from = freq)%>%
+  select(type, underweight, normal, overweight, obese, `morbidly obese`)
 
 write_csv(bmi_change_year, here("outputs/data/adult_bmi_distrib_policy4a.csv"))
+
+write_csv(bmi_change_year, here("outputs/data/for_157_kcals.csv"))
 

@@ -1,5 +1,5 @@
 # Policy 4a :  Ban BOGOF price promotions on HFSS products for medium and large retailers
-# Effect size from rapid reviews = -22 kcal reduction
+# Effect size from rapid reviews = -3 kcal reduction
 # Intervention group: Children identified as overweight, obese or severely obese
 # Outputs: BMI bar plot comparison between baseline and endline years and corresponding table
 
@@ -12,9 +12,10 @@ library(tidyverse)
 library(here)
 library(bw)
 library(survey)
+library(sitar)
 
 
-child_intake_change = -5
+child_intake_change = -57.5
 
 df_child <- read_csv(here("inputs/processed/hse_2019_children.csv")) %>%  # we are reading a file that contains energy intake, BMI weight class and other variables reated during the pre-processing stage.
   mutate(sex = ifelse(sex == 1, "male", "female")) %>% 
@@ -22,13 +23,7 @@ df_child <- read_csv(here("inputs/processed/hse_2019_children.csv")) %>%  # we a
   mutate(intake_diff = ifelse(bmi_cat_baseline %in% c("underweight", "normal"), 0, child_intake_change ))
 
 
-
-
-#eichange_child <- t(apply(df_child, 1, function(x) rep(as.numeric(x["intake_diff"]), 365*1)))
-
-#t_eichange_child <- t(apply(df_child, 1, function(x) rep(as.numeric(x["intake"]) + as.numeric(x["intake_diff"]), 365*1)))
-
-energy_intake = apply(df_child, 1, function(x) rep(as.numeric(x["intake_hox"]) + as.numeric(x["intake_diff"]), 365*5))
+energy_intake = apply(df_child, 1, function(x) rep(as.numeric(x["intake_hox"]) + as.numeric(x["intake_diff"]), 365*3))
 
 
 # model 1 with fm and ffm
@@ -37,7 +32,7 @@ child_model_weight = child_weight(age = df_child$age,
                                   FM = df_child$fm_hudda, 
                                   FFM = df_child$ffm_hudda, 
                                   EI = energy_intake,   
-                                  days = (365*5),
+                                  days = (365*3),
                                   checkValues = TRUE)
 
 
@@ -79,7 +74,6 @@ child_age_bw_ffm_fm = cbind(child_bw_h, child_age_h, child_ffm_h, child_fm_h) %>
          # age_1095, bw_1095, fm_1095, ffm_1095,
          # age_1460, bw_1460, fm_1460, ffm_1460,
          age_1825, bw_1825, fm_1825, ffm_1825)
-
 
 
 

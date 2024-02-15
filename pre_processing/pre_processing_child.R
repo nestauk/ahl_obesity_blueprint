@@ -38,8 +38,6 @@ df_2019_children = df_2019_children %>%
   mutate(pal = case_when(age < 3 ~ 1.40,
                          age >=3 & age < 10 ~ 1.58,
                          age >=10 & age < 18 ~ 1.75),
-         rmr_msj = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
-                         TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161)),  # sex = 2 female Miffin & St.Jeor
          rmr_hox = case_when(sex == 1 ~ (  ((66.9*weight) + 2876)/4.184  ),
                              TRUE ~ ( ((47.9*weight) + 3230)/4.184 ) )) %>% 
   mutate(bmi_class = case_when(bmi <= 18.5 ~ "underweight",
@@ -48,10 +46,7 @@ df_2019_children = df_2019_children %>%
                                bmi >= 30 & bmi < 40 ~ "obese",
                                bmi >= 40 ~ "morbidly obese",
                                TRUE ~ "NA")) %>% 
-  mutate(intake_msj = pal*rmr_msj,
-         intake_hox = pal*rmr_hox) %>% # calculating value of energy intake 
-  # mutate(fm_deurenberg = case_when(sex == 1 ~ ((1.51*bmi) - (0.7*age) -  ((2.2/100)*weight)),
-  #                                  sex == 2 ~ ((1.51*bmi) - (0.7*age) -  ((1.4/100)*weight)))) %>%
+  mutate(intake_hox = pal*rmr_hox) %>% # calculating value of energy intake 
   mutate(fm_hudda = case_when(sex == 1 ~ (case_when(origin2 == 1 ~ (calculate_fat_mass(weight = weight, 
                                                                                        height = height/100,
                                                                                        BA = 0,
@@ -116,7 +111,6 @@ df_2019_children = df_2019_children %>%
                                                                                            other = 1,
                                                                                            age = age,
                                                                                            male = 0)))))) %>%
-  # mutate(ffm_deurenberg = weight - fm_deurenberg) %>%
   mutate(ffm_hudda = weight - fm_hudda) %>%
   mutate(bf_percent_baseline = (fm_hudda/weight)*100) %>%
   mutate(bmi_cat_baseline = case_when(age == 6 ~ (case_when(sex == 1 ~ case_when(bf_percent_baseline <= 12.4 ~ "underweight",
@@ -165,6 +159,111 @@ df_2019_children = df_2019_children %>%
 write_csv(df_2019_children, here("inputs/processed/hse_2019_children.csv"))
 
 
+
+
+
+# Scotland
+
+
+
+df_2019_child_sc <- read.table(here("C:/Users/Anish.Chacko/Downloads/hs_scotland/shes19i_eul.tab"), sep = "\t", header = TRUE) %>%
+  filter(wtval>0 & htval>0 & age < 18) %>%
+  rename(weight = wtval,
+         height = htval,
+         sex = Sex,
+         bmi_ur = bmi,
+         bmi = bmival,
+         id = CPSerialA,
+         psu = PSU,
+         wt_int = cint19wt,
+         origin2 = Ethnic05,
+         strata = Strata) %>% 
+  dplyr::select(id, weight, height, age, sex, bmi, wt_int, psu, strata, origin2) %>% # select variables needed
+  mutate(pal = case_when(age < 3 ~ 1.40,
+                         age >=3 & age < 10 ~ 1.58,
+                         age >=10 & age < 18 ~ 1.75),
+         rmr_hox = case_when(sex == 1 ~ (  ((66.9*weight) + 2876)/4.184  ),
+                             TRUE ~ ( ((47.9*weight) + 3230)/4.184 ) )) %>% 
+  mutate(intake_hox = pal*rmr_hox) %>% # calculating value of energy intake 
+  mutate(fm_hudda = case_when(sex == 1 ~ (case_when(origin2 == 1 | 2 | 3 ~ (calculate_fat_mass(weight = weight, 
+                                                                                       height = height/100,
+                                                                                       BA = 0,
+                                                                                       SA = 0,
+                                                                                       AO = 0,
+                                                                                       other = 0,
+                                                                                       age = age,
+                                                                                       male = 1)),
+                                                    origin2 == 4 ~ (calculate_fat_mass(weight = weight, 
+                                                                                       height = height/100,
+                                                                                       BA = 0,
+                                                                                       SA = 0,
+                                                                                       AO = 1,
+                                                                                       other = 0,
+                                                                                       age = age,
+                                                                                       male = 1)),
+                                                    origin2 == 5 ~ (calculate_fat_mass(weight = weight, 
+                                                                                       height = height/100,
+                                                                                       BA = 0,
+                                                                                       SA = 0,
+                                                                                       AO = 0,
+                                                                                       other = 1,
+                                                                                       age = age,
+                                                                                       male = 1)),
+                                                    origin2 == -1 ~ (calculate_fat_mass(weight = weight, 
+                                                                                           height = height/100,
+                                                                                           BA = 0,
+                                                                                           SA = 0,
+                                                                                           AO = 0,
+                                                                                           other = 0,
+                                                                                           age = age,
+                                                                                           male = 1)))),
+                              sex == 2 ~ (case_when(origin2 == 1 | 2 | 3 ~ (calculate_fat_mass(weight = weight, 
+                                                                                       height = height/100,
+                                                                                       BA = 0,
+                                                                                       SA = 0,
+                                                                                       AO = 0,
+                                                                                       other = 0,
+                                                                                       age = age,
+                                                                                       male = 0)),
+                                                    origin2 == 4 ~ (calculate_fat_mass(weight = weight, 
+                                                                                       height = height/100,
+                                                                                       BA = 0,
+                                                                                       SA = 0,
+                                                                                       AO = 1,
+                                                                                       other = 0,
+                                                                                       age = age,
+                                                                                       male = 0)),
+                                                    origin2 == 5 ~ (calculate_fat_mass(weight = weight, 
+                                                                                       height = height/100,
+                                                                                       BA = 0,
+                                                                                       SA = 1,
+                                                                                       AO = 0,
+                                                                                       other = 0,
+                                                                                       age = age,
+                                                                                       male = 0)),
+                                                    origin2 == -1 ~ (calculate_fat_mass(weight = weight, 
+                                                                                           height = height/100,
+                                                                                           BA = 0,
+                                                                                           SA = 0,
+                                                                                           AO = 0,
+                                                                                           other = 0,
+                                                                                           age = age,
+                                                                                           male = 0)))))) %>%
+  mutate(ffm_hudda = weight - fm_hudda) %>%
+  mutate(bf_percent_baseline = (fm_hudda/weight)*100) %>%
+  left_join(body_fat_reference_tables, by = c("age", "sex")) %>%
+  mutate(bmi_cat_baseline = case_when(bf_percent_baseline < p2 ~ "underweight",
+                                      bf_percent_baseline >= p95 ~ "obese",
+                                      bf_percent_baseline >= p85 & bf_percent_baseline < p95 ~ "overweight",
+                                      TRUE ~ "normal"))
+
+write_csv(df_2019_children, here("inputs/processed/shes_2019_children.csv"))
+
+
+
+
+
+body_fat_reference_tables = read_csv(file = here("inputs/body_fat_reference_tables.csv"))
 
 
 
