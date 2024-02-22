@@ -256,50 +256,7 @@ process_clean_save = function(file_path, nation, population_group){
                                                                                                  other = 1,
                                                                                                  age = age,
                                                                                                  male = 0)))))) %>%
-        mutate(ffm_hudda = weight - fm_hudda) %>%
-        mutate(bf_percent_baseline = (fm_hudda/weight)*100) %>% # body fat percentage calculated as fat mass divided by bodyweight and categorisation into BMI groups based on McCarthy et al. (2006)
-        mutate(bmi_cat_baseline = case_when(age == 6 ~ (case_when(sex == 1 ~ case_when(bf_percent_baseline <= 12.4 ~ "underweight",
-                                                                                       bf_percent_baseline >= 19.5 & bf_percent_baseline < 22.7 ~ "overweight",
-                                                                                       bf_percent_baseline >12.4 & bf_percent_baseline < 19.5 ~ "normal",
-                                                                                       bf_percent_baseline >= 22.7 ~ "obese"),
-                                                                  sex == 2 ~ case_when(bf_percent_baseline <= 14.4 ~ "underweight",
-                                                                                       bf_percent_baseline >14.4 & bf_percent_baseline < 23 ~ "normal",
-                                                                                       bf_percent_baseline >= 23 & bf_percent_baseline < 26.2 ~ "overweight",
-                                                                                       bf_percent_baseline >= 26.2 ~ "obese") )),
-                                            age == 9 ~ (case_when(sex == 1 ~ case_when(bf_percent_baseline <= 12.8 ~ "underweight",
-                                                                                       bf_percent_baseline >12.8 & bf_percent_baseline < 22.2 ~ "normal",
-                                                                                       bf_percent_baseline >= 22.2 & bf_percent_baseline < 26.8 ~ "overweight",
-                                                                                       bf_percent_baseline >= 26.8 ~ "obese"),
-                                                                  sex == 2 ~ case_when(bf_percent_baseline <= 15.7 ~ "underweight",
-                                                                                       bf_percent_baseline >15.7 & bf_percent_baseline < 27.2 ~ "normal",
-                                                                                       bf_percent_baseline >= 27.2 & bf_percent_baseline < 31.2 ~ "overweight",
-                                                                                       bf_percent_baseline >= 31.2 ~ "obese") )),
-                                            age == 11.5 ~ (case_when(sex == 1 ~ case_when(bf_percent_baseline <= 12.6 ~ "underweight",
-                                                                                          bf_percent_baseline >12.6 & bf_percent_baseline < 23 ~ "normal",
-                                                                                          bf_percent_baseline >= 23 & bf_percent_baseline < 28.3 ~ "overweight",
-                                                                                          bf_percent_baseline >= 28.3 ~ "obese"),
-                                                                     sex == 2 ~ case_when(bf_percent_baseline <= 16.1 ~ "underweight",
-                                                                                          bf_percent_baseline >16.1 & bf_percent_baseline < 28.8 ~ "normal",
-                                                                                          bf_percent_baseline >= 28.8 & bf_percent_baseline < 32.8 ~ "overweight",
-                                                                                          bf_percent_baseline >= 32.8 ~ "obese") )),
-                                            age == 14 ~ (case_when(sex == 1 ~ case_when(bf_percent_baseline <= 10.9 ~ "underweight",
-                                                                                        bf_percent_baseline >10.9 & bf_percent_baseline < 21.3 ~ "normal",
-                                                                                        bf_percent_baseline >= 21.3 & bf_percent_baseline < 25.9 ~ "overweight",
-                                                                                        bf_percent_baseline >= 25.9 ~ "obese"),
-                                                                   sex == 2 ~ case_when(bf_percent_baseline <= 16 ~ "underweight",
-                                                                                        bf_percent_baseline > 16 & bf_percent_baseline < 29.6 ~ "normal",
-                                                                                        bf_percent_baseline >= 29.6 & bf_percent_baseline < 33.6 ~ "overweight",
-                                                                                        bf_percent_baseline >= 33.6 ~ "obese") )),
-                                            age == 17 ~ (case_when(sex == 1 ~ case_when(bf_percent_baseline <= 9.8 ~ "underweight",
-                                                                                        bf_percent_baseline > 9.8 & bf_percent_baseline < 20.1 ~ "normal",
-                                                                                        bf_percent_baseline >= 20.1 & bf_percent_baseline < 23.9 ~ "overweight",
-                                                                                        bf_percent_baseline >= 23.9 ~ "obese"),
-                                                                   sex == 2 ~ case_when(bf_percent_baseline <= 15.1 ~ "underweight",
-                                                                                        bf_percent_baseline > 15.1 & bf_percent_baseline < 30.4 ~ "normal",
-                                                                                        bf_percent_baseline >= 30.4 & bf_percent_baseline < 34.4 ~ "overweight",
-                                                                                        bf_percent_baseline >= 34.4 ~ "obese") )) ))
-      
-      
+        mutate(ffm_hudda = weight - fm_hudda) 
       
       write_csv(df_2019_children, here("inputs/processed/hse_2019_children.csv")) 
       print("Output csv with processed data is saved here: inputs/processed/hse_2019_children.csv")
@@ -395,13 +352,7 @@ process_clean_save = function(file_path, nation, population_group){
                                                                                               other = 0,
                                                                                               age = age,
                                                                                               male = 0)))))) %>%
-        mutate(ffm_hudda = weight - fm_hudda) %>%
-        mutate(bf_percent_baseline = (fm_hudda/weight)*100) %>%
-        left_join(body_fat_reference_tables, by = c("age", "sex")) %>%
-        mutate(bmi_cat_baseline = case_when(bf_percent_baseline < p2 ~ "underweight",
-                                            bf_percent_baseline >= p95 ~ "obese",
-                                            bf_percent_baseline >= p85 & bf_percent_baseline < p95 ~ "overweight",
-                                            TRUE ~ "normal")) 
+        mutate(ffm_hudda = weight - fm_hudda)
       
       write_csv(df_2019_child_sc, here("inputs/processed/shes_2019_children.csv"))
       print("Output csv with processed data is saved here: inputs/processed/shes_2019_children.csv")

@@ -10,32 +10,62 @@ install.packages("listviewer")
 library(jsonlite)
 library(listviewer)
 
+
+generate_height_refdata = function(input_1, input_2){
+  
+  female_ht_json = read_json(input_1, simplifyVector = FALSE)
+  
+  male_ht_json = read_json(input_2, simplifyVector = FALSE)
+  
+
+  rcpch_4_uk90child_female_ht = female_ht_json[[4]][["uk90_child"]][["female"]][["height"]]
+  rcpch_4_uk90child_male_ht = male_ht_json[[4]][["uk90_child"]][["male"]][["height"]]
+  
+  
+  female_ht_df = tibble(height_percentile_f = rcpch_4_uk90child_female_ht)
+  male_ht_df   = tibble(height_percentile_m = rcpch_4_uk90child_male_ht)
+  
+  
+  female_ht_df_1 = as.data.frame (female_ht_df %>%
+                                    unnest_wider(height_percentile_f) %>%
+                                    select(sds, centile, data) %>%
+                                    unnest_longer(data) %>%
+                                    select(sds, centile, data) %>%
+                                    unnest_wider(data)) %>%
+    select(sds, centile, x, y) %>%
+    mutate(sex = 2) %>%
+    distinct()
+  
+  male_ht_df_1 = as.data.frame (male_ht_df %>%
+                                  unnest_wider(height_percentile_m) %>%
+                                  select(sds, centile, data) %>%
+                                  unnest_longer(data) %>%
+                                  select(sds, centile, data) %>%
+                                  unnest_wider(data)) %>%
+    select(sds, centile, x, y) %>%
+    mutate(sex = 1) %>%
+    distinct()
+  
+  height_refdata = rbind(female_ht_df_1, male_ht_df_1)
+  
+  return(height_refdata)
+  
+}
+
+uk90_height_refdata = generate_height_refdata("C:/Users/Anish.Chacko/Downloads/ht_ref_data/cole-nine-centiles-uk-who-female-height.json",
+                                              "C:/Users/Anish.Chacko/Downloads/ht_ref_data/cole-nine-centiles-uk-who-male-height.json")
+
+
+
 tab_output = list()
 
 
-female_ht_json = read_json("C:/Users/Anish.Chacko/Downloads/cole-nine-centiles-uk-who-female-height.json")
 
-
-female_ht_json = read_json("C:/Users/Anish.Chacko/Downloads/cole-nine-centiles-uk-who-female-height.json",
-                           simplifyVector = FALSE)
-
-female_ht_json_1 = female_ht_json
-
-rcpch_4_uk90child_female_ht = female_ht_json_1[[4]][["uk90_child"]][["female"]][["height"]]
-
-ht_df = tibble(height_percentile = rcpch_4_uk90child_female_ht)
-
-test_1 = as.data.frame (ht_df %>%
-                          unnest_wider(height_percentile) %>%
-                          select(sds, centile, data) %>%
-                          unnest_longer(data) %>%
-                          select(sds, centile, data) %>%
-                          unnest_wider(data)) %>%
-  select(sds, centile, x, y) %>%
-  distinct()
 
 test_2 = test_1 %>%
   pivot_wider(names_from = c(sds, centile), values_from = y)
+
+height_refdata = test_1
 
 # Rename the columns
 colnames(test_2) <- c("age", "0.4", "2", "9", "25", "50", "75", "91", "98", "99.6")
@@ -44,28 +74,73 @@ colnames(test_2) <- c("age", "0.4", "2", "9", "25", "50", "75", "91", "98", "99.
 write.csv(test_3, file = "C:/git/ahl_obesity_blueprint/outputs/rcpch_growth.csv")
 
 
+## bmi_ref_data_calculatded and used
+
+library(sitar)
+
+generate_bmi_refdata = function(data_B){
+  
+  bmi_refdata = data_B %>%
+    select(years, sex, L.bmi, M.bmi, S.bmi) %>%
+    subset(years >= as.double(4) & years <= as.double(20)) %>%
+    mutate(p_2 = (M.bmi*(1 + L.bmi*S.bmi*-2.054)^(1/L.bmi)),
+           p_85 = (M.bmi*(1 + L.bmi*S.bmi*1.036)^(1/L.bmi)),
+           p_95 = (M.bmi*(1 + L.bmi*S.bmi*1.645)^(1/L.bmi))) %>%
+    select(years, sex, p_2, p_85, p_95) %>%
+    rename(age = years)
+  
+  return(bmi_refdata)
+  
+}
+
+uk90_bmi_refdata = generate_bmi_refdata(sitar::uk90)
 
 
 
 
-uk90_3centile = read_json("C:/Users/Anish.Chacko/Downloads/centile/three-percent-centiles-uk-who-female-height.json")
+## bmi ref data
 
 
-rcpch_3pc_4_uk90child_female_ht = uk90_3centile[[4]][["uk90_child"]][["female"]][["height"]]
+female_bmi_json = read_json("C:/Users/Anish.Chacko/Downloads/bmi_ref_data/cole-nine-centiles-uk-who-female-bmi.json")
+male_bmi_json = read_json("C:/Users/Anish.Chacko/Downloads/bmi_ref_data/cole-nine-centiles-uk-who-male-bmi.json")
 
-ht_3pc_4_uk90child = tibble(height_percentile = rcpch_3pc_4_uk90child_female_ht)
+rcpch_cole_uk90_female_bmi = female_bmi_json[[4]][["uk90_child"]][["female"]][["bmi"]]
+rcpch_cole_uk90_male_bmi = male_bmi_json[[4]][["uk90_child"]][["male"]][["bmi"]]
 
-test_1 = as.data.frame (ht_3pc_4_uk90child %>%
-                          unnest_wider(height_percentile) %>%
-                          select(sds, centile, data) %>%
-                          unnest_longer(data) %>%
-                          select(sds, centile, data) %>%
-                          unnest_wider(data)) %>%
+
+female_bmi_1 = tibble(bmi_percentile_f = rcpch_cole_uk90_female_bmi)
+male_bmi_1 = tibble(bmi_percentile_m = rcpch_cole_uk90_male_bmi)
+
+rcpch_cole_uk90_female_bmi_df = as.data.frame (female_bmi_1 %>%
+                                                 unnest_wider(bmi_percentile_f) %>%
+                                                 select(sds, centile, data) %>%
+                                                 unnest_longer(data) %>%
+                                                 select(sds, centile, data) %>%
+                                                 unnest_wider(data)) %>%
   select(sds, centile, x, y) %>%
+  mutate(sex = 2) %>%
   distinct()
 
-test_2 = test_1 %>%
-  pivot_wider(names_from = c(sds, centile), values_from = y)
+rcpch_cole_uk90_male_bmi_df = as.data.frame (male_bmi_1 %>%
+                                               unnest_wider(bmi_percentile_m) %>%
+                                               select(sds, centile, data) %>%
+                                               unnest_longer(data) %>%
+                                               select(sds, centile, data) %>%
+                                               unnest_wider(data)) %>%
+  select(sds, centile, x, y) %>%
+  mutate(sex = 1) %>%
+  distinct()
+
+bmi_refdata = rbind(rcpch_cole_uk90_female_bmi_df, rcpch_cole_uk90_male_bmi_df)
+
+bmi_ref_table = rbind(rcpch_cole_uk90_female_bmi_df %>%
+                        pivot_wider(names_from = c(sds, centile), values_from = y)%>%
+                        mutate(sex = "female"),
+                      rcpch_cole_uk90_male_bmi_df %>%
+                        pivot_wider(names_from = c(sds, centile), values_from = y) %>%
+                        mutate(sex = "male")) %>%
+  `colnames<-`(c("age", "sex", "p_0.4", "p_2", "p_9", "p_25", "p_50", "p_75", "p_91", "p_98", "p_99.6"))
+
 
 
 

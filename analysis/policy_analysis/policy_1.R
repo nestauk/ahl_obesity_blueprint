@@ -82,7 +82,7 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab",
 # Based on [A] and [C], the intake change = effect size - compensation effect = -44.43 kcals
 
 policy_1_impact_england_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
-                                                          intake_change = -44.43,
+                                                          intake_change = 44.43,
                                                           implementation_duration = 365*5, 
                                                           use_bodyfat_curves = 0)
 
@@ -159,7 +159,7 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab",
 # Based on [A] and [C], the intake change = effect size - compensation effect = -44.43 kcals
 
 policy_1_impact_scotland_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019_children.csv")),
-                                                                  intake_change = -44.43,
+                                                                  intake_change = 44.43,
                                                                   implementation_duration = 365*5, 
                                                                   use_bodyfat_curves = 1)
 
