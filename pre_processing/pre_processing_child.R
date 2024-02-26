@@ -31,10 +31,11 @@ df_2019_children = df_2019_children %>%
          height = HtVal,
          sex = Sex,
          bmi = BMIVal,
+         bmi_grp = BMICat1,
          id = SerialA,
          psu = PSU_SCR,
          strata = cluster94) %>% 
-  dplyr::select(id, weight, height, age, sex, bmi, wt_int, psu, strata, origin2 )  %>% # select variables needed
+  dplyr::select(id, weight, height, age, sex, bmi, bmi_grp, wt_int, psu, strata, origin2 )  %>% # select variables needed
   mutate(pal = case_when(age < 3 ~ 1.40,
                          age >=3 & age < 10 ~ 1.58,
                          age >=10 & age < 18 ~ 1.75),

@@ -7,19 +7,24 @@ library(sitar)
 library(jsonlite)
 
 
+# function to look-up energy intake for children as they grow (age)
+# based on age and sex, the function looks up the incremental energy intake required for the child to grow
+# the look-up table is generated based on the daily reference intake (DRI) published by the SACN in 2011.
 
 lookup_energy_intake = function(age, sex, data_B){
   #browser()
-  
+  # checks that the inout is for a child i.e. less than 19 years of age
   if (age <19){
     
-    age = ceiling(age)
-    age_row_prev <- data_B[data_B$age == age - 1 & data_B$sex == sex, ]
-    age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
+    age = ceiling(age) # round up the age as the published DRI values are for integer ages, eg. child is 5.5, it rounds up to 6.
+    age_row_prev <- data_B[data_B$age == age - 1 & data_B$sex == sex, ] # get row for the previous age, eg. datarow for age 5
+    age_row <- data_B[data_B$age == age & data_B$sex == sex, ] # get row for current age, eg. datarow for age 6
     
-    ei_age_prev = age_row_prev$population_kcal
-    ei_age = age_row$population_kcal
+    ei_age_prev = age_row_prev$population_kcal # get the recommended DRI for previous age
+    ei_age = age_row$population_kcal # get recommended DRI for current age
     
+    # get population level mean excess energy intake for combinations of age and sex
+    # excess energy intake values for sex and age group taken from Calorie Reformulation Report (DHSC - UK Gov, 2017)
     ei_excess = case_when(age >= 5 & age <= 10 & sex == 1 ~ 21,
                           age >= 11 & age <= 15 & sex == 1 ~ 69,
                           age >= 16 & age <= 18 & sex == 1 ~ 104,
@@ -29,9 +34,9 @@ lookup_energy_intake = function(age, sex, data_B){
     
     ei_excess = 0
     
-    net_energy_intake = (ei_age - ei_age_prev) + ei_excess
+    net_energy_intake = (ei_age - ei_age_prev) + ei_excess # net increment in energy intake for child growth
   } else{
-    
+    # incase of children aged 19 and above, set incremental energy intake for growth = 0 kcals
     net_energy_intake = 0
     
   }
