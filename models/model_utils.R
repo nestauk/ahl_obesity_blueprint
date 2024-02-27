@@ -1,4 +1,32 @@
 
+##########################################################
+# Script for function required to run the models.        #
+##########################################################
+
+
+# Note: As of now only the child modelling related functions are written here, in subsequent fixes,
+# all supporting functions called for implementing the Hall model will be moved here.
+
+# References:
+
+# 1. SACN (2011). Dietary Reference Values for Energy 2011. [online] Available at: 
+#    https://assets.publishing.service.gov.uk/media/5a7edb37ed915d74e33f2d8f/SACN_Dietary_Reference_Values_for_Energy.pdf.
+#
+# 2. Dalia Camacho-Garcia-Formenti and Rodrigo Zepeda-Tello (2018). bw: Dynamic Body Weight Models for Children and
+#    Adults. R package version 1.0.0.
+#
+# 3. NHS England (2023). National Child Measurement Programme, England, 2022/23 School Year. [online] NHS Digital. 
+#    Available at: https://digital.nhs.uk/data-and-information/publications/statistical/national-child-measurement-programme/2022-23-school-year/introduction.
+#
+# 4. Chapman, S., Baw, M., & Cole, T. (2022). rcpchgrowth (Version 4.2.8) [Computer software]. https://doi.org/10.5281/zenodo.6303587
+#
+# 5. Cole, T. (2023). statist7/sitar. GitHub. Available at: https://github.com/statist7/sitar [Accessed 27 Feb. 2024].
+#
+# 6. Cole TJ. (2012). The development of growth references and growth charts. Ann Hum Biol. 2012 Sep;39(5):382-94. 
+#    doi: 10.3109/03014460.2012.694475. Epub 2012 Jul 11. PMID: 22780429; PMCID: PMC3920659.
+
+
+
 library(tidyverse)
 library(here)
 library(bw)
@@ -7,9 +35,18 @@ library(sitar)
 library(jsonlite)
 
 
+
+# 1. FUNCTION 1: Look up energy intake
 # function to look-up energy intake for children as they grow (age)
-# based on age and sex, the function looks up the incremental energy intake required for the child to grow
-# the look-up table is generated based on the daily reference intake (DRI) published by the SACN in 2011.
+# INPUTS:
+# Function takes age, sex and reference data as input,
+# the function the looks up the reference data to find the incremental energy intake  required for 
+# the child to grow. The look-up table is generated based on the Estimated Average Requirement (EAR)
+# estimated and published in Table 8 (SACN, 2011). All values refer to daily energy intake reported in
+# kcals per day.
+
+# OUTPUTS:
+# Output is the value of the updated daily energy intake for age and sex in kcals.
 
 lookup_energy_intake = function(age, sex, data_B){
   #browser()
@@ -32,7 +69,7 @@ lookup_energy_intake = function(age, sex, data_B){
                           age >= 11 & age <= 15 & sex == 2 ~ 63,
                           age >= 16 & age <= 18 & sex == 2 ~ 44)
     
-    ei_excess = 0
+    ei_excess = 0 # set to zero for now as we decide who should receive excess calorie intake - specific BMI groups or all children
     
     net_energy_intake = (ei_age - ei_age_prev) + ei_excess # net increment in energy intake for child growth
   } else{
@@ -44,6 +81,14 @@ lookup_energy_intake = function(age, sex, data_B){
   
 }
 
+# FUNCTION 2: Generate SACN Estimated Average Requirements (EAR) age and sex wise reference data 
+
+# INPUTS:
+# input to the function is the path to a csv file store in the input refdata files.
+# this csv was generated from Table 8 in Dietary Reference Values for Energy (SACN, 2011)
+
+# OUTPUTS:
+# Function reads a csv and returns a dataframe.
 
 generate_sacn_dietary_intake = function(input_path){
   
@@ -54,10 +99,26 @@ generate_sacn_dietary_intake = function(input_path){
 }
 
 
+# FUNCTION 3: Generate Energy Matrix:
+# function to generate the daily energy intake matrix for five years for children based on
+# daily energy intake provided at day 0, 365, 730, 1095, 1460 and 1825 of the intervention
+# which corresponds to baseline and end of each one of the five years of the intervention
+# Within the function, we call 'energy_build' (Camacho-Garcia-Formenti & Zepeda-Tello, 2018)
+# function written as part of the 'bw' package. The 'Brownian' interpolation is used as it 
+# is thought to represent typical energy intake patterns in comparison to 'Linear', 
+# 'Exponential', 'Stepwise', 'Lograthmic' etc.
 
+# INPUTS:
+# input to the matrix is a row that contains energy intakes at points in time listed above.
+
+# OUTPUTS:
+# output is a dataframe where each column represents an individual and each row represents
+# a day in five years.
 
 generate_interpolated_energy <- function(row) {
   #browser()
+  
+  # values in the row are added to a list
   energy_values <- c(as.numeric(row["intake_hox"]),
                      as.numeric(row["ei_365"]),
                      as.numeric(row["ei_730"]),
@@ -65,18 +126,33 @@ generate_interpolated_energy <- function(row) {
                      as.numeric(row["ei_1460"]),
                      as.numeric(row["ei_1825"]))
   
+  # energy build expects a list of energy values, along with time points (in days) and interpolation method
   interpolated_energy <- energy_build(energy_values, c(0, 365, 730, 1095, 1460, 1825), interpolation = "Brownian")
   
   return(interpolated_energy)
   
 }
 
+# FUNCTION 4: Look up projected height:
 
+# INPUTS:
+# function to estimate the future height of the child given current age, sex, height, years
+# grown, and reference data. 
+
+
+# The function takes the input age and sex and filters the ref 
+# data to return rows with height and percentile values. Then compares the input height to
+# each of the heights in the filtered row to return the percentile it matches the closest.
+# This is the percentile at baseline. We assume that the child grows along this percentile.
+# Reference data is available for until age 20 (inclusive). For future ages above that, we
+# that the child's height stays the same as at 20.
+
+# OUTPUTS:
+# The function returns the value of the projected height at a different age.
 
 lookup_projected_height <- function(age, sex, height, data_B, years_added) {
-  # Find the row in dataframe B corresponding to the given age
-  #op_list = list()
   
+  # recoding sex to numeric value from character
   if (sex == "female"){
     sex = 2
   } else { sex = 1}
@@ -84,20 +160,16 @@ lookup_projected_height <- function(age, sex, height, data_B, years_added) {
   
   age_row <- data_B[data_B$x == age & data_B$sex == sex, ]
   
-  
-  # Find the percentile with the closest height to the one in dataframe A
   closest_percentile_index <- which.min(abs(age_row$y - height))
   closest_percentile <- age_row$centile[closest_percentile_index]
-  #op_list[1] = closest_percentile
   
-  # Find the age 3 years later
+  
   age_future <- age + years_added
   
   if (age_future <= 20){
     
-    # Find the projected height for age + 3 and the identified percentile
     projected_height <- data_B$y[data_B$x == age_future & data_B$centile == closest_percentile & data_B$sex == sex]
-    #op_list[2] = projected_height
+    
     
   } else{   if(age_future == 21) {
     
@@ -125,6 +197,19 @@ lookup_projected_height <- function(age, sex, height, data_B, years_added) {
 }
 
 
+
+# FUNCTION 5: Calculate BMI category:
+
+# Function to calculate the BMI category of a child given the BMI value, age and sex
+# by comparing it to reference values generated using LMS method from UK90 growth 
+# charts. The cutoffs used are as per NCMP (NHS England, 2023).
+
+# INPUTS:
+# Inputs to the function are age, sex, bmi and reference table
+
+# OUTPUTS:
+# output is BMI category - underweight, normal, overweight and obese (NHS England, 2023).
+# If the input age is over 20 years, then the adult thresholds are used for classification.
 
 
 calculate_bmi_category <- function(age, sex, bmi, df_B) {
@@ -165,6 +250,21 @@ calculate_bmi_category <- function(age, sex, bmi, df_B) {
   return(category)
 }
 
+
+# FUNCTION 6: Generate height reference data
+
+# INPUTS:
+# function that takes two JSON files and combines them to create a dataframe. The two inputs are
+# JSON files of UK90 height reference data taken from RCPCH digital growth charts repo for male
+# and female (Chapman, Baw & Cole, 2022). They files can be accessed here:
+# https://github.com/rcpch/digital-growth-charts-server/tree/live/chart-data
+# The JSON files have been downloaded from the link and stored in inputs\ref_data:
+# cole-nine-centiles-uk-who-female-height.json
+# cole-nine-centiles-uk-who-male-height.json
+# These files contain for males and females - z-score, centile, age and height
+
+# OUTPUTS:
+# The function outputs a dataframe where for each age and sex, centile wise height is recorded.
 
 
 generate_height_refdata = function(input_1, input_2){
@@ -208,14 +308,31 @@ generate_height_refdata = function(input_1, input_2){
   
 }
 
+# FUNCTION 7: Generate BMI Reference Data using UK90 growth charts
+# INPUTS:
+# The function takes a dataframe as input which contains for each combination of age and sex,
+# L, M and S values are recorded. The dataframe is taken from 'sitar' package (Cole, 2023)
+# which contains a function 'uk90' (https://rdrr.io/cran/sitar/man/uk90.html) that is a dataframe
+# which matches the necessary input format required by the function.
+# The LMS formula to calculate z-score and thereby percentile is described in Cole (2012) as below:
+# z = ((X / M) ^ L - 1) / (L * S)  
+# where z is z-score; X is a measurement (of bmi, height, weight etc); L, M & S are parameters that summarise
+# the normal distribution generated from a Box-Cox transformation of measurements at each age (Cole, 2012).
+# This formula is then inverted to calculate the measurement (X) given that we know the L, M and S for each
+# age and sex and also know the z-scores for which we would like to calculate the measurements.
+# The formula used to calculate measurement (X) in the function is:
+# X = M * (1 + Z * L * S) ^ (1 / L)
 
 
+# OUTPUT:
+# The function returns a dataframe with age and sex wise bmi values for the threshold percentiles
+# for child BMI category cut-offs - 2nd, 85th and 95t as per NCMP (NHS England, 2023)
 
 generate_bmi_refdata = function(data_B){
   
   bmi_refdata = data_B %>%
     select(years, sex, L.bmi, M.bmi, S.bmi) %>%
-    subset(years >= as.double(4) & years <= as.double(20)) %>%
+    subset(years >= as.double(4) & years <= as.double(20)) %>% # filtered to limit to ages between 4 and 20, both inclusive
     mutate(p_2 = (M.bmi*(1 + L.bmi*S.bmi*-2.054)^(1/L.bmi)),
            p_85 = (M.bmi*(1 + L.bmi*S.bmi*1.036)^(1/L.bmi)),
            p_95 = (M.bmi*(1 + L.bmi*S.bmi*1.645)^(1/L.bmi))) %>%
@@ -225,6 +342,3 @@ generate_bmi_refdata = function(data_B){
   return(bmi_refdata)
   
 }
-
-
-
