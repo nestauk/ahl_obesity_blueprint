@@ -150,17 +150,24 @@ generate_interpolated_energy <- function(row) {
 # OUTPUTS:
 # The function returns the value of the projected height at a different age.
 
+#test_ht = lookup_projected_height(age = 6, sex = 2, height = 104.3, data_B = height_refdata_100centile, years_added = 1)
+#test_ht_1 = lookup_projected_height(age = 6, sex = "female", height = 104.3, data_B = height_refdata_100centile, years_added = 1)
+
 lookup_projected_height <- function(age, sex, height, data_B, years_added) {
-  
+  # browser()
   # recoding sex to numeric value from character
-  if (sex == "female"){
+  if (sex == "female" | sex == 2){
     sex = 2
-  } else { sex = 1}
+  } else { if(sex == "male" | sex == 1){
+    
+    sex = 1
+    
+  } }
   
   
-  age_row <- data_B[data_B$x == age & data_B$sex == sex, ]
+  age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
   
-  closest_percentile_index <- which.min(abs(age_row$y - height))
+  closest_percentile_index <- which.min(abs(age_row$height - height))
   closest_percentile <- age_row$centile[closest_percentile_index]
   
   
@@ -168,22 +175,22 @@ lookup_projected_height <- function(age, sex, height, data_B, years_added) {
   
   if (age_future <= 20){
     
-    projected_height <- data_B$y[data_B$x == age_future & data_B$centile == closest_percentile & data_B$sex == sex]
+    projected_height <- data_B$height[data_B$age == age_future & data_B$centile == closest_percentile & data_B$sex == sex]
     
     
   } else{   if(age_future == 21) {
     
     
-    projected_height <- data_B$y[data_B$x == (age_future - 1) & data_B$centile == closest_percentile & data_B$sex == sex] 
+    projected_height <- data_B$height[data_B$age == (age_future - 1) & data_B$centile == closest_percentile & data_B$sex == sex] 
     
     
   } else{ if(age_future == 22){
     
-    projected_height <- data_B$y[data_B$x == (age_future - 2) & data_B$centile == closest_percentile & data_B$sex == sex]   
+    projected_height <- data_B$height[data_B$age == (age_future - 2) & data_B$centile == closest_percentile & data_B$sex == sex]   
     
   } else{ if(age_future == 23){
     
-    projected_height <- data_B$y[data_B$x == (age_future - 3) & data_B$centile == closest_percentile & data_B$sex == sex]
+    projected_height <- data_B$height[data_B$age == (age_future - 3) & data_B$centile == closest_percentile & data_B$sex == sex]
     
   }
     
@@ -302,7 +309,9 @@ generate_height_refdata = function(input_1, input_2){
     mutate(sex = 1) %>%
     distinct()
   
-  height_refdata = rbind(female_ht_df_1, male_ht_df_1)
+  height_refdata = rbind(female_ht_df_1, male_ht_df_1) %>%
+    rename(age = x,
+           height = y)
   
   return(height_refdata)
   
@@ -341,4 +350,148 @@ generate_bmi_refdata = function(data_B){
   
   return(bmi_refdata)
   
+  
 }
+
+# function to generate bmi ref data
+
+generate_bmi_refdata_100centiles = function(data_B){
+  
+  #browser()
+  
+  bmi_refdata = data_B %>%
+    select(years, sex, L.bmi, M.bmi, S.bmi) %>%
+    subset(years >= as.double(4) & years <= as.double(20))
+
+  for( x in 1:100){
+    
+    if (x <= 99) {
+      
+      x = x/100
+      
+     
+        
+        bmi_refdata = bmi_refdata %>%
+          mutate(!!paste0("p","_",(x*100)) := M.bmi*(1 + L.bmi*S.bmi*qnorm(x))^(1/L.bmi))
+          # rowwise() %>%
+          # mutate(!!paste0("p","_",(x*100)) := M.bmi[y]*(1 + L.bmi[y]*S.bmi[y]*qnorm(x))^(1/L.bmi[y]))
+        
+    
+        
+     
+      
+    } else{
+      #browser()
+      x = 0.996
+      
+      bmi_refdata = bmi_refdata %>%
+        mutate(!!paste0("p","_",(x*100)) := M.bmi*(1 + L.bmi*S.bmi*qnorm(x))^(1/L.bmi))
+      
+    }
+  }
+  
+  return(bmi_refdata)
+  
+}
+
+
+
+# function to generate height ref data
+
+generate_height_refdata_100centiles = function(data_B){
+
+  #browser()
+  
+  ht_refdata = data_B %>%
+    select(years, sex, L.ht, M.ht, S.ht) %>%
+    subset(years >= as.double(4) & years <= as.double(20))
+  
+  for( x in 1:100){
+    
+    if (x <= 99) {
+      
+      x = x/100
+      
+      
+      
+      ht_refdata = ht_refdata %>%
+        mutate(!!paste0("p","_",(x*100)) := M.ht*(1 + L.ht*S.ht*qnorm(x))^(1/L.ht))
+      # rowwise() %>%
+      # mutate(!!paste0("p","_",(x*100)) := M.bmi[y]*(1 + L.bmi[y]*S.bmi[y]*qnorm(x))^(1/L.bmi[y]))
+      
+      
+      
+      
+      
+    } else{
+      #browser()
+      x = 0.996
+      
+      ht_refdata = ht_refdata %>%
+        mutate(!!paste0("p","_",(x*100)) := M.ht*(1 + L.ht*S.ht*qnorm(x))^(1/L.ht))
+      
+    }
+  }
+  
+  return(ht_refdata)
+
+} 
+
+
+
+
+
+# function to lookup projected bmi
+
+lookup_projected_bmi <- function(age, sex, bmi, data_B, years_added) {
+  
+  # recoding sex to numeric value from character
+  if (sex == "female"){
+    sex = 2
+  } else { sex = 1}
+  
+  #browser()
+  age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
+  
+  closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
+  closest_percentile <- age_row$centile[closest_percentile_index]
+  
+  
+  age_future <- age + years_added
+  
+  if (age_future <= 20){
+    
+    projected_bmi <- data_B$bmi[data_B$age == age_future & data_B$centile == closest_percentile & data_B$sex == sex]
+    
+    
+  } else{   if(age_future == 21) {
+    
+    projected_bmi <- data_B$bmi[data_B$age == (age_future - 1) & data_B$centile == closest_percentile & data_B$sex == sex]
+    # projected_bmi <- data_B$y[data_B$x == (age_future - 1) & data_B$centile == closest_percentile & data_B$sex == sex] 
+    
+    
+  } else{ if(age_future == 22){
+    
+    projected_bmi <- data_B$bmi[data_B$age == (age_future - 2) & data_B$centile == closest_percentile & data_B$sex == sex]
+    # projected_height <- data_B$y[data_B$x == (age_future - 2) & data_B$centile == closest_percentile & data_B$sex == sex]   
+    
+  } else{ if(age_future == 23){
+    
+    projected_bmi <- data_B$bmi[data_B$age == (age_future - 3) & data_B$centile == closest_percentile & data_B$sex == sex]
+    # projected_height <- data_B$y[data_B$x == (age_future - 3) & data_B$centile == closest_percentile & data_B$sex == sex]
+    
+  }
+    
+  }
+    
+  }
+    
+  }
+  
+  return(projected_bmi)
+}
+
+
+
+# t1 = lookup_projected_height(age = 6, sex = "female", height = 104.3, data_B = uk90_height_refdata, years_added = 1 )
+
