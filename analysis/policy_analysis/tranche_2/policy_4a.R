@@ -41,15 +41,15 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 22 kcals
+# Effect size [A]: 2.6 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
 # Compensation effect [C]: 0 kcals (already accounted in the final estimates shared in the evidence)
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -22 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -2.6 kcals
 
 policy_4a_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                             intake_change = -22,
+                                                             intake_change = -2.6,
                                                              implmentation_duration = 365*5)
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -65,6 +65,7 @@ ggsave(here("outputs/policy_4a/policy_4a_impact_England_adult.png"),
 policy_4a_impact_england_adult$bmi_percent_prevalence
 
 table_outputs[["england_adult"]] = policy_4a_impact_england_adult$bmi_percent_prevalence
+
 
 # 2. Children in England
 
@@ -84,6 +85,12 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab",
 # Duration [D]: 5 years ~ 365 * 5 days
 
 # Based on [A] and [C], the intake change = effect size - compensation effect = -2.48 kcals
+
+
+policy_4a_impact_england_child = calculate_bmi_from_ei_change(df = read_csv(here("inputs/processed/hse_2019_children.csv")), daily_ei_change = 2.48 )
+
+policy_4a_impact_england_child$bmi_prevalence_table
+policy_4a_impact_england_child$bmi_prevalence_plot
 
 policy_4a_impact_england_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
                                                                    intake_change = 2.48,
@@ -116,15 +123,15 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # 3.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 22 kcals
+# Effect size [A]: 2.6 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
 # Compensation effect [C]: 0 kcals
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -22 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -2.6 kcals
 
 policy_4a_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
-                                                             intake_change = -22,
+                                                             intake_change = -2.6,
                                                              implmentation_duration = 365*5)
 # 3.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -141,7 +148,6 @@ ggsave(here("outputs/policy_4a/policy_4a_impact_Scotland_adult.png"),
 policy_4a_impact_scotland_adult$bmi_percent_prevalence
 
 table_outputs[["scotland_adult"]] = policy_4a_impact_scotland_adult$bmi_percent_prevalence
-
 
 # 4. Children in Scotland
 
@@ -186,14 +192,21 @@ policy_4a_impact_scotland_child$bmi_percent_prevalence
 
 table_outputs[["scotland_child"]] = policy_4a_impact_scotland_child$bmi_percent_prevalence
 
-write_xlsx(path = "outputs/policy_4a/policy_4a.xlsx", 
-           x = table_outputs)
+
+
+# 5. Exporting tabular outputs:
+
+
+write_xlsx(path = "outputs/policy_4a/policy_4a.xlsx", x = table_outputs)
 
 
 write.csv(policy_4a_impact_england_adult$post_df, file = "outputs/policy_4a/policy_4a_adult_england_bmi.csv")
+
 write.csv(policy_4a_impact_england_child$post_df, file = "outputs/policy_4a/policy_4a_child_england_bmi.csv")
 
+
 write.csv(policy_4a_impact_scotland_adult$post_df, file = "outputs/policy_4a/policy_4a_adult_scotland_bmi.csv")
+
 write.csv(policy_4a_impact_scotland_child$post_df, file = "outputs/policy_4a/policy_4a_child_scotland_bmi.csv")
 
 

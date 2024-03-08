@@ -31,7 +31,7 @@ library(writexl)
 source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
-source(file = "models/child_model_calorie.R")
+#source(file = "models/child_model_calorie.R")
 
 
 table_outputs = list()

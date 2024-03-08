@@ -10,7 +10,8 @@
 # The evidence from the rapid review  
 # (https://docs.google.com/document/d/1xYDMQdCBmFuSpww7D6qXdRaNTsfEbG5hByr1HBhVd3Q/edit?usp=sharing) 
 # (quality assured by the EAG) showed that the intervention led to reduction in daily calorie intake
-# by 7.6 kcals for adults. The policy was found to reduce daily calorie intake in children by 6.7 kcals.
+# by 38 kcals for adults. 44.97% of the purchases out of home is via delivery platforms. Therefore,
+# this policy results in 44.97% of (20% of 38) which is 3.41 kcals.
 # The source of the evidence also indicates that compensatory behaviour was accounted for while reporting
 # out the final estimates of daily calorie reductions.
 
@@ -40,15 +41,15 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 7.6 kcals
+# Effect size [A]: 3.41 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
 # Compensation effect [C]: 23% of [A] = 1.75 kcals
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -5.85 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -2.63 kcals
 
 policy_8b_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                             intake_change = -5.85,
+                                                             intake_change = -2.63,
                                                              implmentation_duration = 365*5)
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -115,15 +116,15 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # 3.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 7.6 kcals
+# Effect size [A]: 3.41 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
 # Compensation effect [C]: 23% of [A] = 1.75 kcals
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -5.85 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -2.63 kcals
 
 policy_8b_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
-                                                              intake_change = -22,
+                                                              intake_change = -2.63,
                                                               implmentation_duration = 365*5)
 # 3.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -190,9 +191,9 @@ write_xlsx(path = "outputs/policy_8b/policy_8b.xlsx",
 
 
 write.csv(policy_8b_impact_england_adult$post_df, file = "outputs/policy_8b/policy_8b_adult_england_bmi.csv")
-write.csv(policy_8b_impact_england_child$post_df, file = "outputs/policy_8b/policy_8b_child_england_bmi.csv")
+#write.csv(policy_8b_impact_england_child$post_df, file = "outputs/policy_8b/policy_8b_child_england_bmi.csv")
 
 write.csv(policy_8b_impact_scotland_adult$post_df, file = "outputs/policy_8b/policy_8b_adult_scotland_bmi.csv")
-write.csv(policy_8b_impact_scotland_child$post_df, file = "outputs/policy_8b/policy_8b_child_scotland_bmi.csv")
+#write.csv(policy_8b_impact_scotland_child$post_df, file = "outputs/policy_8b/policy_8b_child_scotland_bmi.csv")
 
 

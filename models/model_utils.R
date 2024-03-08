@@ -221,12 +221,16 @@ lookup_projected_height <- function(age, sex, height, data_B, years_added) {
 
 calculate_bmi_category <- function(age, sex, bmi, df_B) {
   #browser()
+  
   if (age <= 20){
     
-    if (sex == "female"){
+    if (sex == "female" | sex == 2){
       sex = 2
-    } else { sex = 1}
-    
+    } else { if(sex == "male" | sex == 1){
+      
+      sex = 1
+      
+    } }
     
     #browser()
     percentile_2 <- df_B$p_2[which(df_B$age == age & df_B$sex == sex)]
@@ -437,7 +441,27 @@ generate_height_refdata_100centiles = function(data_B){
 
 } 
 
-
+look_up_percentile <- function(age, sex, bmi, data_B, years_added) {
+  
+  
+  # recoding sex to numeric value from character
+  if (sex == "female" | sex == 2){
+    sex = 2
+  } else { if(sex == "male" | sex == 1){
+    
+    sex = 1
+    
+  } }
+  
+  #browser()
+  age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
+  
+  closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
+  closest_percentile <- age_row$centile[closest_percentile_index]
+  
+  return(closest_percentile)
+  
+}
 
 
 
@@ -446,12 +470,16 @@ generate_height_refdata_100centiles = function(data_B){
 lookup_projected_bmi <- function(age, sex, bmi, data_B, years_added) {
   
   # recoding sex to numeric value from character
-  if (sex == "female"){
+  if (sex == "female" | sex == 2){
     sex = 2
-  } else { sex = 1}
+  } else { if(sex == "male" | sex == 1){
+    
+    sex = 1
+    
+  } }
   
   #browser()
-  age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
+  age_row <- data_B[data_B$age == age & data_B$sex == sex,]
   
   closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
   closest_percentile <- age_row$centile[closest_percentile_index]
@@ -493,5 +521,127 @@ lookup_projected_bmi <- function(age, sex, bmi, data_B, years_added) {
 
 
 
-# t1 = lookup_projected_height(age = 6, sex = "female", height = 104.3, data_B = uk90_height_refdata, years_added = 1 )
+lookup_excess_energy_intake = function(age, sex, data_B){
+  #browser()
+  # checks that the inout is for a child i.e. less than 19 years of age
+  if (age <19){
+    
+    age = ceiling(age) # round up the age as the published DRI values are for integer ages, eg. child is 5.5, it rounds up to 6.
+    #age_row_prev <- data_B[data_B$age == age - 1 & data_B$sex == sex, ] # get row for the previous age, eg. datarow for age 5
+    #age_row <- data_B[data_B$age == age & data_B$sex == sex, ] # get row for current age, eg. datarow for age 6
+    
+    #ei_age_prev = age_row_prev$population_kcal # get the recommended DRI for previous age
+    #ei_age = age_row$population_kcal # get recommended DRI for current age
+    
+    # get population level mean excess energy intake for combinations of age and sex
+    # excess energy intake values for sex and age group taken from Calorie Reformulation Report (DHSC - UK Gov, 2017)
+    ei_excess = case_when(age >= 5 & age <= 10 & sex == 1 ~ 21,
+                          age >= 11 & age <= 15 & sex == 1 ~ 69,
+                          age >= 16 & age <= 18 & sex == 1 ~ 104,
+                          age >= 5 & age <= 10 & sex == 2 ~ 34,
+                          age >= 11 & age <= 15 & sex == 2 ~ 63,
+                          age >= 16 & age <= 18 & sex == 2 ~ 44)
+    
+    #ei_excess = 0 # set to zero for now as we decide who should receive excess calorie intake - specific BMI groups or all children
+    
+    net_energy_intake = ei_excess # net increment in energy intake for child growth
+  } else{
+    # incase of children aged 19 and above, set incremental energy intake for growth = 0 kcals
+    net_energy_intake = 0
+    
+  }
+  return(net_energy_intake)
+  
+}
+
+
+
+#old
+function(age, sex, intake_change, data_B){
+  #browser()
+  
+  age = floor(age)
+  
+  if (sex == "female" | sex == 2){
+    sex = 2
+  } else { if(sex == "male" | sex == 1){
+    
+    sex = 1
+    
+  } }
+  
+  effect_weight = data_B$weight[data_B$age == age & data_B$sex == sex]
+  
+  prop_intake_change = effect_weight*intake_change
+  
+  
+  return(prop_intake_change)
+  
+}
+
+
+#new
+
+
+# test_1 = calculate_intake_change(age = 6, sex = 2, bmi = 15.627169, intake_change = 20, bmi_ref_data = bmi_refdata_100centiles, prop_weight_data = effect_weighting)
+
+calculate_proportional_ei_change = function(age, sex, bmi, intake_change, bmi_ref_data, prop_weight_data){
+ 
+  #browser()
+  
+  age = floor(age)
+  
+  if (sex == "female" | sex == 2){
+    sex = 2
+  } else { if(sex == "male" | sex == 1){
+    
+    sex = 1
+    
+  } }
+  
+  
+  if (!is.null(bmi)){
+    
+    age_row <- bmi_ref_data[bmi_ref_data$age == age & bmi_ref_data$sex == sex,]
+    
+    closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
+    closest_percentile <- age_row$centile[closest_percentile_index]
+    
+    
+    if(closest_percentile <= 10){
+      
+      prop_intake_change = 0
+      
+    } else{
+      
+      effect_weight = prop_weight_data$weight[prop_weight_data$age == age & prop_weight_data$sex == sex]
+      
+      prop_intake_change = effect_weight*intake_change
+      
+      
+    }
+      
+  }
+  
+  return(prop_intake_change)
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

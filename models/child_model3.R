@@ -1,6 +1,7 @@
 
 
 ## appraoch using bmi, FM and FFM
+# approach using projected bmi, height and weight
 
 
 uk90_height_refdata = generate_height_refdata("C:/Users/Anish.Chacko/Downloads/ht_ref_data/cole-nine-centiles-uk-who-female-height.json",
@@ -35,7 +36,7 @@ height_refdata_100centile = height_refdata_100centile %>%
   mutate(centile = substr(centile, 3, nchar(centile)))
 
 
-
+write.csv(bmi_refdata_100centiles, file = "C:/git/ahl_obesity_blueprint/outputs/data/bmi_refdata.csv" )
 
 df_child3 <- read_csv(here("inputs/processed/hse_2019_children.csv")) %>%  # we are reading a file that contains energy intake, BMI weight class and other variables reated during the pre-processing stage.
   #mutate(sex = ifelse(sex == 1, "male", "female")) %>% 
@@ -43,6 +44,7 @@ df_child3 <- read_csv(here("inputs/processed/hse_2019_children.csv")) %>%  # we 
   #mutate(intake_diff = ifelse(bmi_cat_baseline %in% c("underweight", "normal"), 0, child_intake_change )) %>%
   rowwise() %>%
   #mutate(bmi_cat_b = calculate_bmi_category(age = age, sex = sex, bmi = bmi, df_B = generate_bmi_refdata(sitar::uk90))) %>%
+  mutate(percentile = look_up_percentile(age = age, sex = sex, bmi = bmi, data_B = bmi_refdata_100centiles)) %>%
   mutate(proj_bmi_365 = lookup_projected_bmi(age = age, sex = sex, bmi = bmi, years_added = 1, data_B = bmi_refdata_100centiles),
          proj_bmi_730 = lookup_projected_bmi(age = age, sex = sex, bmi = bmi, years_added = 2, data_B = bmi_refdata_100centiles),
          proj_bmi_1095 = lookup_projected_bmi(age = age, sex = sex, bmi = bmi, years_added = 3, data_B = bmi_refdata_100centiles),
@@ -80,6 +82,22 @@ df_child3 <- read_csv(here("inputs/processed/hse_2019_children.csv")) %>%  # we 
 #library("bw")
 
 energy_matrix3 = apply(df_child3, 1, generate_interpolated_energy)
+
+energy_matrix3 = t(energy_matrix3)
+
+
+upd_df3 = cbind(df_child3, energy_matrix3)
+
+
+
+
+mean_ei_5_10 = mean(child_energy_intake$`1`[child_energy_intake$bmi_cat_b == "obese" | child_energy_intake$bmi_cat_b == "overweight" 
+                                            & child_energy_intake$age >= 5 & child_energy_intake$age <= 10])
+
+
+mean_ei_11_15 = mean(child_energy_intake$`1`[child_energy_intake$bmi_cat_b == "obese" | child_energy_intake$bmi_cat_b == "overweight" 
+                                             & child_energy_intake$age >= 11 & child_energy_intake$age < 15])
+
 
 
 
@@ -209,9 +227,9 @@ child_bar_plot3 = child_bmi_change3 %>%
   geom_bar(stat = "identity", position = "dodge") +
   theme_ipsum() +
   labs(fill = "", 
-       title = "BMI Categories Distribution", 
-       y = "Frequency",
-       subtitle = "Population") +
+       title = "BMI Distribution - Approach 2", 
+       y = "Prevalence - %",
+       subtitle = "Children - No policy applied") +
   theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
   theme(legend.position = "top")
 

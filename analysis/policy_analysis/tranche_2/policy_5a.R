@@ -11,10 +11,10 @@
 # The evidence from the rapid review  
 # (https://docs.google.com/document/d/1Q2l1H2bHlEO2t6rK2fpbR43z3_qa8EJ_6h_CcjIEMDo/edit?usp=sharing) 
 # (quality assured by the EAG) showed that the intervention led to reduction in daily calorie intake
-# by 22 kcal for adults. The policy was found to reduce daily calorie intake in children by 2.48 kcals.
+# by 2.6 kcal for adults. The policy was found to reduce daily calorie intake in children by 2.48 kcals.
 # In addition, several reports have indicated that about 20-25% of the daily calorie intake for adults
-# come from the OOH sector. Considering that 80% of the daily calorie intake is reduced by 22 kcals, 20%
-# is likely to be reduced by 5.5 kcals per day. Similarly for children it would be 0.62 kcals per day.
+# come from the OOH sector. Considering that 80% of the daily calorie intake is reduced by 2.6 kcals, 20%
+# is likely to be reduced by 0.52 kcals per day. Similarly for children it would be 0.62 kcals per day.
 # The source of the evidence also indicates that compensatory behaviour was accounted for while reporting
 # out the final estimates of daily calorie reductions.
 
@@ -28,7 +28,7 @@ library(writexl)
 source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
-source(file = "models/child_model_calorie.R")
+#source(file = "models/child_model_calorie.R")
 
 
 table_outputs = list()
@@ -44,15 +44,15 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 5.5 kcals
+# Effect size [A]: 0.52 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
 # Compensation effect [C]: 0 kcals (already accounted in the final estimates shared in the evidence)
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -5.5 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -0.52 kcals
 
 policy_5a_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                             intake_change = -5.5,
+                                                             intake_change = -0.52,
                                                              implmentation_duration = 365*5)
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -119,7 +119,7 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # 3.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 5.5 kcals
+# Effect size [A]: 0.52 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
 # Compensation effect [C]: 0 kcals (already accounted in the final estimates shared in the evidence)
 # Duration [D]: 5 years ~ 365 * 5 days
@@ -128,7 +128,7 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 
 
 policy_5a_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
-                                                              intake_change = -22,
+                                                              intake_change = -0.52,
                                                               implmentation_duration = 365*5)
 # 3.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -190,14 +190,16 @@ policy_5a_impact_scotland_child$bmi_percent_prevalence
 
 table_outputs[["scotland_child"]] = policy_5a_impact_scotland_child$bmi_percent_prevalence
 
-write_xlsx(path = "outputs/policy_5a/policy_5a.xlsx", 
-           x = table_outputs)
+
+# 5. Exporting tabular outputs
+
+write_xlsx(path = "outputs/policy_5a/policy_5a.xlsx", x = table_outputs)
 
 
 write.csv(policy_5a_impact_england_adult$post_df, file = "outputs/policy_5a/policy_5a_adult_england_bmi.csv")
-write.csv(policy_5a_impact_england_child$post_df, file = "outputs/policy_5a/policy_5a_child_england_bmi.csv")
+#write.csv(policy_5a_impact_england_child$post_df, file = "outputs/policy_5a/policy_5a_child_england_bmi.csv")
 
 write.csv(policy_5a_impact_scotland_adult$post_df, file = "outputs/policy_5a/policy_5a_adult_scotland_bmi.csv")
-write.csv(policy_5a_impact_scotland_child$post_df, file = "outputs/policy_5a/policy_5a_child_scotland_bmi.csv")
+#write.csv(policy_5a_impact_scotland_child$post_df, file = "outputs/policy_5a/policy_5a_child_scotland_bmi.csv")
 
 
