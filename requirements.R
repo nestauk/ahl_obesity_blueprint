@@ -25,6 +25,7 @@ pkgLoad <- function( packages = "favourites" ) {
   
 }
 
+install.packages("sitar")
 
 pkgLoad()
 devtools::install_github("INSP-RH/bw")

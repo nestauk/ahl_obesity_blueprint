@@ -359,7 +359,10 @@ generate_bmi_refdata = function(data_B){
 
 # function to generate bmi ref data
 
-generate_bmi_refdata_100centiles = function(data_B){
+
+#test_func = generate_bmi_refdata_100centiles(data_B = sitar::uk90, format_table = TRUE)
+
+generate_bmi_refdata_100centiles = function(data_B, format_table = FALSE){
   
   #browser()
   
@@ -373,17 +376,12 @@ generate_bmi_refdata_100centiles = function(data_B){
       
       x = x/100
       
-     
-        
         bmi_refdata = bmi_refdata %>%
           mutate(!!paste0("p","_",(x*100)) := M.bmi*(1 + L.bmi*S.bmi*qnorm(x))^(1/L.bmi))
           # rowwise() %>%
           # mutate(!!paste0("p","_",(x*100)) := M.bmi[y]*(1 + L.bmi[y]*S.bmi[y]*qnorm(x))^(1/L.bmi[y]))
         
     
-        
-     
-      
     } else{
       #browser()
       x = 0.996
@@ -392,6 +390,23 @@ generate_bmi_refdata_100centiles = function(data_B){
         mutate(!!paste0("p","_",(x*100)) := M.bmi*(1 + L.bmi*S.bmi*qnorm(x))^(1/L.bmi))
       
     }
+  }
+  
+  
+  if(format_table == TRUE){
+    
+    bmi_refdata = bmi_refdata %>%
+      rename(age = years)
+    
+  } else{
+    
+    bmi_refdata = bmi_refdata %>%
+      select(-c(L.bmi, M.bmi, S.bmi)) %>%
+      unite(col = "sex_years", "sex", "years", sep = "_") %>%
+      pivot_longer(cols= c(starts_with("p")), names_to = "centile", values_to = "bmi") %>%
+      separate("sex_years", into = c("sex", "age"), sep = "_") %>%
+      mutate(centile = substr(centile, 3, nchar(centile)))
+    
   }
   
   return(bmi_refdata)
@@ -441,25 +456,87 @@ generate_height_refdata_100centiles = function(data_B){
 
 } 
 
-look_up_percentile <- function(age, sex, bmi, data_B, years_added) {
-  
-  
-  # recoding sex to numeric value from character
-  if (sex == "female" | sex == 2){
-    sex = 2
-  } else { if(sex == "male" | sex == 1){
-    
-    sex = 1
-    
-  } }
-  
+#bmi_ref_data = generate_bmi_refdata_100centiles(sitar::uk90)
+
+#test_func = lookup_bmi_percentile_category(age = 6, 
+#                               bmi = 14.13838, 
+#                               data_B = bmi_ref_data,
+#                               sex = 1, value_to_calculate = "bmi_centile_and_category")
+
+lookup_bmi_percentile_category <- function(age, sex, bmi, data_B, value_to_calculate) {
   #browser()
-  age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
+  op_list = list()
   
-  closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
-  closest_percentile <- age_row$centile[closest_percentile_index]
+  if(!(value_to_calculate == "bmi_category" || value_to_calculate == "bmi_centile" || value_to_calculate == "bmi_centile_and_category")){
+
+    warning("value_to_calculate is a REQUIRED input and ONLY accepts: 'bmi_centile' | 'bmi_category' | 'bmi_centile_and_category'.")
+    
+  } else{
+    
+    # recoding sex to numeric value from character
+    if (sex == "female" | sex == 2){
+      sex = 2
+    } else { if(sex == "male" | sex == 1){
+      
+      sex = 1
+      
+    } }
+    
+    #browser()
+    age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
+    closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
+    closest_percentile <- as.numeric(age_row$centile[closest_percentile_index]) 
+    bmi_value = data_B[data_B$age == age & data_B$sex == sex & data_B$centile == closest_percentile,]
+    
+    
+    p_2 = data_B$bmi[data_B$age == age & data_B$sex == sex & data_B$centile == 2]
+    p_85 = data_B$bmi[data_B$age == age & data_B$sex == sex & data_B$centile == 85]
+    p_95 = data_B$bmi[data_B$age == age & data_B$sex == sex & data_B$centile == 95]
+    
+
+    category <- case_when(
+      bmi <= p_2  ~ "underweight",
+      bmi > p_2 & bmi < p_85 ~ "normal",
+      bmi >= p_85 & bmi < p_95 ~ "overweight",
+      bmi >= p_95 ~ "obese")
+    
+        
+    
+    op_list[["bmi_centile"]] = (closest_percentile)
+    
+#    category <- case_when(
+#      closest_percentile <= 2  ~ "underweight",
+#      closest_percentile > 2 & closest_percentile < 85 ~ "normal",
+#      closest_percentile >= 85 & closest_percentile < 95 ~ "overweight",
+#      closest_percentile >= 95 ~ "obese")
+    
+    op_list[["bmi_category"]] = category
+  }
   
-  return(closest_percentile)
+  if(value_to_calculate == "bmi_category"){
+    
+    return(op_list$bmi_category)
+    
+  } else{
+    
+    if(value_to_calculate == "bmi_centile"){
+      
+      
+      return(op_list$bmi_centile)
+      
+    } else{
+      
+      if(value_to_calculate == "bmi_centile_and_category"){
+        
+        return(op_list)
+        
+      }
+      
+      
+    }
+    
+    
+  }
   
 }
 
