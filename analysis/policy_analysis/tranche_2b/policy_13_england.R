@@ -38,8 +38,10 @@ bmi_refdata_100centiles = generate_bmi_refdata_100centiles(sitar::uk90)
 process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab",
                    nation = "England",
                    population_group = "Children")
-
-
+generate_bmi_refdata_100centiles
+lookup_bmi_percentile_category
+process_clean_save
+calculate_bmi_from_eichange
 
 df_child <- read_csv(here("inputs/processed/hse_2019_children.csv")) %>%
   rowwise() %>%
@@ -49,7 +51,7 @@ df_child <- read_csv(here("inputs/processed/hse_2019_children.csv")) %>%
   mutate(selection = ifelse(bmi_category_baseline %in% c("normal", "overweight", "obese") & 
                                         (age_grp %in% c("5-7", "8-10", "11-12")),
                                       "Yes", "No")) %>%
-  mutate(bmi_change = ifelse(selection == "Yes", effect_size, 0 ))
+  mutate(bmi_change = ifelse(selection == "Yes", effect_size, 0 ))5
 
 
 df_child = df_child %>%
@@ -133,4 +135,4 @@ child_bmi_change_year
 
 write_xlsx(path = "outputs/policy_13/policy_13_england.xlsx", x = child_bmi_change_year)
 
-
+write.csv(df_child, file = "outputs/policy_13/policy_13_child_england_bmi.csv")

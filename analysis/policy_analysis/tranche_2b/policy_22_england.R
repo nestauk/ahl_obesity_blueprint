@@ -132,3 +132,4 @@ child_bmi_change_year
 
 write_xlsx(path = "outputs/policy_22/policy_22_england.xlsx", x = child_bmi_change_year)
 
+write.csv(df_child, file = "outputs/policy_22/policy_22_child_england_bmi.csv")
