@@ -35,7 +35,7 @@ process_clean_save = function(file_path, nation, population_group){
     
     
     if (nation == "England" & population_group == "Adult") {
-      
+      #browser()
       # Age35g is a categorical variable of 5 year age bands for 16+, smallest possible grouping from HSE 2019
       # Age35g == 8 indicates all those in age group 20-24 years
       df_2019_adult <- read.table(here(file_path), sep = "\t", header = TRUE) %>% 
@@ -75,10 +75,12 @@ process_clean_save = function(file_path, nation, population_group){
                height = HtVal,
                sex = Sex,
                bmi = BMIVal,
+               diabetes = diabete2,
+               cardiovd = CardioTakg2,
                id = SerialA,
                psu = PSU_SCR,
                strata = cluster94) %>% 
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, wt_int, psu, strata )  %>% # select variables needed
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, diabetes, cardiovd, wt_int, psu, strata )  %>% # select variables needed
         mutate(pal = 1.6, # pal assumed to be 1.6 for the entire population to indicate a sendentary/ light active lifestyle
                rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
                                TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # sex = 2 female; rmr is calculated using Mifflin St Jeor Equations from Mifflin et al (1990)
@@ -119,6 +121,8 @@ process_clean_save = function(file_path, nation, population_group){
                sex = Sex,
                bmi_ur = bmi,
                bmi = bmival,
+               diabetes = diabete2,
+               cardiovd = medtyp1B,
                id = CPSerialA,
                psu = PSU,
                wt_int = int19wt,
@@ -136,7 +140,7 @@ process_clean_save = function(file_path, nation, population_group){
                                    age >= 70 & age <= 74 ~ "70-74",
                                    age >= 75 ~ "75+",
                                    TRUE ~ "NA")) %>%
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, wt_int, psu, strata) %>% # select variables needed for analysis and would be inputs for modelling
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, diabetes, cardiovd, wt_int, psu, strata) %>% # select variables needed for analysis and would be inputs for modelling
         mutate(pal = 1.6,
                rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
                                TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # Calculating an individuals resting metabolic rate using equations published in Mifflin & St.Jeor (1990)
@@ -182,10 +186,17 @@ process_clean_save = function(file_path, nation, population_group){
                height = HtVal,
                sex = Sex,
                bmi = BMIVal,
+               father_bmi = fath_bmi2,
+               mother_bmi = moth_bmi2,
+               qimd = qimd19,
                id = SerialA,
                psu = PSU_SCR,
                strata = cluster94) %>% 
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, wt_int, psu, strata, origin2 )  %>% # select variables needed
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, father_bmi, mother_bmi, qimd, wt_int, psu, strata, origin2 )  %>% # select variables needed
+        mutate(parent_bmi = case_when((father_bmi == 2 | mother_bmi == 2) ~ 1,
+                                      TRUE ~ 0)) %>%
+        mutate(qimd_updated = case_when((qimd == 4 | qimd == 5) ~ 1,
+                                        TRUE ~ 0)) %>%
         mutate(pal = case_when(age < 3 ~ 1.40, 
                                age >=3 & age < 10 ~ 1.58,
                                age >=10 & age < 18 ~ 1.75), # pal set based on SACN (2011) guidelines

@@ -29,19 +29,19 @@ calculate_bmi_from_ei_change = function(df, daily_ei_change){
   
   uk90_bmi_refdata_100centiles = generate_bmi_refdata_100centiles(sitar::uk90)
   
-  uk90_bmi_refdata_100centiles = uk90_bmi_refdata_100centiles %>%
-    select(-c(L.bmi, M.bmi, S.bmi)) %>%
-    unite(col = "sex_years", "sex", "years", sep = "_") %>%
-    pivot_longer(cols= c(starts_with("p")), names_to = "centile", values_to = "bmi") %>%
-    separate("sex_years", into = c("sex", "age"), sep = "_") %>%
-    mutate(centile = substr(centile, 3, nchar(centile)))
-  
+  # uk90_bmi_refdata_100centiles = uk90_bmi_refdata_100centiles %>%
+  #   select(-c(L.bmi, M.bmi, S.bmi)) %>%
+  #   unite(col = "sex_years", "sex", "years", sep = "_") %>%
+  #   pivot_longer(cols= c(starts_with("p")), names_to = "centile", values_to = "bmi") %>%
+  #   separate("sex_years", into = c("sex", "age"), sep = "_") %>%
+  #   mutate(centile = substr(centile, 3, nchar(centile)))
+  # 
   
   # read_csv(here("inputs/processed/hse_2019_children.csv"))
   df <- df %>%
     rowwise() %>%
     mutate(baseline_bmi_category = calculate_bmi_category(age = age, sex = sex, bmi = bmi, df_B = uk90_bmi_refdata_3centiles)) %>%
-    mutate(bmi_centile = look_up_percentile(age = age, sex = sex, bmi = bmi, data_B = uk90_bmi_refdata_100centiles)) %>%
+    #mutate(bmi_centile = look_up_percentile(age = age, sex = sex, bmi = bmi, data_B = uk90_bmi_refdata_100centiles)) %>%
     mutate(intake_change = ifelse(baseline_bmi_category %in% c("normal", "overweight", "obese"),
                                   calculate_proportional_ei_change(age = age, sex = sex, bmi = bmi, intake_change = -daily_ei_change, 
                                                           prop_weight_data = effect_weighting, bmi_ref_data = uk90_bmi_refdata_100centiles), 0)) %>%

@@ -805,7 +805,269 @@ write_csv(df2019, here("inputs/processed/hse_2019.csv"))
 
 
 
+### Policy 25
 
+
+
+
+
+
+selected_individuals
+
+
+
+
+
+
+
+eligible_individuals <- health_survey[health_survey$bmi > 35 &
+                                        (health_survey$cardiovd == 1 | health_survey$diabetes == 1), ]
+
+
+# Calculate the total number of individuals eligible for intervention
+eligible_individuals <- subset_data[subset_data$bmi > 35 & 
+                                      (subset_data$cvd_condition == 1 | subset_data$diabetes_status == 1), ]
+total_eligible <- nrow(eligible_individuals)
+
+# Calculate the sampling probability adjustment factor
+adjustment_factor <- 7000 / total_eligible
+
+# Calculate the weights adjusted for the sampling probability
+subset_data$sampling_weights <- subset_data$weight * adjustment_factor
+
+# Initialize vector to store sampled individuals
+sampled_individuals <- rep(FALSE, nrow(subset_data))
+
+# Initialize vector to store intervention assignment
+intervention_assignments <- rep(0, nrow(subset_data))
+
+# Perform weighted random sampling
+current_sample_size <- 0
+while (current_sample_size < 7000) {
+  remaining_indices <- which(!sampled_individuals)
+  
+  if (length(remaining_indices) == 0) {
+    break
+  }
+  
+  # Calculate sampling probabilities based on adjusted weights
+  adjusted_weights <- subset_data$sampling_weights[remaining_indices]
+  sum_adjusted_weights <- sum(adjusted_weights)
+  sampling_probs <- adjusted_weights / sum_adjusted_weights
+  
+  # Sample one individual
+  selected_index <- sample(remaining_indices, size = 1, prob = sampling_probs)
+  
+  # Mark the selected individual as sampled
+  sampled_individuals[selected_index] <- TRUE
+  
+  # Increment the intervention assignment count
+  intervention_assignments[selected_index] <- intervention_assignments[selected_index] + 1
+  
+  # Update the current sample size
+  current_sample_size <- sum(intervention_assignments)
+}
+
+# Assign intervention to sampled individuals
+subset_data$intervention <- ifelse(intervention_assignments > 0, "yes", "no")
+
+# Apply weight loss for intervention group
+subset_data$weight[subset_data$intervention == "yes"] <- subset_data$weight[subset_data$intervention == "yes"] * 0.77  # 23% reduction in weight
+
+# Weight gain for subsequent years
+for (i in 2:5) {
+  prev_intervention <- paste0("intervention_", i - 1)
+  current_intervention <- paste0("intervention_", i)
+  subset_data$weight[subset_data[current_intervention] == "yes"] <- subset_data$weight[subset_data[current_intervention] == "yes"] + 0.81
+}
+
+
+
+
+
+
+
+
+
+health_survey = df
+# Assuming your dataset is named 'health_survey'
+# Filter individuals with BMI >= 35 and a comorbidity (CVD or diabetes)
+eligible_individuals <- health_survey %>%
+  filter(bmi >= 35 & (cardiovd == 1 | diabetes == 1))
+
+# Calculate the proportion of eligible individuals
+eligible_proportion <- sum(eligible_individuals$weight) / sum(health_survey$weight)
+
+# Estimate the number of eligible individuals in the population
+population_size <- 45000000 # Assuming the population size is 45 million
+n_eligible_population <- round(eligible_proportion * population_size)
+
+# Calculate the adjustment factor for weights
+adjustment_factor <- min(7000 / n_eligible_population, 1)
+
+# Adjust the weights of eligible individuals
+eligible_individuals$adjusted_weight <- eligible_individuals$weight * adjustment_factor
+
+# Create a list to store the intervention assignments
+intervention_list <- list()
+
+# Assign interventions for each year
+for (i in 1:5) {
+  # Exclude individuals who have already received the intervention
+  remaining_individuals <- eligible_individuals %>%
+    filter(!(id %in% unlist(intervention_list)))
+  
+  # Randomly select individuals for the current year's intervention based on adjusted weights
+  intervention_year <- remaining_individuals %>%
+    slice_sample(n = nrow(remaining_individuals), weight_by = adjusted_weight) %>%
+    mutate(intervention = paste0("intervention_", i),
+           weight_loss = 0.23 * weight)
+  
+  # Store the intervention assignment for the current year
+  intervention_list[[i]] <- intervention_year
+}
+
+# Combine the intervention assignments into a single data frame
+intervention_df <- bind_rows(intervention_list)
+
+# Calculate weight gain for subsequent years
+intervention_df <- intervention_df %>%
+  group_by(id) %>%
+  mutate(years_since_intervention = row_number(),
+         weight_gain = ifelse(years_since_intervention > 1, 0.81 * (years_since_intervention - 1), 0),
+         updated_bodyweight = weight - weight_loss + weight_gain)
+
+# Merge the intervention assignments back into the original dataset
+health_survey_updated <- health_survey %>%
+  left_join(intervention_df, by = "id")
+
+
+
+
+
+
+
+
+health_survey = df
+
+
+# Calculate the total weight of the survey
+total_weight <- sum(health_survey$wt_int)
+
+# Subset the data frame to include only individuals with BMI >= 35
+subset_data <- health_survey[health_survey$bmi >= 35 & (health_survey$diabetes == 1 | health_survey$cardiovd == 1), ]
+
+# Calculate the proportion of people with BMI >= 35 in the population
+proportion_bmi_over_35 <- sum(subset_data$wt_int) / total_weight
+
+# Calculate the number of people with BMI >= 35 in the population
+population_bmi_over_35 <- round(proportion_bmi_over_35 * 45104526)
+
+# Calculate the desired weight sum for the sample
+desired_weight_sum <- (7000 / population_bmi_over_35) * sum(subset_data$wt_int)
+
+# Initialize a vector to store the selected individuals
+selected_individuals <- rep(FALSE, nrow(subset_data))
+
+# Initialize a variable to keep track of the current weight sum
+current_weight_sum <- 0
+
+
+
+# Perform weighted random sampling until the desired weight sum is reached
+while (current_weight_sum < desired_weight_sum) {
+  remaining_indices <- which(!selected_individuals)
+  
+  if (length(remaining_indices) == 0) {
+    break
+  }
+  
+  selected_index <- sample(remaining_indices, size = 1, prob = subset_data$wt_int[remaining_indices])
+  selected_individuals[selected_index] <- TRUE
+  
+  current_weight_sum <- current_weight_sum + subset_data$wt_int[selected_index]
+}
+
+# Check if the weighted sum of selected individuals is less than the desired weight sum
+selected_indices <- which(selected_individuals)
+if (sum(subset_data$wt_int[selected_indices]) < desired_weight_sum) {
+  remaining_indices <- which(!selected_individuals)
+  additional_index <- sample(remaining_indices, size = 1, prob = subset_data$wt_int[remaining_indices])
+  selected_individuals[additional_index] <- TRUE
+  
+} else{
+  
+  print("all good")
+}
+
+selected_indices_original <- which(health_survey$bmi >= 35 &
+                                     (health_survey$diabetes == 1 | health_survey$cardiovd == 1))[selected_individuals]
+
+
+
+# Add the 'intervention' variable to the original data frame
+health_survey$intervention <- "No"
+health_survey$intervention[health_survey$bmi >= 35 &
+                             (health_survey$diabetes == 1 | health_survey$cardiovd == 1)][selected_individuals] <- "Yes"
+
+
+
+
+
+
+
+
+
+
+
+
+library(dplyr)
+
+# Assuming your dataset is named 'health_survey'
+# Filter individuals with BMI >= 35 and a comorbidity (CVD or diabetes)
+eligible_individuals <- health_survey %>%
+  filter(bmi >= 35 & (cardiovd == 1 | diabetes == 1))
+
+# Create a list to store the intervention assignments
+intervention_list <- list()
+
+# Assign interventions for each year
+for (i in 1:5) {
+  # Exclude individuals who have already received the intervention
+  remaining_individuals <- eligible_individuals %>%
+    filter(!(id %in% unlist(intervention_list)))
+  
+  # Calculate the cumulative sum of weights
+  remaining_individuals$cumulative_weight <- cumsum(remaining_individuals$weight)
+  
+  # Determine the number of people to select for the intervention
+  n_intervention <- min(7000, floor(sum(remaining_individuals$weight)))
+  
+  # Find the index of the last individual to include in the intervention
+  last_index <- which(remaining_individuals$cumulative_weight >= n_intervention)[1]
+  
+  # Select individuals for the current year's intervention
+  intervention_year <- remaining_individuals[1:last_index, ] %>%
+    mutate(intervention = paste0("intervention_", i),
+           weight_loss = 0.23 * weight)
+  
+  # Store the intervention assignment for the current year
+  intervention_list[[i]] <- intervention_year
+}
+
+# Combine the intervention assignments into a single data frame
+intervention_df <- bind_rows(intervention_list)
+
+# Calculate weight gain for subsequent years
+intervention_df <- intervention_df %>%
+  group_by(individual_id) %>%
+  mutate(years_since_intervention = row_number(),
+         weight_gain = ifelse(years_since_intervention > 1, 0.81 * (years_since_intervention - 1), 0),
+         updated_bodyweight = bodyweight - weight_loss + weight_gain)
+
+# Merge the intervention assignments back into the original dataset
+health_survey_updated <- health_survey %>%
+  left_join(intervention_df, by = "individual_id")
 
 
 

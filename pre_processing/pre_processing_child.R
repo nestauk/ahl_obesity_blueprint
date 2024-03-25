@@ -12,7 +12,7 @@ calculate_fat_mass <- function(weight, height, BA, SA, AO, other, age, male) {
   return(fat_mass)
 }
 
-
+test_df = as.data.frame(colnames(df_2019_children)) 
 
 df_2019_children <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", header = TRUE) %>%
   filter(WtVal>0 & HtVal>0 & Age35g > 2 & Age35g < 8) %>%
@@ -26,16 +26,16 @@ df_2019_children <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep
                          TRUE ~ 0))
 
 
-df_2019_children = df_2019_children %>%
+df_2019_children_1 = df_2019_children %>%
   rename(weight = WtVal,
          height = HtVal,
          sex = Sex,
          bmi = BMIVal,
-         bmi_grp = BMICat1,
-         id = SerialA,
+         bmi_grp = BMICat1, 
+         id = SerialA, mother_bmi = Moth_bmi, father_bmi = Fath_bmi, imd = qimd19, 
          psu = PSU_SCR,
          strata = cluster94) %>% 
-  dplyr::select(id, weight, height, age, sex, bmi, bmi_grp, wt_int, psu, strata, origin2 )  %>% # select variables needed
+  dplyr::select(id, weight, height, age, sex, bmi, bmi_grp, mother_bmi, father_bmi, imd, wt_int, psu, strata, origin2 )  %>% # select variables needed
   mutate(pal = case_when(age < 3 ~ 1.40,
                          age >=3 & age < 10 ~ 1.58,
                          age >=10 & age < 18 ~ 1.75),
@@ -47,7 +47,18 @@ df_2019_children = df_2019_children %>%
                                bmi >= 30 & bmi < 40 ~ "obese",
                                bmi >= 40 ~ "morbidly obese",
                                TRUE ~ "NA")) %>% 
-  mutate(intake_hox = pal*rmr_hox) %>% # calculating value of energy intake 
+  mutate(intake_hox = pal*rmr_hox) 
+
+total_weight = sum(df_2019_children_1$wt_int) *nrow(df_2019_children_1)
+
+
+
+sampling_fraction = 7000/ total_weight
+
+sampled_data = df_2019_children_1 %>%
+  filter(runif(n()) < sampling_fraction)
+
+#%>% # calculating value of energy intake 
   mutate(fm_hudda = case_when(sex == 1 ~ (case_when(origin2 == 1 ~ (calculate_fat_mass(weight = weight, 
                                                                                        height = height/100,
                                                                                        BA = 0,
