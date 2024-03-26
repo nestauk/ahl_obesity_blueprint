@@ -131,10 +131,17 @@ df = read_csv(here("inputs/processed/hse_2019_children.csv"))
 
 
 
-intervention_df = select_intervention_sample(data = df, bmi_threshold = 25, sample_size = 371875, 
-                                     population_size = 12000000, weight_var = "wt_int", bmi_var = "bmi",
-                                     num_years = 1, citeria_1 = "qimd_updated",
-                                     citeria_2 = "parent_bmi", citeria_1_value = 1, citeria_2_value = 1)
+intervention_df = select_intervention_sample(data = df,
+                                             bmi_threshold = 25,
+                                             sample_size = 371875,
+                                             population_size = 12000000,
+                                             weight_var = "wt_int",
+                                             bmi_var = "bmi",
+                                             num_years = 1,
+                                             citeria_1 = "qimd_updated",
+                                             citeria_2 = "parent_bmi",
+                                             citeria_1_value = 1,
+                                             citeria_2_value = 1)
 
 
 

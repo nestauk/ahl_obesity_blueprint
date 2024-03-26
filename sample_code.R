@@ -1014,6 +1014,52 @@ health_survey$intervention[health_survey$bmi >= 35 &
 
 
 
+# function to assign weight loss and weight regain:
+
+assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_percent, weight_regain) {
+  #browser()
+  # Create weight loss and weight regain columns for each year
+  weight_loss_cols <- paste0("weight_loss_y", 1:num_years)
+  weight_regain_cols <- paste0("weight_regain_y", 1:num_years)
+  data[, c(weight_loss_cols, weight_regain_cols)] <- 0
+  
+  for (year in 1:num_years) {
+    intervention_col <- paste0("intervention_year", year)
+    
+    if(year < 5){
+      
+      # Assign weight loss for individuals who received the intervention in the current year
+      data[data[[intervention_col]] == "Yes", weight_loss_cols[year]] = -weight_loss_percent*0.5* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      
+      data[data[[intervention_col]] == "Yes", weight_loss_cols[year+1]] = -weight_loss_percent*0.5* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      
+      #, weight_loss_cols[year+1] 
+      
+    } else{
+      
+      data[data[[intervention_col]] == "Yes", weight_loss_cols[year]] = -weight_loss_percent*0.5* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      
+      
+    }
+    
+    # Assign weight regain for individuals who received the intervention in previous years
+    if (year > 2) {
+      prev_intervention_cols <- paste0("intervention_year", 1:(year - 2))
+      prev_intervention <- apply(data[, prev_intervention_cols] == "Yes", 1, any)
+      
+      #print(prev_intervention)
+      #print(2*data[data[[intervention_col]] == "Yes", weight_loss_cols[year]])
+      #print(data[data[[paste0("intervention_year", year-1)]] == "Yes", weight_loss_cols[year-1]])
+      #print(data[data[[paste0("intervention_year", year-2)]] == "Yes", weight_loss_cols[year-2]])
+      
+      data[prev_intervention, weight_regain_cols[year]] <- weight_regain # *2*data[data[[paste0("intervention_year", year-1)]] == "Yes", weight_loss_cols[year-1]] #* data[prev_intervention, bodyweight_var]
+    }
+  } 
+  
+  return(data)
+}
+
+
 
 
 

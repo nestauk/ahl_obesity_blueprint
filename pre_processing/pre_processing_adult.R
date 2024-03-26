@@ -75,12 +75,13 @@ process_clean_save = function(file_path, nation, population_group){
                height = HtVal,
                sex = Sex,
                bmi = BMIVal,
+               ethnicity = origin2,
                diabetes = diabete2,
                cardiovd = CardioTakg2,
                id = SerialA,
                psu = PSU_SCR,
                strata = cluster94) %>% 
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, diabetes, cardiovd, wt_int, psu, strata )  %>% # select variables needed
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, ethnicity, diabetes, cardiovd, wt_int, psu, strata )  %>% # select variables needed
         mutate(pal = 1.6, # pal assumed to be 1.6 for the entire population to indicate a sendentary/ light active lifestyle
                rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
                                TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # sex = 2 female; rmr is calculated using Mifflin St Jeor Equations from Mifflin et al (1990)
