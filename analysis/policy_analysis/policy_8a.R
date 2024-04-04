@@ -84,15 +84,22 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab",
 
 # Based on [A] and [C], the intake change = effect size - compensation effect = -51.59 kcals
 
-policy_8a_impact_england_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
-                                                                  intake_change = -51.59,
-                                                                  implementation_duration = 365*5, 
-                                                                  use_bodyfat_curves = 0)
+# policy_8a_impact_england_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
+#                                                                   intake_change = -51.59,
+#                                                                   implementation_duration = 365*5, 
+#                                                                   use_bodyfat_curves = 0)
+
+policy_8a_impact_england_child = calculate_bmi_from_eichange_hox(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
+                                                                 daily_ei_change = -51.59)
+
+
 
 
 # 2.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
-policy_8a_impact_england_child$bmi_category_plot
+# policy_8a_impact_england_child$bmi_category_plot
+policy_8a_impact_england_child$bmi_prevalence_plot
+
 
 ggsave(here("outputs/policy_8a/policy_8a_impact_England_child.png"), 
        plot = policy_8a_impact_england_child$bmi_category_plot, 
@@ -101,7 +108,9 @@ ggsave(here("outputs/policy_8a/policy_8a_impact_England_child.png"),
        bg='#ffffff')
 
 # Output table with year on year distrubution of BMI categories
-policy_8a_impact_england_child$bmi_percent_prevalence
+# policy_8a_impact_england_child$bmi_percent_prevalence
+
+policy_8a_impact_england_child$bmi_prevalence_table
 
 table_outputs[["england_child"]] = policy_8a_impact_england_child$bmi_percent_prevalence
 
@@ -159,39 +168,45 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab",
 # Compensation effect [C]: 23% of [A] = 15.41
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -51.59 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = 51.59 kcals
 
-policy_8a_impact_scotland_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019_children.csv")),
-                                                                   intake_change = -51.59,
-                                                                   implementation_duration = 365*5, 
-                                                                   use_bodyfat_curves = 1)
+# policy_8a_impact_scotland_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019_children.csv")),
+#                                                                    intake_change = -51.59,
+#                                                                    implementation_duration = 365*5, 
+#                                                                    use_bodyfat_curves = 1)
+
+policy_8a_impact_scotland_child = calculate_bmi_from_eichange_hox(df = read_csv(here("inputs/processed/shes_2019_children.csv")),
+                                                                  daily_ei_change =  51.59, 
+                                                                  nation = "Scotland", tags = "Policy 8a")
+
 
 
 # 4.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
-policy_8a_impact_scotland_child$bmi_category_plot
+policy_8a_impact_scotland_child$bmi_prevalence_plot
 
 ggsave(here("outputs/policy_8a/policy_8a_impact_Scotland_child.png"), 
-       plot = policy_8a_impact_scotland_child$bmi_category_plot, 
+       plot = policy_8a_impact_scotland_child$bmi_prevalence_plot, 
        width = 10, 
        height = 6,
        bg='#ffffff')
 
 
 # Output table with year on year distrubution of BMI categories
-policy_8a_impact_scotland_child$bmi_percent_prevalence
+policy_8a_impact_scotland_child$bmi_prevalence_table
 
-table_outputs[["scotland_child"]] = policy_8a_impact_scotland_child$bmi_percent_prevalence
+table_outputs[["scotland_child"]] = policy_8a_impact_scotland_child$bmi_prevalence_table
 
 write_xlsx(path = "outputs/policy_8a/policy_8a.xlsx", x = table_outputs)
 
 
-
-
+# Output files for cost modelling
+# Adult:
 write.csv(policy_8a_impact_england_adult$post_df, file = "outputs/policy_8a/policy_8a_adult_england_bmi.csv")
-write.csv(policy_8a_impact_england_child$post_df, file = "outputs/policy_8a/policy_8a_child_england_bmi.csv")
-
 write.csv(policy_8a_impact_scotland_adult$post_df, file = "outputs/policy_8a/policy_8a_adult_scotland_bmi.csv")
+
+# Child:
+write.csv(policy_8a_impact_england_child$post_df, file = "outputs/policy_8a/policy_8a_child_england_bmi.csv")
 write.csv(policy_8a_impact_scotland_child$post_df, file = "outputs/policy_8a/policy_8a_child_scotland_bmi.csv")
 
 

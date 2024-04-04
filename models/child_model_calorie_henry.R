@@ -14,7 +14,7 @@ source(file = "models/model_utils.R")
 
 # calculate_bmi_from_ei_change(df = read_csv(here("inputs/processed/hse_2019_children.csv")), intake_change = 50)
 
-calculate_bmi_from_ei_change = function(df, daily_ei_change){
+calculate_bmi_from_eichange_hox = function(df, daily_ei_change, nation, tags){
   
   print("This model uses Henry equations")
   
@@ -42,10 +42,11 @@ calculate_bmi_from_ei_change = function(df, daily_ei_change){
     rowwise() %>%
     mutate(baseline_bmi_category = calculate_bmi_category(age = age, sex = sex, bmi = bmi, df_B = uk90_bmi_refdata_3centiles)) %>%
     #mutate(bmi_centile = look_up_percentile(age = age, sex = sex, bmi = bmi, data_B = uk90_bmi_refdata_100centiles)) %>%
-    mutate(intake_change = ifelse(baseline_bmi_category %in% c("normal", "overweight", "obese"),
+    mutate(intake_change = ifelse(baseline_bmi_category %in% c( "overweight", "obese"), # "normal",
                                   calculate_proportional_ei_change(age = age, sex = sex, bmi = bmi, intake_change = -daily_ei_change, 
                                                           prop_weight_data = effect_weighting, bmi_ref_data = uk90_bmi_refdata_100centiles), 0)) %>%
     ungroup() %>%
+    mutate(intervention_status = ifelse(intake_change == 0, "No", "Yes")) %>%
     mutate(policy_period_energy_intake = intake_hox + intake_change) %>%
     mutate(policy_period_rmr = policy_period_energy_intake/pal) %>%
     mutate(post_policy_weight = case_when(sex == 1 ~ (((policy_period_rmr * 4.184) - 2876)/66.9),
@@ -85,9 +86,9 @@ calculate_bmi_from_ei_change = function(df, daily_ei_change){
     geom_bar(stat = "identity", position = "dodge") +
     theme_ipsum() +
     labs(fill = "", 
-         title = "BMI Distribution:", 
+         title = paste("BMI Distribution - ", tags), 
          y = "Prevalence - %",
-         subtitle = "Children - Proportional kcals") +
+         subtitle = paste("Children | Nation:", nation)) +
     theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
     theme(legend.position = "top")
   

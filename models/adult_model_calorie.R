@@ -14,7 +14,7 @@ library(survey)
 #                                    4) bmi_percent_prevalence : Table of year wise percentage prevalence of each BMI category
 
 
-calculate_bmi_from_eichange = function(df, intake_change, implmentation_duration ) {
+calculate_bmi_from_eichange = function(df, intake_change, implmentation_duration) {
   
   output_list = list() # creating a list to store outputs to be returned from the function
   
@@ -138,9 +138,9 @@ calculate_bmi_from_eichange = function(df, intake_change, implmentation_duration
     geom_bar(stat = "identity", position = "dodge") +
     theme_ipsum() +
     labs(fill = "", 
-         title = "BMI Categories Distribution", 
-         y = "Frequency",
-         subtitle = "Population") +
+         title = "BMI Distribution", 
+         y = "Prevalence - %",
+         subtitle = "Adult") +
     theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
     theme(legend.position = "top")
   
