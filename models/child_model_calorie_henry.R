@@ -6,8 +6,11 @@ library(sitar)
 
 
 source(file = "models/model_utils.R")
-
-# calculate_bmi_from_ei_change(df = read_csv(here("inputs/processed/hse_2019_children.csv")), intake_change = 50)
+# functions called from model_utils.R:
+# 1. generate_bmi_refdata()
+# 2. generate_bmi_refdata_100centiles()
+# 3. calculate_bmi_category()
+# 4. calculate_proportional_ei_change()
 
 # Function to calculate new bmi and weight category for children using Henry (2005) equations.
 
