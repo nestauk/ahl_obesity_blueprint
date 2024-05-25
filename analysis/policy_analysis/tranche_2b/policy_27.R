@@ -14,6 +14,11 @@
 # This equals to 21.7 kcals from an adults daily energy intake. Compensation of 23% will be applied while
 # modelling the impact.
 
+#  And from the IFS report (Table 2.1), the calories from sugar in Milk drinks is 0.4% while that from soft drinks is 
+# 1.2%. The ratio is one-third. Then assumed that if a similar level of reformulation is achieved then we'd expect to 
+# see a reduction equivalent to one-third that of soft drinks (i.e. 1/3 x 18.08). And then as a conservative estimate 
+# took 50% of that (1/2 x 6). So an additional ~3 kcals due to extending SDIL to milk based drinks bringing the total to ~21 kcals.
+
 # Reference:
 # Dickson, Alex & Gehrsitz, Markus & Kemp, Jonathan, 2022. "Does a Spoonful of Sugar Levy Help the 
 # Calories Go Down? An Analysis of the UK Soft Drinks Industry Levy," VfS Annual Conference 2022 (Basel):

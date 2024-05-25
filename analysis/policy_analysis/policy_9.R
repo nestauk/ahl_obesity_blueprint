@@ -17,8 +17,23 @@
 # (quality assured by the EAG) that identified a meta-analysis showed that a 40% reduction in portion 
 # sizes of products led to a reduction of 247 kcals in daily energy intake.
 
+# !! ignore next two line!!:
 # In case of this policy, for a 20% reduction, we assume that the reduction in daily energy intake is 
 # approximately half of that reported by the review, that is 123.5 kcals `(intake_change)`.
+
+
+# From OOH Analysis:
+# Daily equivalent share of kcals from products > 1000 kcals in chains = 9.87%
+# From the evidence we know that 40% reduction in portion sizes of all products results in 144 to 228 kcal
+# reduction in daily energy intake.
+# Now estimating the effect of a 10% reduction in portion sizes of products > 1000 kcals 
+# Based on what we know:
+# 1. 40% reduction in portion sizes of all products ----> 186 kcal reduction in DEI
+# 2. 10% reduction in portion sizes of products > 1000 kcals in branded restaurants -----> ?
+#    = [10% x 9.87% x 20% x (DEI) x 186]/[40% x DEI] = 0.92 kcals
+
+# we do not apply compensation effect as the study has already accounted for it.
+
 
 
 # setup
@@ -46,16 +61,22 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # 2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: ﹣123.5 kcal
+# Effect size [A]: ﹣123.5 kcal [Updated to 0.92 kcals]
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
-# Compensation effect [C]: 23% of [A] = 28.405
+# Compensation effect [C]: 23% of [A] = 28.405 [Updated to 0 kcals]
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -95.1 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -95.1 kcals [Updated to 0.92 kcals]
+
+# policy_9_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
+#                                                             intake_change = -95.1,
+#                                                             implmentation_duration = 365*5)
 
 policy_9_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                            intake_change = -95.1,
+                                                            intake_change = -0.92,
                                                             implmentation_duration = 365*5)
+
+
 
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -131,17 +152,24 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # 3.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: ﹣123.5 kcal
+# Effect size [A]: ﹣123.5 kcal [updated to -0.92 kcal]
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
-# Compensation effect [C]: 23% of [A] = 28.405
+# Compensation effect [C]: 23% of [A] = 28.405 [updated to 0 kcals]
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -95.1 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -95.1 kcals [updated to -0.92 kcals]
 
+
+# policy_9_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
+#                                                              intake_change = -95.1,
+#                                                              implmentation_duration = 365*5)
 
 policy_9_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
-                                                              intake_change = -95.1,
-                                                              implmentation_duration = 365*5)
+                                                             intake_change = -0.92,
+                                                             implmentation_duration = 365*5)
+
+
+
 # 3.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
 policy_9_impact_scotland_adult$bmi_category_plot
@@ -204,6 +232,8 @@ ggsave(here("outputs/policy_9/policy_9_impact_Scotland_child.png"),
 policy_9_impact_scotland_child$bmi_prevalence_table
 
 table_outputs[["scotland_child"]] = policy_9_impact_scotland_child$bmi_prevalence_table
+
+
 
 write_xlsx(path = "outputs/policy_9/policy_9.xlsx", x = table_outputs)
 

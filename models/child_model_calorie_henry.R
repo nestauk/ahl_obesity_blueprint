@@ -90,7 +90,7 @@ calculate_bmi_from_eichange_hox = function(df, daily_ei_change, nation, tags){
     df %>% 
       count(post_bmi_category, wt = wt_int) %>% 
       mutate(freq = n/sum(n)*100,
-             type = "Endline") %>% 
+             type = "Post-Implementation") %>% 
       rename(BMI = post_bmi_category))
   
   

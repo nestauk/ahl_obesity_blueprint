@@ -11,6 +11,8 @@
 # (https://docs.google.com/document/d/1U1JH_KI8IGBaN4cNXyW1A0H_k5LmW94C1VBATPDD8jA/edit?usp=sharing) 
 # (quality assured by the EAG) showed that the intervention had no statistically significant effect
 # on adults, implying a 0 kcal reduction in daily energy intake
+# The same rapid review also finds that the effect for children is 57.7 kcals, which is the difference
+# in dietary intake of children in treatment and control groups.
 
 
 # setup
@@ -61,7 +63,12 @@ ggsave(here("outputs/policy_1/policy_1_impact_England_adult.png"),
 # Output table with year on year distribution of BMI categories
 policy_1_impact_england_adult$bmi_percent_prevalence
 
+# test_df_england = policy_1_impact_england_adult$bmi_percent_prevalence
+# test_df_1 = policy_1_impact_england_adult$post_df %>%
+#   filter(bmi_0_class == "obese" & bmi_1_class == "overweight")
+
 table_outputs[["england_adult"]] = policy_1_impact_england_adult$bmi_percent_prevalence
+
 
 # 2. Children in England
 
@@ -105,7 +112,7 @@ ggsave(here("outputs/policy_1/policy_1_impact_England_child.png"),
        bg='#ffffff')
   
 # Output table with year on year distrubution of BMI categories
-policy_1_impact_england_child$bmi_prevalence_table
+test_df = policy_1_impact_england_child$bmi_prevalence_table
 
 
 table_outputs[["england_child"]] = policy_1_impact_england_child$bmi_prevalence_table
@@ -142,7 +149,7 @@ ggsave(here("outputs/policy_1/policy_1_impact_Scotland_adult.png"),
 
 
 # Output table with year on year distrubution of BMI categories
-policy_1_impact_scotland_adult$bmi_percent_prevalence
+test_df_scotland = policy_1_impact_scotland_adult$bmi_percent_prevalence
 
 table_outputs[["scotland_adult"]] = policy_1_impact_scotland_adult$bmi_percent_prevalence
 

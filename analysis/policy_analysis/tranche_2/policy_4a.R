@@ -11,7 +11,7 @@
 # The evidence from the rapid review  
 # (https://docs.google.com/document/d/1Q2l1H2bHlEO2t6rK2fpbR43z3_qa8EJ_6h_CcjIEMDo/edit?usp=sharing) 
 # (quality assured by the EAG) showed that the intervention led to reduction in daily calorie intake
-# by 22 kcal for adults. The policy was found to reduce daily calorie intake in children by 2.48 kcals.
+# by 2.6 kcal for adults. The policy was found to reduce daily calorie intake in children by 2.48 kcals.
 # The source of the evidence also indicates that compensatory behaviour was accounted for while reporting
 # out the final estimates of daily calorie reductions.
 
@@ -25,7 +25,8 @@ library(writexl)
 source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
-source(file = "models/child_model_calorie.R")
+#source(file = "models/child_model_calorie.R")
+source(file = "models/child_model_calorie_henry.R")
 
 
 table_outputs = list()
@@ -87,31 +88,39 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab",
 # Based on [A] and [C], the intake change = effect size - compensation effect = -2.48 kcals
 
 
-policy_4a_impact_england_child = calculate_bmi_from_ei_change(df = read_csv(here("inputs/processed/hse_2019_children.csv")), daily_ei_change = 2.48 )
+#policy_4a_impact_england_child = calculate_bmi_from_ei_change(df = read_csv(here("inputs/processed/hse_2019_children.csv")), daily_ei_change = 2.48 )
 
-policy_4a_impact_england_child$bmi_prevalence_table
-policy_4a_impact_england_child$bmi_prevalence_plot
+#policy_4a_impact_england_child$bmi_prevalence_table
+#policy_4a_impact_england_child$bmi_prevalence_plot
 
-policy_4a_impact_england_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
-                                                                   intake_change = 2.48,
-                                                                   implementation_duration = 365*5, 
-                                                                   use_bodyfat_curves = 0)
+# policy_4a_impact_england_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
+#                                                                    intake_change = 2.48,
+#                                                                    implementation_duration = 365*5, 
+#                                                                    use_bodyfat_curves = 0)
+
+policy_4a_impact_england_child = calculate_bmi_from_eichange_hox(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
+                                                                 daily_ei_change = 2.48,
+                                                                 nation = "England", 
+                                                                 tags = "Policy 4a" )
+
 
 
 # 2.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
-policy_4a_impact_england_child$bmi_category_plot
+#policy_4a_impact_england_child$bmi_category_plot
+policy_4a_impact_england_child$bmi_prevalence_plot
+
 
 ggsave(here("outputs/policy_4a/policy_4a_impact_England_child.png"), 
-       plot = policy_4a_impact_england_child$bmi_category_plot, 
+       plot = policy_4a_impact_england_child$bmi_prevalence_plot, 
        width = 10, 
        height = 6,
        bg='#ffffff')
 
 # Output table with year on year distrubution of BMI categories
-policy_4a_impact_england_child$bmi_percent_prevalence
+test_df = policy_4a_impact_england_child$bmi_prevalence_table
 
-table_outputs[["england_child"]] = policy_4a_impact_england_child$bmi_percent_prevalence
+table_outputs[["england_child"]] = policy_4a_impact_england_child$bmi_prevalence_table
 
 
 # 3. Adults in Scotland
@@ -168,29 +177,35 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab",
 
 # Based on [A] and [C], the intake change = effect size - compensation effect = -2.48 kcals
 
-policy_4a_impact_scotland_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019_children.csv")),
-                                                                    intake_change = 2.48,
-                                                                    implementation_duration = 365*5, 
-                                                                    use_bodyfat_curves = 1)
+# policy_4a_impact_scotland_child = calculate_child_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019_children.csv")),
+#                                                                     intake_change = 2.48,
+#                                                                     implementation_duration = 365*5, 
+#                                                                     use_bodyfat_curves = 1)
+
+policy_4a_impact_scotland_child = calculate_bmi_from_eichange_hox(df = read_csv(here("inputs/processed/shes_2019_children.csv")),
+                                                                  daily_ei_change =  2.48, 
+                                                                  nation = "Scotland",
+                                                                  tags = "Policy 4a")
+
 
 
 # 4.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
-policy_4a_impact_scotland_child$bmi_category_plot
-
+# policy_4a_impact_scotland_child$bmi_category_plot
+policy_4a_impact_scotland_child$bmi_prevalence_plot
 
 
 ggsave(here("outputs/policy_4a/policy_4a_impact_Scotland_child.png"), 
-       plot = policy_4a_impact_scotland_child$bmi_category_plot, 
+       plot = policy_4a_impact_scotland_child$bmi_prevalence_plot, 
        width = 10, 
        height = 6,
        bg='#ffffff')
 
 
 # Output table with year on year distrubution of BMI categories
-policy_4a_impact_scotland_child$bmi_percent_prevalence
+policy_4a_impact_scotland_child$bmi_prevalence_table
 
-table_outputs[["scotland_child"]] = policy_4a_impact_scotland_child$bmi_percent_prevalence
+table_outputs[["scotland_child"]] = policy_4a_impact_scotland_child$bmi_prevalence_table
 
 
 

@@ -59,8 +59,10 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab",
 # Based on [A] and [C], the intake change = effect size - compensation effect = -0 kcals
 
 
-policy_14_impact_england_child = calculate_bmi_from_ei_change(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
-                                                              daily_ei_change = 0)
+policy_14_impact_england_child = calculate_bmi_from_eichange_hox(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
+                                                                 nation = "England",
+                                                                 tags = "Policy 14",
+                                                                 daily_ei_change = 0)
 
 
 
@@ -77,7 +79,7 @@ ggsave(here("outputs/policy_14/policy_14_impact_England_child.png"),
 # Output table with year on year distrubution of BMI categories
 policy_14_impact_england_child$bmi_prevalence_table
 
-table_outputs[["england_child"]] = policy_14_impact_england_child$bmi_percent_prevalence
+table_outputs[["england_child"]] = policy_14_impact_england_child$bmi_prevalence_table
 
 
 
@@ -100,8 +102,10 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab",
 
 # Based on [A] and [C], the intake change = effect size - compensation effect = -0 kcals
 
-policy_14_impact_scotland_child = calculate_bmi_from_ei_change(df = read_csv(here("inputs/processed/shes_2019_children.csv")),
-                                                               daily_ei_change = 0)
+policy_14_impact_scotland_child = calculate_bmi_from_eichange_hox(df = read_csv(here("inputs/processed/shes_2019_children.csv")), 
+                                                                  nation = "Scotland", 
+                                                                  tags =  "Policy 14",
+                                                                  daily_ei_change = 0)
 
 
 # 2.3. Outputs

@@ -1,7 +1,7 @@
 
 #################################################################################################
-# Policy 22 : Allocate £100 million per year to improve provision of physical education and     #
-#             increase physical activity in school children                                     #
+# Policy 21 : Allocate £100 million year to improve nutrition and food preparation literacy in  #
+#             childhood through the state education system                                      #
 #                                                                                               #
 #################################################################################################
 
@@ -12,37 +12,44 @@
 # £100 million is allocation for 56,286,961 people, therefore, for 4,434,138 people the allocation
 # would be £9.7 million, rounding this up to £10 million for Scotland
 
+
 # Scope: Scotland
 
 # Description:
 
-# The policy aims to introduce/ increase activities to ensure that each child is engaged in 60
-# minutes of physical activity every day. The techincal report of the rapid review for the 
-# intervention can be found here: https://docs.google.com/document/d/1_BUvPiDKc-cW6ATAXDp77yQbjTlVyH9Xy_UDyc5_FtE/edit
+# The evidence is from the rapid review  
+# (https://docs.google.com/document/d/1gcvUd5CwQVJMDo8fukUvlp9eTDb8jJVw1bmFxASKy2M/edit?usp=sharing) 
+# (quality assured by the EAG) showed that the intervention led to reduction no change in  daily calorie
+# intake of children.
 
-# Effect size:
-# The mean difference in BMI was found to be 0.07 kg/m2
 
-# Assumptions:
-# Allocation per school = £20,000 per year
-# Number of schools reached = £10 million/ £20,000 = 500 schools in Scotland
-# Number of schools in Scotland = 2,469 [2]
-# Percentage of schools reached = 20.25% =  20% (rounding down as a conservative estimate)
-# Therefore, we assume that we are able to reach 20% of the children in 5 - 17 years in Scotland
+# Assumption: 
+# (1) 25% of the schools would be covered by this policy (this information comes from policy specification team)
+#     Therefore, assumed that 25% of children in age group 5 - 12 years will be covered by this policy.
+# For context the number of schools in Scotland is approximately 10% the number of schools in England [2] [3]
+
+
+# Assumption: 
+# (1) 25% of the schools would be covered by this policy (this information comes from policy specification team). Further,
+#     at a per school cost of £19,900 we can reach 503 schools which is ~25% of the primary schools in Scotland (2,001) [2]
+# (2) We then assume that if 25% of the schools are covered by this policy, ~ 25% of the children in age group 5 - 12 is reached.
 
 
 # Eligibility criteria:
-# Children in age group [5 - 18) years
-# Number of children aged [5 - 18) years in Scotland = 757,447 [1]
-# Number of children reached = 20% of 8,723,931 = 151,489
+# Children in agre group 5 - 12 years
+# Number of children in age group 5 - 12 years = 479,807 [1]
+# Therefore, 25% children in this age group = 25% x 479,807 = 119,952
+
+# Effect size:
+# The intervention has no effect on BMI
+
 
 # References:
-# [1] Office for National Statistics (2022). Estimates of the population for the UK, England and Wales, Scotland and Northern Ireland - Office for National Statistics. [online] Ons.gov.uk. 
-#     Available at: https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland.
-# [2] BESA (2021). Key UK education statistics - BESA. [online] BESA. Available at: https://www.besa.org.uk/key-uk-education-statistics/.
-
-
-
+# [1] National Records of Scotland (2020). Mid-2019 Population Estimates Scotland. NRS Web Continuity Service. [online] webarchive.nrscotland.gov.uk. 
+#     Available at: https://webarchive.nrscotland.gov.uk/20210313152406/https://www.nrscotland.gov.uk/statistics-and-data/statistics/statistics-by-theme/population/population-estimates/mid-year-population-estimates/mid-2019 [Accessed 8 May 2024].
+# [2] Statista (2023). Schools in Scotland 2022. [online] Statista. 
+#     Available at: https://www.statista.com/statistics/718481/number-of-schools-in-scotland/.
+# [3] BESA (2021). Key UK education statistics - BESA. [online] BESA. Available at: https://www.besa.org.uk/key-uk-education-statistics/.
 
 # setup
 rm(list = ls())
@@ -114,7 +121,7 @@ select_intervention_sample <- function(data, sample_size, population_size,
     # Check if the weighted sum of selected individuals is less than the desired weight sum
     selected_indices <- which(selected_individuals)
     
-    
+
     # Get the row indices of the selected individuals in the original data frame
     selected_indices_original <- which(data[[criteria_1]] == criteria_1_value & !intervention_history)[selected_individuals]
     
@@ -144,9 +151,6 @@ select_intervention_sample <- function(data, sample_size, population_size,
 
 
 
-
-
-
 table_outputs = list() # creating a list of table outputs to be saved as an excel file
 
 
@@ -157,7 +161,6 @@ table_outputs = list() # creating a list of table outputs to be saved as an exce
 
 # 1.1. Cleaning the input/ baseline data:
 
-
 process_clean_save(file_path = "inputs/raw/shes19i_eul.tab",
                    nation = "Scotland",
                    population_group = "Children")
@@ -165,21 +168,22 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab",
 
 # 1.2. Selecting 25% of children in age group 5 - 12 years
 
-df = read.csv(here("inputs/processed/shes_2019_children.csv")) %>%
-  mutate(eligibility_criteria = case_when(age >= 5 & age < 18 ~ 1,
-                                          TRUE ~ 0))
 
 # Eligibility criteria:
-# Children in age group [5 - 18) years
-# Number of children aged [5 - 18) years in Scotland = 757,447 [1]
-# Number of children reached = 20% of 8,723,931 = 151,489
+# Children in agre group 5 - 12 years
+# Number of children in age group 5 - 12 years = 479,807 [1]
+# Therefore, 25% children in this age group = 25% x 479,807 = 119,952
 
+df = read.csv(here("inputs/processed/shes_2019_children.csv")) %>%
+  mutate(eligibility_criteria = case_when(age >= 5 & age <= 12 ~ 1,
+                                          TRUE ~ 0))
 # for reproducibility
-set.seed(222)
+
+set.seed(212)
 
 intervention_df = select_intervention_sample(data = df,
-                                             sample_size = 151489,
-                                             population_size = 757447,
+                                             sample_size = 119952,
+                                             population_size = 479807,
                                              weight_var = "wt_int",
                                              bmi_var = "bmi",
                                              num_years = 1,
@@ -191,9 +195,9 @@ intervention_df = select_intervention_sample(data = df,
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: -0.07 kg/m2
+# Effect size [A]: -0 kg/m2
 
-effect_size = -0.07
+effect_size = -0.00
 
 
 bmi_refdata_100centiles = generate_bmi_refdata_100centiles(sitar::uk90)
@@ -219,11 +223,11 @@ intervention_df = intervention_df %>%
                                                             bmi = bmi_post,
                                                             data_B = bmi_refdata_100centiles,
                                                             value_to_calculate = "bmi_category")) %>%
-  # mutate(baseline_bmi_category_1 = lookup_bmi_percentile_category(age = age, 
-  #                                                                 sex = sex, 
-  #                                                                 bmi = bmi,
-  #                                                                 data_B = bmi_refdata_100centiles,
-  #                                                                 value_to_calculate = "bmi_category")) %>%
+  mutate(baseline_bmi_category_1 = lookup_bmi_percentile_category(age = age, 
+                                                                  sex = sex, 
+                                                                  bmi = bmi,
+                                                                  data_B = bmi_refdata_100centiles,
+                                                                  value_to_calculate = "bmi_category")) %>%
   
   ungroup() 
 
@@ -240,8 +244,7 @@ child_bmi_change = rbind(
     count(post_bmi_category, wt = wt_int) %>% 
     mutate(freq = n/sum(n)*100,
            type = "Post-Intervention") %>% 
-    rename(BMI = post_bmi_category))  %>%
-  mutate(BMI = factor(BMI, levels = c("underweight", "normal", "overweight", "obese")))
+    rename(BMI = post_bmi_category))
 
 
 
@@ -254,7 +257,7 @@ child_bar_plot = child_bmi_change %>%
   labs(fill = "", 
        title = "BMI Distribution", 
        y = "Prevalence - %",
-       subtitle = "Children - Scotland | Policy 22") +
+       subtitle = "Children - Scotland") +
   theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
   theme(legend.position = "top")
 
@@ -262,7 +265,7 @@ child_bar_plot = child_bmi_change %>%
 child_bar_plot
 
 
-ggsave(here("outputs/policy_22/policy_22_impact_Scotland_child.png"), 
+ggsave(here("outputs/policy_21/policy_21_impact_Scotland_child.png"), 
        plot = child_bar_plot, 
        width = 10, 
        height = 6,
@@ -278,12 +281,14 @@ child_bmi_change_year = child_bmi_change %>%
 
 child_bmi_change_year
 
+table_outputs[["scotland_child"]] = child_bmi_change_year
 
-table_outputs[["Scotland_child"]] = child_bmi_change_year
+write_xlsx(path = "outputs/policy_21/policy_21_scotland.xlsx", x = table_outputs)
 
-write_xlsx(path = "outputs/policy_22/policy_22_Scotland.xlsx", x = table_outputs)
 
 
 # full datafile outputs with intervention assignment
-write.csv(intervention_df, file = "outputs/policy_22/policy_22_child_Scotland_bmi.csv")
+write.csv(intervention_df, file = "outputs/policy_21/policy_21_child_scotland_bmi.csv")
+
+
 

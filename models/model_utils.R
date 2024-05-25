@@ -707,6 +707,46 @@ calculate_proportional_ei_change = function(age, sex, bmi, intake_change, bmi_re
 
 
 
+# FUNCTION to update bmi value to the required percentile based on age and sex of the individual
+# function works rowwise and should initiate rowwise() before applying this function to a dataset
+update_bmi = function(age, sex, update_to_centile, data_B){
+  
+  # browser()
+  
+  tryCatch(
+    
+    {
+      # recoding sex to numeric value from character
+      if (sex == "female" | sex == 2){
+        
+        sex = 2
+        
+      } else { if(sex == "male" | sex == 1){
+        
+        sex = 1
+        
+      } }
+      
+      
+      # filtering ref data by age, sex and required percentile
+      filtered_row = data_B[data_B$age == age & data_B$sex == sex & data_B$centile == update_to_centile,]
+      
+      # getting the bmi value for input age, sex and percentile
+      bmi_value = filtered_row$bmi
+      
+      return(bmi_value)
+    },
+    
+    
+    error = function(e) {
+      
+      
+      error_message = paste("Please ensure that the function is applied rowwise on a dataframe. An error occured:", conditionMessage(e))
+      
+    }
+  )
+  
+}
 
 
 

@@ -7,7 +7,7 @@
 
 # Description:
 
-# Scope: England
+# Scope: Scotland
 
 # The evidence comes from the results of the rapid review available here
 # - https://docs.google.com/document/d/1HO14YfgenuQk4zy_ldeTILA0nrkv90yq/edit?usp=sharing&ouid=102713518635256687243&rtpof=true&sd=true
@@ -16,8 +16,8 @@
 # The cost of the three drugs per month are - Semaglutide: £130, Orlistat: £25, Liraglutide: £150
 # Average of cost across the three drugs = £101.67 per month
 # Assuming that individuals are on the drugs for a period of 2 years: cost per person for 2 years = £2,440
-# Number of people the funding can reach = £500 million/£2,440 = 204,918 individuals
-# Population estimate for adults equal and over 18 years of age = 44,263,393 (a)
+# Number of people the funding can reach = £50 million/£2,440 = 20,527 individuals
+# Population estimate for adults equal and over 18 years of age = 4,434,138  (a)
 # form of bariatric surgery will have a weight loss of 8.46%.
 # Weight regain is two-thirds of the weight loss. (b)
 
@@ -191,23 +191,23 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_p
 
 
 
+process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland", population_group = "Adult")
 
-process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
-
-df = read_csv(here("inputs/processed/hse_2019.csv"))
+df = read_csv(here("inputs/processed/shes_2019.csv"))
 
 
 df = df %>%
   mutate(eligibility = case_when(bmi >= 35 ~ 1,
-                                (bmi >= 30 & bmi < 35) & (cardiovd == 1 | diabetes == 1) ~ 1,
-                                (bmi >= 27.5 & ethnicity %in% c(2, 3)) ~ 1,    # , 4, 5
-                                TRUE ~ 0))
+                                 (bmi >= 30 & bmi < 35) & (cardiovd == 1 | diabetes == 1) ~ 1,
+                                 (bmi >= 27.5 & ethnicity %in% c(2, 3)) ~ 1,    # , 4, 5
+                                 TRUE ~ 0))
 
+set.seed(242)
 
 
 df = select_intervention_sample(data = df,
-                                sample_size = 204918,
-                                population_size = 44263393,
+                                sample_size = 20527,
+                                population_size = 4434138,
                                 weight_var = "wt_int",
                                 bmi_var = "bmi",
                                 num_years = 5,
@@ -320,7 +320,7 @@ bmi_change_year = bmi_change %>%
 bmi_change_year
 
 # bmi year on year prevalence:
-write.csv(bmi_change_year, file = "outputs/policy_24/policy_24_adult_england.csv")
+write.csv(bmi_change_year, file = "outputs/policy_24/policy_24_adult_scotland.csv")
 
 
 # Plot of year on year BMI category distribution
@@ -337,11 +337,11 @@ adult_bar_plot = bmi_change %>%
 
 adult_bar_plot
 
-ggsave(here("outputs/policy_24/policy_24_impact_England_adult.png"), 
+ggsave(here("outputs/policy_24/policy_24_impact_Scotland_adult.png"), 
        plot = adult_bar_plot, 
        width = 10, 
        height = 6,
        bg='#ffffff')
 
 
-write.csv(post_df_adult, file = "outputs/policy_24/policy_24_adult_england_bmi.csv")
+write.csv(post_df_adult, file = "outputs/policy_24/policy_24_adult_Scotland_bmi.csv")

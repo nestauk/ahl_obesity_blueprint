@@ -8,24 +8,45 @@
 # Description:
 
 # The evidence for this policy comes from the reapid review - https://docs.google.com/document/d/1I93S-TEN7d0_qwIyOLpMztQVbnBBUKjn3nz1u_SZPbw/edit
-# The cost of running the programme per family is £320 per year as per the costs of the HENRY Programme.
-# The average number of children per family in the UK is 1.7
-# £70 million @ £320 per family per year reaches 218,750 families. At 1.7 children per family, this programme
-# will cover 371,875 children in an year.
-# The eligibility for a child to be exposed to the programme will be that the child lives in a QIMD 4, 5 area and
-# has a parent living with overweight/ obesity (BMI >=25)
+# The cost of running the programme per family is £320 per year as per the costs of the HENRY Programme.[1]
+# The average number of children per family in the UK is 1.74 [2]
 
+
+
+# Estimating the number of children the programme can reach:
+# £85 million per year @ £320 per family per year reaches 265,625 families per year
+# At 1.74 children per family, this programme will cover 462,187.5 children per year
+# Total number of children in age group 5 - 18 in the England = 9,342,804 [3]
+
+# Eligibility criteria:
+# The eligibility for a child to be exposed to the programme will be:
+# 1. The child lives in a QIMD 4 or QIMD 5 area 
+# 2. Has a parent living with overweight/ obesity (BMI >=25)
+
+# Effect size
 # The intervention has an effect size of a reduction in child bmi by -0.01 at >= 6 months of intervention. We assume
 # that this is the effect at one year.
 
 # Note: We are able to model impacts only for England as the requisite variables to choose parent BMI is not 
-# available for Scotland.
+# available for Scotland. Therefore, we use population estimates of 5-18 year old children = 9,342,804
+
+## References:
+# [1] HENRY (n.d.). Value for money and return on investment | HENRY. [online] www.henry.org.uk. 
+#     Available at: https://www.henry.org.uk/valueformoney.
+# [2] Toddle About. (n.d.). Forget 2.4 Kids: The average UK family now has 1.7 Children, 1.4 Parents and 1/2 a Dog. [online] 
+#     Available at: https://toddleabout.co.uk/parenting/forget-24-kids/#:~:text=The%20research%20shows%20that%20the.
+# [3] Office for National Statistics (2022). Estimates of the population for the UK, England and Wales, Scotland and Northern Ireland - Office for National Statistics. [online] Ons.gov.uk. 
+#     Available at: https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland.
+
+
 
 # setup
 rm(list = ls())
 library(tidyverse)
 library(here)
 library(writexl)
+
+set.seed(555)
 
 # required functions:
 
@@ -43,10 +64,12 @@ select_intervention_sample <- function(data, bmi_threshold, sample_size, populat
   for (year in 1:num_years) {
     # Subset the data frame to include only individuals meeting the criteria
     subset_data <- data[data[[citeria_1]] == citeria_1_value & 
-                          (data[[citeria_2]] == citeria_2_value) &  !intervention_history, ]
+                          (data[[citeria_2]] == citeria_2_value) &
+                          (data[[bmi_var]] %in% c("overweight", "obese")) &  !intervention_history, ]
     
     # Calculate the total weight of the full dataset
     total_weight <- sum(data[[weight_var]])
+    #eligible_weight = sum(subset_data[[weight_var]])
     
     # Calculate the proportion of people meeting criteria in the population
     proportion_over_threshold <- sum(subset_data[[weight_var]]) / total_weight
@@ -92,6 +115,7 @@ select_intervention_sample <- function(data, bmi_threshold, sample_size, populat
     
     # Get the row indices of the selected individuals in the original data frame
     selected_indices_original <- which((data[[citeria_1]] == citeria_1_value & data[[citeria_2]] == citeria_2_value) &
+                                         (data[[bmi_var]] %in% c("overweight", "obese")) &
                                          !intervention_history)[selected_individuals]
     
     # Update the intervention column for the current year
@@ -99,6 +123,9 @@ select_intervention_sample <- function(data, bmi_threshold, sample_size, populat
     
     # Update the intervention history
     intervention_history[selected_indices_original] <- TRUE
+    
+    #final_wt = sum(data$wt_int[data$intervention_year1 == "Yes"])
+    
   }
   
   return(data)
@@ -126,17 +153,30 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab",
 
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
+effect_size = -0.01
 
 df = read_csv(here("inputs/processed/hse_2019_children.csv"))
 
 
 
+bmi_refdata_100centiles = generate_bmi_refdata_100centiles(sitar::uk90)
+
+
+df = df %>%
+  rowwise() %>%
+  mutate(baseline_bmi_category = lookup_bmi_percentile_category(age = age, 
+                                                                sex = sex, 
+                                                                bmi = bmi,
+                                                                data_B = bmi_refdata_100centiles,
+                                                                value_to_calculate = "bmi_category"))
+
+
 intervention_df = select_intervention_sample(data = df,
                                              bmi_threshold = 25,
-                                             sample_size = 371875,
-                                             population_size = 12000000,
+                                             sample_size = 462187.5, # updated from 371,875 as allocation increased 
+                                             population_size = 9342804, # updated from 12 million to account only for England and ages 5 - 18
                                              weight_var = "wt_int",
-                                             bmi_var = "bmi",
+                                             bmi_var = "baseline_bmi_category",
                                              num_years = 1,
                                              citeria_1 = "qimd_updated",
                                              citeria_2 = "parent_bmi",
@@ -146,10 +186,8 @@ intervention_df = select_intervention_sample(data = df,
 
 
 
-bmi_refdata_100centiles = generate_bmi_refdata_100centiles(sitar::uk90)
-
 intervention_df = intervention_df %>%
-  mutate(bmi_change = case_when(intervention_year1 == "Yes" ~ -0.01,
+  mutate(bmi_change = case_when(intervention_year1 == "Yes" ~ effect_size,
                               TRUE ~ 0)) %>%
   mutate(bmi_post = bmi + bmi_change) %>%
   rowwise() %>%
@@ -158,7 +196,7 @@ intervention_df = intervention_df %>%
                                                       bmi = bmi_post,
                                                       data_B = bmi_refdata_100centiles,
                                                       value_to_calculate = "bmi_category")) %>%
-  mutate(baseline_bmi_category = lookup_bmi_percentile_category(age = age, 
+  mutate(baseline_bmi_category_1 = lookup_bmi_percentile_category(age = age, 
                                                             sex = sex, 
                                                             bmi = bmi,
                                                             data_B = bmi_refdata_100centiles,
@@ -222,6 +260,6 @@ write.csv(child_bmi_change_year, file = "outputs/policy_26/policy_26_child_engla
 write.csv(intervention_df, file = "outputs/policy_26/policy_26_child_england_bmi.csv")
 
 
-
+(sum(intervention_df$wt_int[intervention_df$intervention_year1 == "Yes"])/ sum(intervention_df$wt_int))*100
 
 

@@ -1,4 +1,87 @@
 
+
+# setup
+rm(list = ls())
+library(tidyverse)
+library(here)
+library(writexl)
+
+source(file = "requirements.R")
+source(file = "pre_processing/pre_processing_adult.R")
+
+process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
+
+process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland", population_group = "Adult")
+
+hse_2019 = read_csv(here("inputs/processed/hse_2019.csv"))
+
+shes_2019 = read_csv(here("inputs/processed/shes_2019.csv"))
+
+
+df_hse_2019_adult <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", header = TRUE) 
+
+df_hse_2019_adult = df_hse_2019_adult %>%
+  filter(wt_int >= 0)
+
+
+
+
+# bmi_loss_percent
+
+assign_weight_changes <- function(data, bodyweight_var, num_years, bmi_loss, bmi_regain) {
+  # browser()
+  as.data.frame(data)
+  # Create weight loss and weight regain columns for each year
+  bmi_loss_cols <- paste0("bmi_loss_y", 1:num_years)
+  bmi_regain_cols <- paste0("bmi_regain_y", 1:num_years)
+  data[, c(bmi_loss_cols, bmi_regain_cols)] <- 0
+  
+  for (year in 1:num_years) {
+    intervention_col <- paste0("intervention_year", year)
+    
+    if(year < 6){
+      
+      
+      data[data[[intervention_col]] == "Yes" & bmi_, bmi_loss_cols[year]] = -bmi_loss # *0.5* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      
+      
+    } else{
+      
+      
+      
+    }
+    
+    
+    
+    if (year > 1) {
+      prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
+      
+      # test = as.data.frame(data[, prev_intervention_cols] == "Yes")
+      prev_intervention <- apply(as.data.frame(data[, prev_intervention_cols] == "Yes"), 1, any)
+      
+      # Calculate weight regain based on weight loss in one of the two intervention years and calulated as 67% of two times weight loss in any one of the years
+      # two times weight loss in any one year is the total weight loss over two years.
+      bmi_regain_1 = bmi_regain
+      
+      # weight_regain <- 0.67 *2* pmax(
+      #   data[prev_intervention, weight_loss_cols[year - 1], drop = TRUE],
+      #   data[prev_intervention, weight_loss_cols[year - 2], drop = TRUE]
+      # )
+      
+      data[prev_intervention, bmi_regain_cols[year]] <- -bmi_regain_1
+    }
+  } 
+  
+  return(data)
+}
+
+
+
+
+
+
+
+
 ########################
 ########################
 ########################

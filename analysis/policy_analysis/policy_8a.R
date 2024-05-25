@@ -91,7 +91,9 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab",
 #                                                                   use_bodyfat_curves = 0)
 
 policy_8a_impact_england_child = calculate_bmi_from_eichange_hox(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
-                                                                 daily_ei_change = -51.59)
+                                                                 daily_ei_change = 51.59,
+                                                                 nation = "England", 
+                                                                 tags = "Policy 8a" )
 
 
 
@@ -103,7 +105,7 @@ policy_8a_impact_england_child$bmi_prevalence_plot
 
 
 ggsave(here("outputs/policy_8a/policy_8a_impact_England_child.png"), 
-       plot = policy_8a_impact_england_child$bmi_category_plot, 
+       plot = policy_8a_impact_england_child$bmi_prevalence_plot, 
        width = 10, 
        height = 6,
        bg='#ffffff')
@@ -113,7 +115,7 @@ ggsave(here("outputs/policy_8a/policy_8a_impact_England_child.png"),
 
 policy_8a_impact_england_child$bmi_prevalence_table
 
-table_outputs[["england_child"]] = policy_8a_impact_england_child$bmi_percent_prevalence
+table_outputs[["england_child"]] = policy_8a_impact_england_child$bmi_prevalence_table
 
 
 # 3. Adults in Scotland
