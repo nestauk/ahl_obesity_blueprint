@@ -75,13 +75,26 @@ process_clean_save = function(file_path, nation, population_group){
                height = HtVal,
                sex = Sex,
                bmi = BMIVal,
+               qimd = qimd19,
+               number_children = Nofch3,
+               income_JSA = srcin05d, # Job Seekers Allowance
+               income_IS = srcin07d,  # Income Support
+               income_PC = srcin08d,  # Pension Credit
+               income_CTC = srcin10d, # Child Tax Credit
+               income_UC = srcin14d,  # Universal Credit 
                ethnicity = origin2,
                diabetes = diabete2,
                cardiovd = CardioTakg2,
                id = SerialA,
                psu = PSU_SCR,
-               strata = cluster94) %>% 
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, ethnicity, diabetes, cardiovd, wt_int, psu, strata )  %>% # select variables needed
+               strata = cluster94) %>%
+        mutate(income_support_status = case_when((income_JSA == 1 | income_IS == 1 | income_PC == 1 | income_CTC == 1 | income_UC == 1) ~ 1,
+                                                 TRUE ~ 0)) %>%
+        mutate(children_updated = case_when(number_children == 0 ~ 0,
+                                            TRUE ~ 1)) %>%
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, qimd, children_updated, income_support_status, ethnicity, diabetes, cardiovd, wt_int, psu, strata )  %>% # select variables needed
+        mutate(qimd_updated = case_when((qimd == 4 | qimd == 5) ~ 1,
+                                        TRUE ~ 0)) %>%
         mutate(pal = 1.6, # pal assumed to be 1.6 for the entire population to indicate a sendentary/ light active lifestyle
                rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
                                TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # sex = 2 female; rmr is calculated using Mifflin St Jeor Equations from Mifflin et al (1990)
@@ -122,6 +135,7 @@ process_clean_save = function(file_path, nation, population_group){
                sex = Sex,
                bmi_ur = bmi,
                bmi = bmival,
+               simd = SIMD20_SGa,
                diabetes = diabete2,
                cardiovd = medtyp1B,
                id = CPSerialA,
@@ -141,7 +155,9 @@ process_clean_save = function(file_path, nation, population_group){
                                    age >= 70 & age <= 74 ~ "70-74",
                                    age >= 75 ~ "75+",
                                    TRUE ~ "NA")) %>%
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, diabetes, cardiovd, wt_int, psu, strata) %>% # select variables needed for analysis and would be inputs for modelling
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, simd, diabetes, cardiovd, wt_int, psu, strata) %>% # select variables needed for analysis and would be inputs for modelling
+        mutate(simd_updated = case_when((simd == 1 | simd == 2) ~ 1,
+                                        TRUE ~ 0)) %>%
         mutate(pal = 1.6,
                rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
                                TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # Calculating an individuals resting metabolic rate using equations published in Mifflin & St.Jeor (1990)
@@ -282,6 +298,7 @@ process_clean_save = function(file_path, nation, population_group){
                sex = Sex,
                bmi_ur = bmi,
                bmi = bmival,
+               simd = SIMD20_SGa,
                id = CPSerialA,
                psu = PSU,
                wt_int = cint19wt,
@@ -293,7 +310,9 @@ process_clean_save = function(file_path, nation, population_group){
                                    age >= 13 & age <= 15 ~ "13-15",
                                    age >= 16 & age <= 19 ~ "16-19",
                                    TRUE ~ "NA")) %>%
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, wt_int, psu, strata, origin2) %>% # select variables needed
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, simd, wt_int, psu, strata, origin2) %>% # select variables needed
+        mutate(simd_updated = case_when((simd == 1 | simd == 2) ~ 1,
+                                        TRUE ~ 0)) %>%
         mutate(pal = case_when(age < 3 ~ 1.40,
                                age >=3 & age < 10 ~ 1.58,
                                age >=10 & age < 18 ~ 1.75),
@@ -379,5 +398,3 @@ process_clean_save = function(file_path, nation, population_group){
   }
   
 }
-
-

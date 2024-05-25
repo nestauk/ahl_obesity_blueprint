@@ -1,6 +1,9 @@
 library(here)
 library(tidyverse)
 
+(sum(df2019$wt_int[df2019$pregnant_status==1])/sum(df2019$wt_int))* 44000000
+
+
 
 df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", header = TRUE) %>% 
   filter(WtVal>0 & HtVal>0 & Age35g >=7 ) %>% # remove missing height and weight and children
@@ -25,10 +28,12 @@ df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", h
          height = HtVal,
          sex = Sex,
          bmi = BMIVal,
+         number_children = Nofch3,
+         pregnant_status = PregNTJ,
          id = SerialA,
          psu = PSU_SCR,
          strata = cluster94) %>% 
-  dplyr::select(id, weight, height, age, sex, bmi, wt_int, psu, strata )  %>% # select variables needed
+  dplyr::select(id, weight, height, age, sex, bmi, number_children, pregnant_status, wt_int, psu, strata )  %>% # select variables needed
   mutate(pal = 1.6,
          rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
                          TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # sex = 2 female Miffin & St.Jeor
