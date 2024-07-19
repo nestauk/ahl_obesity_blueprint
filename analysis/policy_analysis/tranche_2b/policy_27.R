@@ -60,6 +60,15 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 policy_27_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
                                                              intake_change = -16.7,
                                                              implmentation_duration = 365*5)
+
+policy_27_impact_england_adult_1 = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
+                                                             intake_change = -2.31,
+                                                             implmentation_duration = 365*5)
+
+
+policy_27_impact_england_adult_2 = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
+                                                               intake_change = -4.62,
+                                                               implmentation_duration = 365*5)
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
 policy_27_impact_england_adult$bmi_category_plot
@@ -72,6 +81,10 @@ ggsave(here("outputs/policy_27/policy_27_impact_England_adult.png"),
 
 # Output table with year on year distribution of BMI categories
 policy_27_impact_england_adult$bmi_percent_prevalence
+
+test_df_0 = policy_27_impact_england_adult$bmi_percent_prevalence # 16.7 from 21
+test_df = policy_27_impact_england_adult_1$bmi_percent_prevalence # 2.31 from 3
+test_df_2 = policy_27_impact_england_adult_2$bmi_percent_prevalence # 4.62 from 6
 
 table_outputs[["england_adult"]] = policy_27_impact_england_adult$bmi_percent_prevalence
 
@@ -122,4 +135,26 @@ write_xlsx(path = "outputs/policy_27/policy_27.xlsx", x = table_outputs)
 write.csv(policy_27_impact_england_adult$post_df, file = "outputs/policy_27/policy_27_adult_england_bmi.csv")
 
 write.csv(policy_27_impact_scotland_adult$post_df, file = "outputs/policy_27/policy_27_adult_scotland_bmi.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

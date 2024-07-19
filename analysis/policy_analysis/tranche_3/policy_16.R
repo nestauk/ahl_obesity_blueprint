@@ -59,7 +59,7 @@ select_intervention_sample <- function(data, bmi_threshold, required_proportion,
                                        weight_var, bmi_var, num_years, 
                                        criteria_1=0, criteria_2=0, criteria_1_value=0, criteria_2_value=0,
                                        population_1 = 0, population_2 = 0, population_3 = 0) {
-  # browser()
+  browser()
   # Add intervention columns for each year to indicate intervention status, that is if an individual receives intervention.
   intervention_cols <- paste0("intervention_year", 1:num_years)
   data[, intervention_cols] <- "No"

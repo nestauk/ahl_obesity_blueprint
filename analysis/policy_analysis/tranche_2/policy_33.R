@@ -1,6 +1,6 @@
 
 #################################################################################################
-# Policy 5b : Regulate large retailers to change their organisation-wide converted NPM score    #
+# Policy 33 : Regulate large retailers to change their organisation-wide converted NPM score    #
 #             to ≥ 69 across their entire food product portfolio                                #
 #                                                                                               #
 #################################################################################################
@@ -49,11 +49,17 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # Based on [A] and [C], the intake change = effect size - compensation effect = 78 kcals per person per day
 
 policy_33_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
+                                                             intake_change = -50,
+                                                             implmentation_duration = 365*5)
+
+policy_33_impact_england_adult_1 = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
                                                              intake_change = -78,
                                                              implmentation_duration = 365*5)
+
+
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
-policy_33_impact_england_adult$bmi_category_plot
+policy_33_impact_england_adult_1$bmi_category_plot
 
 ggsave(here("outputs/policy_33/policy_33_impact_England_adult.png"), 
        plot = policy_33_impact_england_adult$bmi_category_plot, 
@@ -62,9 +68,10 @@ ggsave(here("outputs/policy_33/policy_33_impact_England_adult.png"),
        bg='#ffffff')
 
 # Output table with year on year distribution of BMI categories
-policy_33_impact_england_adult$bmi_percent_prevalence
+df_50 = policy_33_impact_england_adult$bmi_percent_prevalence
+df_78 = policy_33_impact_england_adult_1$bmi_percent_prevalence
 
-table_outputs[["england_adult"]] = policy_33_impact_england_adult$bmi_percent_prevalence
+table_outputs[["england_adult"]] = policy_33_impact_england_adult_1$bmi_percent_prevalence
 
 
 # 2. Adults in Scotland
@@ -106,8 +113,23 @@ table_outputs[["scotland_adult"]] = policy_33_impact_scotland_adult$bmi_percent_
 write_xlsx(path = "outputs/policy_33/policy_33.xlsx", x = table_outputs)
 
 # outputs for cost modelling
-write.csv(policy_33_impact_england_adult$post_df, file = "outputs/policy_33/policy_33_adult_england_bmi.csv")
+write.csv(policy_33_impact_england_adult_1$post_df, file = "outputs/policy_33/policy_33_adult_england_bmi.csv")
 
 write.csv(policy_33_impact_scotland_adult$post_df, file = "outputs/policy_33/policy_33_adult_scotland_bmi.csv")
+
+
+
+df = read_csv(here("inputs/processed/hse_2019.csv"))
+
+
+bmi_table = df %>% 
+  count(bmi_class, wt = wt_int) %>% 
+  mutate(freq = n/sum(n)*100,
+         type = "Year 0") 
+
+
+bmi_table$freq[[3]] + bmi_table$freq[[1]]
+
+
 
 

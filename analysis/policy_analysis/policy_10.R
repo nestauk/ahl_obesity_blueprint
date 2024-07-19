@@ -219,3 +219,45 @@ write.csv(policy_10_impact_scotland_adult$post_df, file = "outputs/policy_10/pol
 # Child:
 write.csv(policy_10_impact_england_child$post_df, file = "outputs/policy_10/policy_10_child_england_bmi.csv")
 write.csv(policy_10_impact_scotland_child$post_df, file = "outputs/policy_10/policy_10_child_scotland_bmi.csv")
+
+
+
+# s3://ahl-private-data/data_requests/22-blueprint-inhome/kantar_2021_inhome_blueprint.csv
+
+test_df <- s3read_using(FUN = read.csv,
+                        bucket = "ahl-private-data",
+                        object = "data_requests/22-blueprint-inhome/kantar_2021_inhome_blueprint.csv")
+  
+test_df_1 = test_df %>%
+  mutate(kcal = grossed_up_energy_kcal/grossed_up_quantity,
+         kcal_density = (grossed_up_energy_kcal/(grossed_up_volume*grossed_up_quantity))*100,
+         guw = grossed_up_energy_kcal/ kcal)
+  
+  
+  
+  
+library(arrow)
+  
+
+
+
+
+test_df_2 <- s3read_using(FUN = read_parquet,
+                          bucket = "ahl-private-data",
+                          object = "in_home/processed/targets/model_data.parquet")
+
+
+colnames(test_df_2)
+
+
+
+
+
+
+
+
+
+
+
+
+

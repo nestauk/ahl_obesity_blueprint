@@ -15,9 +15,13 @@
 # intake in children.
 # The source of the evidence also indicates that compensatory behaviour was accounted for while reporting
 # out the final estimates of daily calorie reductions.
-# In addition, several reports have indicated that about 20-25% of the daily calorie intake for adults
-# come from the OOH sector. Considering that 80% of the daily calorie intake is reduced by 87.6 kcals, 20%
-# is likely to be reduced by 21.9 kcals per day.
+# Nesta Analysis has shown that the calorie contribution from OOH sector as a whole is ~300 kcals per 
+# person per day on average. Large businesses contribute a third of the total OOH contribution to 
+# people's diets on average and the in-home sector contributes ~1700 kcals to people's diets.
+# A policy affecting 1700 kcals of people's diets is reduced DEI by 87.6 kcals due to the policy, therefore,
+# a policy affecting large businesses that contribute 1/3rd of the calorie contribution of OOH sector
+# would reduce energy intake by (1/3)*300*87.6*(1/1700) = 5.15 kcals per person per day.
+
 # The source of the evidence also indicates that compensatory behaviour was accounted for while reporting
 # out the final estimates of daily calorie reductions.
 
@@ -47,7 +51,7 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 21.9 kcals
+# Effect size [A]: 5.15 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
 # Compensation effect [C]: 0 kcals (already accounted in the final estimates shared in the evidence)
 # Duration [D]: 5 years ~ 365 * 5 days
@@ -55,7 +59,7 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # Based on [A] and [C], the intake change = effect size - compensation effect = -21.9 kcals per person per day
 
 policy_5b_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                             intake_change = -21.9,
+                                                             intake_change = -5.15,
                                                              implmentation_duration = 365*5)
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -82,7 +86,7 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # 2.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 21.9 kcals
+# Effect size [A]: 5.15 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
 # Compensation effect [C]: 0 kcals (already accounted in the final estimates shared in the evidence)
 # Duration [D]: 5 years ~ 365 * 5 days
@@ -90,7 +94,7 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # Based on [A] and [C], the intake change = effect size - compensation effect = -21.9 kcals per person per day
 
 policy_5b_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
-                                                              intake_change = -21.9,
+                                                              intake_change = -5.15,
                                                               implmentation_duration = 365*5)
 # 2.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories

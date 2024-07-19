@@ -27,11 +27,11 @@
 
 
 # Reformulation Pot = £500 million
-# Assuming per product reformulation on average = £100,000 (Awaiting information from FDF Scotland on this)
-# number of products that can be reformulated = 5000
+# Assuming per product reformulation on average = £500,000 (Awaiting information from FDF Scotland on this)
+# number of products that can be reformulated = 1000
 
-# Percentage of HFSS products that can be reformulated = 5000/60525 = 8.26%
-# Percentage of all products that can be reformulated = 5000/142357 = 3.5%
+# Percentage of HFSS products that can be reformulated = 1000/60525 = 1.65%
+# Percentage of all products that can be reformulated = 1000/142357 = 0.7%
 
 # Average calorie densiyt of OOH products = 1.92 kcal/gm
 # average calorie density of in-home products = 2 kcal/gm
@@ -39,9 +39,9 @@
 # On average, when participants consumed foods all foods in a day with lower energy density, they consumed 709 fewer
 # calories per day compared to when they consumed all foods in a day with higher energy density.
 
-# Therefore, if 8.26% of the HFSS products were reformulated, then individuals would consume:
-# 8.26% x 709 = 58.56 kcals
-# i.e. 58.6 kcals fewer per day on average
+# Therefore, if 0.7% of all products were reformulated, then individuals would consume:
+# 0.7% x 709 = 4.96 kcals  i.e. 4.96 kcals fewer per day on average per day
+
 
 
 # [1] Nesta Analysis of OOH food and drink data from market research company (2024)
@@ -59,7 +59,7 @@ source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
 #source(file = "models/child_model_calorie.R")
-source(file = "models/child_model_calorie_henry.R")
+# source(file = "models/child_model_calorie_henry.R")
 
 
 table_outputs = list()
@@ -75,15 +75,15 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 58.6 kcals
+# Effect size [A]: 4.96 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
-# Compensation effect [C]:  23% of the change in daily energy intake = 23% * 58.6 = 13.48
+# Compensation effect [C]:  23% of the change in daily energy intake = 23% * 4.96 = 1.14
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -45.1 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -3.81 kcals
 
 policy_12_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                             intake_change = -45.1,
+                                                             intake_change = -3.81,
                                                              implmentation_duration = 365*5)
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -110,15 +110,15 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # 2.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 58.6 kcals
+# Effect size [A]: 4.96 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
-# Compensation effect [C]:  23% of the change in daily energy intake = 23% * 58.6 = 13.48
+# Compensation effect [C]:  23% of the change in daily energy intake = 23% * 4.96 = 1.14
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -45.1 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -3.81 kcals
 
 policy_12_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
-                                                              intake_change = -45.1,
+                                                              intake_change = -3.81,
                                                               implmentation_duration = 365*5)
 # 3.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
