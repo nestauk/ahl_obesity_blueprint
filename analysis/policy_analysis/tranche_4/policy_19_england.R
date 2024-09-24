@@ -9,20 +9,18 @@
 
 # Description:
 
-# The evidence from this cost benefit analysis (https://www.glasgow.gov.uk/CHttpHandler.ashx?id=55780&p=0)
-# showed that the active transport interventions would lead to 50,000 additional trips across the population.
-# The evaluation suggests that these additional trips would be 20% cycling and 80% walking trips.
+# The evidence from the rapid review (https://docs.google.com/document/d/1d9CndNKBoayk-rnrT-r8pcoEsglWV0ySxmbTD8oBWRY/edit?usp=sharing)
+# showed that it lead to 15 minutes of walking/ cycling per week.
 
 # Assumptions:
-# (1) Time spent on each trip:
-#     Each additional cycling trip = 23 minutes of cycling [4]
-#     Each additional walking trip = 17 minutes of walking [4]
-# (2) 50% of those living with excess weight increase physical activity, make additional trips.
-#     No reference available as searches didn't return any evidence on participation in active travel by BMI groups.
-#     (Note: Can be changed, if value is too high)
+# (1) Additional time spent walking = 15 minutes
+# (2) We assume that the £500 mil would be distributed to 5 local authorities at £100 mil each. We find that on average local authorities
+#     (County, Unitary Authority, Boroughs and Metropolitan districts) together make up 151 units with an average population of 293,135 people.
+#     Implementing the policy in 5 local authorities @ £100 mil per authority implies that ~ 1,465,675 individuals would be exposed to the policy.
+#     Further, given that the proportion of people living with excess weight is ~ 66% of the population England, which equals 967,346 individuals
+#     Therefore, we choose 2.2% of the population to receive this intervention
 # (3) Individuals don’t compensate EE with EI [7]
 
-#
 # Based on this physical activity we want to estimate the energy expenditure which is calculated as:
 
 # Energy Expenditure = [(Metabolic Equivalent x 3.5 x body weight kg)/200] x time spent doing activity [1][2][3]
@@ -34,20 +32,7 @@
 # Metabolic equivalent for cycling = 6 [1][2]
 # mean metabolic equivalent = 4.5 (equivalent of a moderate intensity activity)
 
-# (B) time spent doing activity (per adult in minutes):
-# Total time spent on activity = (time spent walking x walking trips) + (time spent cycling x cycling trips)
-# = 10,000 trips x 23 minutes + 40,000 trips x 17 minutes
-# Total time spent on trips = 910,000 active minutes
-
-# Adult population of Glasgow = 521,522 [5]
-# time spent doing activity (per adult in minutes) = 910,000/ 521,522 = 1.74 minutes (in Glasgow)
-
-# Cost of active travel infrastructure in Glasgow = £475 million
-# Increase in total time spent doing activity as a result of spending £500 million = (£500 x 910,000)/ £475 = 957,894.736 active minutes
-
-# Adult population for England = 44,263,393 [6]
-# Additional minutes spent on active transport = 957,894.736/44,263,393 = 0.022 minutes
-
+# (B) time spent doing activity (per adult in minutes) = 15 minutes per week = 15/ 7 = 2.14 minutes per day
 
 
 # References:
@@ -88,7 +73,7 @@ table_outputs = list() # creating a list of table outputs to be saved as an exce
 select_intervention_sample <- function(data, bmi_threshold, required_proportion, 
                                        weight_var, bmi_var, num_years, 
                                        citeria_1=0, citeria_2=0, citeria_1_value=0, citeria_2_value=0) {
-  #browser()
+  # browser()
   # Add intervention columns for each year to indicate intervention status, that is if an individual receives intervention.
   intervention_cols <- paste0("intervention_year", 1:num_years)
   data[, intervention_cols] <- "No"
@@ -173,15 +158,29 @@ df = read_csv(here("inputs/processed/hse_2019.csv"))
 
 # Selecting individuals to recive intervention
 
-set.seed(444)
+set.seed(191)
+
+number_of_la = 5
+people_per_la = 293135
+adults_england = 44263393
+
+total_people_la = people_per_la * number_of_la
+percent_excess_weight = 0.666
+total_eligible_la = percent_excess_weight * total_people_la
+total_eligible_england = percent_excess_weight * adults_england # 0.03311258
+
+proportion_to_select = total_eligible_la / total_eligible_england
+proportion_to_select/2
 
 df_selected = select_intervention_sample(data = df,
                                          bmi_threshold = 25, # interrested in impact of policy on those living with excess weight
-                                         required_proportion = 0.5, # assuming that 50% of those living with excess weight increase their physical activity
+                                         required_proportion = proportion_to_select, # 0.016, # 0.5, # assuming that 50% of those living with excess weight increase their physical activity
                                          weight_var = "wt_int",
                                          bmi_var = "bmi",
                                          num_years = 1)
 
+# sum(df_selected$wt_int[df_selected$intervention_year1 == "Yes"])/ sum(df_selected$wt_int)
+# sum(df_selected$wt_int[df_selected$intervention_year1 == "Yes"])/ sum(df_selected$wt_int[df_selected$bmi >= 25])
 
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
@@ -200,20 +199,9 @@ met = 4.5
 
 
 # (B) time spent doing activity (per adult in minutes):
-# Total time spent on activity = (time spent walking x walking trips) + (time spent cycling x cycling trips)
-# = 10,000 trips x 23 minutes + 40,000 trips x 17 minutes
-# Total time spent on trips = 910,000 active minutes
 
-
-# Cost of active travel infrastructure in Glasgow = £475 million
-# Increase in total time spent doing activity as a result of spending £500 million = (£500 x 910,000)/ £475 = 957,894.736 active minutes
-
-# Adult population for England = 44,263,393
-# Additional minutes spent on active transport = 957,894.736/44,263,393 = 0.022 minutes
-
-
-time = 0.022
-
+# time = 0.022
+time = 2.14
 
 # We are interested in impacts over five years.
 
@@ -381,15 +369,17 @@ bmi_change_year = bmi_change %>%
   pivot_wider(., names_from = BMI, values_from = freq) %>%
   select(type, underweight, normal, overweight, obese, `morbidly obese`)
 
-bmi_change_year
+bmi_year = bmi_change_year
 
 
 table_outputs[["england_adult"]] = bmi_change_year
 
 # bmi year on year prevalence:
 
-write_xlsx(path = "outputs/policy_19/policy_19_england.xlsx", x = table_outputs)
+write_xlsx(path = "outputs/policy_19/policy_19_updated_england.xlsx", x = table_outputs)
 
 # Output 3: Cost Modelling input files:
-write.csv(post_df_adult, file = "outputs/policy_19/policy_19_adult_england_bmi.csv")
+write.csv(post_df_adult, file = "outputs/policy_19/policy_19_updated_adult_england_bmi.csv")
+
+
 

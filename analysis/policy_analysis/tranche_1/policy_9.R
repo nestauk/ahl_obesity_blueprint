@@ -179,6 +179,8 @@ write.csv(policy_9_impact_scotland_adult$post_df, file = "outputs/policy_9/polic
 
 # access info
 
+# add access info
+
 
 
 # Getting file with the latest channel labels
@@ -232,11 +234,20 @@ processed_purchased_df = ooh_purchase_df %>%
          day_no = date(date_ymd)) %>%
   filter(Age > 17) %>%
   filter(year_no == 2021) %>%
-  filter(month_no %in% c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
-    
+  filter(month_no %in% c(4, 5, 6, 7, 8, 9, 10, 11, 12)) #1, 2, 3,
+
 #  sum(processed_purchased_df$kcal_tot)/gb_pop_18/days_model
 #  unique(processed_purchased_df$year)
 # "ooh/processed/household_demog_table.csv"
+
+n_distinct(processed_purchased_df$unique_product_code)
+
+n_distinct(processed_purchased_df$Combined.category.cleaned)
+
+n_distinct(processed_purchased_df$product_code)
+
+n_distinct(processed_purchased_df$Category.level.1)
+n_distinct(processed_purchased_df$Meal.description)
 
 
   
@@ -313,6 +324,11 @@ options(scipen = 999)
 # proportion_chain = sum(test_df$pop_kcal[test_df$type == "chain"])/ sum(test_df$pop_kcal)
 
 
+
+
+gb_pop_18 = 51718632
+days_model = 365
+
 chain_meals_2 = test_df 
 #  %>%
 #  filter(type == "chain")
@@ -368,13 +384,12 @@ chain_meals_3 = chain_meals_3 %>%
   mutate(updated_kcal_serving = case_when(updated_product_category == "meal_over_1345" ~ 1344,
                                           updated_product_category == "meal_side_over_600" ~ 599,
                                           updated_product_category == "pizza_over_1230" ~ 1229,
+                                          updated_product_category == "pastry_over_670" ~ 669,
+                                          updated_product_category == "sandwich_over_580" ~ 579,
                                           TRUE ~ kcal_serving_wtd)) %>%
   mutate(post_kcals_tot = updated_kcal_serving*cross_prod,
          baseline_kcals_tot = kcal_serving_wtd*cross_prod)
 
-
-gb_pop_18 = 51718632
-days_model = 365
 
 sum(chain_meals_3$kcal_serving_tot)/ gb_pop_18/ days_model
 sum(chain_meals_3$baseline_kcals_tot)/ gb_pop_18/ days_model
@@ -396,3 +411,20 @@ reduc_kcal_pp_pd = chain_meals_3 %>%
 
 
 
+product_share = chain_meals_3 %>%
+  group_by(updated_product_category) %>%
+  summarise(share = sum(cross_prod)) %>%
+  mutate(percent_share = (share / sum(share)) * 100)
+  
+  
+unique(chain_meals_2$type)
+
+test_df_6 = chain_meals_2 %>%
+  filter(nation %in% c("England", "Scotland", "Wales")) %>%
+  filter(!is.na(updated_channel_level_1)) %>%
+  group_by(type) %>%
+  summarise(business_spend = sum(spend * gross_up_weight)) %>%
+  mutate(spend_percent_share = (business_spend/sum(business_spend)) * 100) %>%
+  arrange(desc(spend_percent_share)) 
+
+  

@@ -50,25 +50,18 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # 1.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 21.7 kcals
+# Effect size [A]: 3.01 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
-# Compensation effect [C]: 23% of [A] = 4.99
+# Compensation effect [C]: 23% of [A] = 0.69
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -16.7 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -2.31 kcals
 
 policy_27_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                             intake_change = -16.7,
-                                                             implmentation_duration = 365*5)
-
-policy_27_impact_england_adult_1 = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
                                                              intake_change = -2.31,
                                                              implmentation_duration = 365*5)
 
 
-policy_27_impact_england_adult_2 = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                               intake_change = -4.62,
-                                                               implmentation_duration = 365*5)
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
 policy_27_impact_england_adult$bmi_category_plot
@@ -82,9 +75,7 @@ ggsave(here("outputs/policy_27/policy_27_impact_England_adult.png"),
 # Output table with year on year distribution of BMI categories
 policy_27_impact_england_adult$bmi_percent_prevalence
 
-test_df_0 = policy_27_impact_england_adult$bmi_percent_prevalence # 16.7 from 21
-test_df = policy_27_impact_england_adult_1$bmi_percent_prevalence # 2.31 from 3
-test_df_2 = policy_27_impact_england_adult_2$bmi_percent_prevalence # 4.62 from 6
+test_df = policy_27_impact_england_adult$bmi_percent_prevalence # 2.31 from 3
 
 table_outputs[["england_adult"]] = policy_27_impact_england_adult$bmi_percent_prevalence
 
@@ -98,16 +89,16 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # 2.2. Estimating the impact of the intervention on prevalence of obesity:
 
 # Inputs to the model:
-# Effect size [A]: 21.7 kcals
+# Effect size [A]: 3.01 kcals
 # Population segment impacted by policy [B]: Adults with BMI ≥ 25
-# Compensation effect [C]: 23% of [A] = 4.99
+# Compensation effect [C]: 23% of [A] = 0.69
 # Duration [D]: 5 years ~ 365 * 5 days
 
-# Based on [A] and [C], the intake change = effect size - compensation effect = -16.7 kcals
+# Based on [A] and [C], the intake change = effect size - compensation effect = -2.31 kcals
 
 
 policy_27_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
-                                                              intake_change = -16.7,
+                                                              intake_change = -2.31,
                                                               implmentation_duration = 365*5)
 # 2.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -135,23 +126,6 @@ write_xlsx(path = "outputs/policy_27/policy_27.xlsx", x = table_outputs)
 write.csv(policy_27_impact_england_adult$post_df, file = "outputs/policy_27/policy_27_adult_england_bmi.csv")
 
 write.csv(policy_27_impact_scotland_adult$post_df, file = "outputs/policy_27/policy_27_adult_scotland_bmi.csv")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

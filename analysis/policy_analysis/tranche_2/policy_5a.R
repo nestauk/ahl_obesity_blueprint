@@ -53,7 +53,7 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # Based on [A] and [C], the intake change = effect size - compensation effect = -0.52 kcals
 
 policy_5a_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                             intake_change = -0.52,
+                                                             intake_change = -0.5,
                                                              implmentation_duration = 365*5)
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -66,7 +66,8 @@ ggsave(here("outputs/policy_5a/policy_5a_impact_England_adult.png"),
        bg='#ffffff')
 
 # Output table with year on year distribution of BMI categories
-policy_5a_impact_england_adult$bmi_percent_prevalence
+test = policy_5a_impact_england_adult$bmi_percent_prevalence
+test_1 = policy_5a_impact_england_adult$bmi_percent_prevalence
 
 table_outputs[["england_adult"]] = policy_5a_impact_england_adult$bmi_percent_prevalence
 

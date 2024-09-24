@@ -24,9 +24,12 @@
 # (1) Time spent on each trip is assumed same as England for Scotland as well
 #     Each additional cycling trip = 23 minutes of cycling [4]
 #     Each additional walking trip = 17 minutes of walking [4]
-# (2) 50% of those living with excess weight increase physical activity, make additional trips. 
-#     No reference available as searched didn't return any evidence on participation in active travel by BMI groups.
-#     (Note: Can be changed, if value is too high)
+# (2) We assume that the £50 mil would be distributed to 5 local authorities at £10 mil each. We find that on average local authorities
+#     (County, Unitary Authority, Boroughs and Metropolitan districts) together make up 32 units with an average population of 138,567 people.
+#     Implementing the policy in 5 local authorities @ £10 mil per authority implies that ~ 692,835 individuals would be exposed to the policy.
+#     Further, as we are interested in measuring the impact on those with a BMI >=25, we focus on this group. The proportion of people living 
+#     with excess weight is ~ 67% of the population Scotland, which equals 464,200 individuals. Therefore, we choose 10% of the population to 
+#     receive this intervention
 # (3) Individuals don’t compensate EE with EI [7]
 #
 # Based on this physical activity we want to estimate the energy expenditure which is calculated as:
@@ -40,19 +43,7 @@
 # Metabolic equivalent for cycling = 6 [1][2]
 # mean metabolic equivalent = 4.5 (equivalent of a moderate intensity activity)
 
-# (B) time spent doing activity (per adult in minutes):
-# Total time spent on activity = (time spent walking x walking trips) + (time spent cycling x cycling trips)
-# = 10,000 trips x 23 minutes + 40,000 trips x 17 minutes
-# Total time spent on trips = 910,000 active minutes
-
-# Adult population of Glasgow = 521,522 [5]
-# time spent doing activity (per adult in minutes) = 910,000/ 521,522 = 1.74 minutes
-
-# Cost of active travel infrastructure in Glasgow = £475 million
-# Increase in total time spent doing activity as a result of spending £50 million = (£50 mil x 910,000)/ £475 mil = 95,789.474 active minutes
-
-# Adult population for Scotland = 4,434,138 [6]
-# Additional minutes spent on active transport = 95,789.474/4,434,138 = 0.022 minutes
+# (B) time spent doing activity (per adult in minutes) = 15 minutes per week = 15/ 7 = 2.14 minutes per day
 
 
 # References:
@@ -177,11 +168,25 @@ df = read_csv(here("inputs/processed/shes_2019.csv"))
 
 # Selecting individuals to recive intervention
 
+
+
+number_of_la = 5
+people_per_la = 170728
+adults_scotland = 4434138
+
+total_people_la = people_per_la * number_of_la
+percent_excess_weight = 0.67
+total_eligible_la = percent_excess_weight * total_people_la
+total_eligible_scotland = percent_excess_weight * adults_scotland # 0.03311258
+
+proportion_to_select = total_eligible_la / total_eligible_scotland
+
+
 set.seed(192)
 
 df_selected = select_intervention_sample(data = df,
                                          bmi_threshold = 25, # interrested in impact of policy on those living with excess weight
-                                         required_proportion = 0.5, # assuming that 50% of those living with excess weight increase their physical activity
+                                         required_proportion = proportion_to_select, # 0.1, # assuming that 50% of those living with excess weight increase their physical activity
                                          weight_var = "wt_int",
                                          bmi_var = "bmi",
                                          num_years = 1)
@@ -203,23 +208,11 @@ df_selected = select_intervention_sample(data = df,
 met = 4.5
 
 
-# (B) time spent doing activity (per adult in minutes):
-# Total time spent on activity = (time spent walking x walking trips) + (time spent cycling x cycling trips)
-# = 10,000 trips x 23 minutes + 40,000 trips x 17 minutes
-# Total time spent on trips = 910,000 active minutes
-
-# Adult population of Glasgow = 521,522 [5]
-# time spent doing activity (per adult in minutes) = 910,000/ 521,522 = 1.74 minutes
-
-# Cost of active travel infrastructure in Glasgow = £475 million
-# Increase in total time spent doing activity as a result of spending £500 million = (£50 x 910,000)/ £475 = 95,789.474 active minutes
-
-# Adult population for Scotland = 4,434,138
-# Additional minutes spent on active transport = 95,789.474/4,434,138 = 0.022 minutes
+# (B) time spent doing activity (per adult in minutes) = 15 minutes per week = 15/ 7 = 2.14 minutes per day
 
 # time = 1.75
-time = 0.022
-
+# time = 0.022
+time = 2.14
 
 # We are interested in impacts over five years.
 

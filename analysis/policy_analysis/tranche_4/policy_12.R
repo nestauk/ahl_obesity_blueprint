@@ -54,12 +54,96 @@ rm(list = ls())
 library(tidyverse)
 library(here)
 library(writexl)
+library(aws.s3)
 
 source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
 #source(file = "models/child_model_calorie.R")
 # source(file = "models/child_model_calorie_henry.R")
+
+
+
+# access info
+
+# add access information
+
+
+
+# Getting file with the latest channel labels
+channel_labelling <- s3read_using(FUN = read.csv,
+                                  bucket = "ahl-private-data",
+                                  object = "ooh/processed/channel_labelling_v1.csv") %>%
+  dplyr::select(shopcode, store_name, channel_level_1, channel_level_2 ) %>%
+  rename(updated_channel_level_2 = channel_level_2,
+         updated_channel_level_1 = channel_level_1)
+
+
+
+
+# Reading purchase datafile into a dataframe and updating with new channel variables:
+ooh_purchase_df <- s3read_using(FUN = read.csv,
+                                bucket = "ahl-private-data",
+                                object = "ooh/processed/descriptive_analysis/purchases_trip_analysis_with_spend_v2.csv") %>%
+  mutate(nation = case_when(region %in% c("South East", "London", "North East",
+                                          "South West", "West Midlands", "East Midlands",
+                                          "East of England", "Yorkshire and The Humber", "North West") ~ "England",
+                            region %in% c("Wales") ~ "Wales",
+                            region %in% c("Scotland") ~ "Scotland",
+                            TRUE ~ "Unknown"),
+         match_key = paste(channel, shop.description, sep = "_")) %>%
+  left_join(channel_labelling, by = c("shop_code" =  "shopcode"))
+
+
+hh_demog = s3read_using(FUN = read.csv,
+                        bucket = "ahl-private-data",
+                        object = "ooh/processed/household_demog_table.csv")
+
+
+
+# Updating dataframe with purchase mode variable, total spend and kcal
+processed_purchased_df = ooh_purchase_df %>%
+  mutate(trip_num = paste(hh_no, ind_no, week_no, day, trip_id, sep = "_")) %>%
+  mutate(purchase_mode = case_when(delivery.type %in% c("Just Eat - Delivery", "Deliveroo - Delivery", "Uber Eats - Delivery", "Just Eat - Collection",
+                                                        "Deliveroo - Collection") ~ "delivery_apps",
+                                   delivery.type %in% c("Restaurant's Web App Delivery",
+                                                        "Restaurant's Web App - Collection") ~ "restaurant_app_delivery",
+                                   delivery.type %in% c("Ordered at Counter - Collection") ~ "ordered_at_counter",
+                                   delivery.type %in% c("Rang to Order - Collection", "Rang to Order - Delivery") ~ "rang_to_order",
+                                   delivery.type %in% c("Not a Takeaway") ~ "in_premise")) %>%
+  mutate(total_spend = spend*gross_up_weight) %>%
+  mutate(kcal_tot = kcal_serving_combined * gross_up_weight * quantity) %>%
+  mutate(hh_ind = paste(hh_no, ind_no, sep = "_")) %>%
+  left_join(hh_demog, by = "hh_ind") %>%
+  mutate(date_ymd = ymd(date)) %>%
+  mutate(month_no = month(date_ymd),
+         year_no = year(date_ymd),
+         day_no = date(date_ymd)) %>%
+  filter(Age > 17) %>%
+  filter(year_no == 2021) %>%
+  filter(month_no %in% c(4, 5, 6, 7, 8, 9, 10, 11, 12)) #1, 2, 3,
+
+
+ooh_products = n_distinct(processed_purchased_df$unique_product_code)
+
+
+in_home_purchase_df <- s3read_using(FUN = read.csv,
+                                    bucket = "ahl-private-data",
+                                    object = "data_requests/22-blueprint-inhome/kantar_2021_inhome_blueprint_2.csv")
+
+in_home_products = n_distinct(in_home_purchase_df$Product.Long.Description)
+
+total_products = in_home_products + ooh_products
+
+percent_of_products_reformulated = (1000 / total_products) * 100
+
+kcal_reduction = (round(percent_of_products_reformulated, 1) * 709) / 100
+
+
+
+
+
+
 
 
 table_outputs = list()

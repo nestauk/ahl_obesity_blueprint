@@ -35,7 +35,7 @@ process_clean_save = function(file_path, nation, population_group){
     
     
     if (nation == "England" & population_group == "Adult") {
-      #browser()
+      # browser()
       # Age35g is a categorical variable of 5 year age bands for 16+, smallest possible grouping from HSE 2019
       # Age35g == 8 indicates all those in age group 20-24 years
       df_2019_adult <- read.table(here(file_path), sep = "\t", header = TRUE) %>% 
@@ -138,6 +138,7 @@ process_clean_save = function(file_path, nation, population_group){
                simd = SIMD20_SGa,
                diabetes = diabete2,
                cardiovd = medtyp1B,
+               ethnicity = Ethnic05,
                id = CPSerialA,
                psu = PSU,
                wt_int = int19wt,
@@ -155,7 +156,7 @@ process_clean_save = function(file_path, nation, population_group){
                                    age >= 70 & age <= 74 ~ "70-74",
                                    age >= 75 ~ "75+",
                                    TRUE ~ "NA")) %>%
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, simd, diabetes, cardiovd, wt_int, psu, strata) %>% # select variables needed for analysis and would be inputs for modelling
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, simd, diabetes, cardiovd, ethnicity, wt_int, psu, strata) %>% # select variables needed for analysis and would be inputs for modelling
         mutate(simd_updated = case_when((simd == 1 | simd == 2) ~ 1,
                                         TRUE ~ 0)) %>%
         mutate(pal = 1.6,

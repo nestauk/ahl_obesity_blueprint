@@ -20,8 +20,8 @@
 
 # Eligibility criteria:
 # Children in age group 5 - 17 years
-# Number of children in age group 5 - 17 years = 8,723,931 [2]
-# Therefore, 48% children in this age group = 48% x 8,723,931 = 4,187,487
+# Therefore, 48% children in this age group = 48% x 8,723,931 = 
+# Number of children in age group 5 - 17 years = 8,723,931 [2]4,187,487
 
 
 # Effect size

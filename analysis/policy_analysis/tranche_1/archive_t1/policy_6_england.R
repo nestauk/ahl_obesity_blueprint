@@ -1,3 +1,4 @@
+
 #############################################################################################
 # Policy 6 : Everyone with a BMI of 30 or above is offered a free referral to a behavioural #
 #            weight loss programme (either 12-month TDR or 12-week education) via a primary #
@@ -25,8 +26,6 @@ library(here)
 
 source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
-
-
 
 
 
