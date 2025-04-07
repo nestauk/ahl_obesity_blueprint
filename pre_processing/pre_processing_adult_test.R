@@ -17,7 +17,7 @@ library(dplyr)
 
 # function to clean and save the raw health survey data for both adults and children
 
-process_clean_save = function(file_path, nation, population_group){
+process_clean_save_test = function(file_path, nation, population_group){
   
   if (nation %in% c("England", "Scotland") & population_group %in% c("Adult", "Children")) {
     
@@ -35,11 +35,12 @@ process_clean_save = function(file_path, nation, population_group){
     
     
     if (nation == "England" & population_group == "Adult") {
-      # browser()
+      browser()
       # Age35g is a categorical variable of 5 year age bands for 16+, smallest possible grouping from HSE 2019
       # Age35g == 8 indicates all those in age group 20-24 years
       df_2019_adult <- read.table(here(file_path), sep = "\t", header = TRUE) %>% 
-        filter(WtVal>0 & HtVal>0 & Age35g >7 ) %>% # remove missing height and weight and children; 
+        browser() %>%
+        filter(WtVal>0 & HtVal>0 & Age35g >=7 ) %>% # remove missing height and weight and children; 
         mutate(age = case_when(#Age35g == 7 ~ (16+19)/2,
           Age35g == 8 ~ (20+24)/2, 
           Age35g == 9 ~ (25+29)/2,
@@ -57,6 +58,7 @@ process_clean_save = function(file_path, nation, population_group){
           Age35g == 21 ~ (85+89)/2,
           Age35g == 22 ~ (90),
           TRUE ~ 0)) %>%
+        browser() %>%
         mutate(age_grp = case_when(#Age35g == 7 ~ (16+19)/2,
           Age35g == 8 ~ "20-24", 
           Age35g == 9 ~ "25-29",
@@ -71,6 +73,7 @@ process_clean_save = function(file_path, nation, population_group){
           Age35g == 18 ~ "70-74",
           Age35g == 19 | Age35g == 20 | Age35g == 21 | Age35g == 22  ~ "75+",
           TRUE ~ "NA")) %>%
+          browser() %>%
         rename(weight = WtVal,
                height = HtVal,
                sex = Sex,
@@ -88,6 +91,7 @@ process_clean_save = function(file_path, nation, population_group){
                id = SerialA,
                psu = PSU_SCR,
                strata = cluster94) %>%
+          browser() %>%
         mutate(income_support_status = case_when((income_JSA == 1 | income_IS == 1 | income_PC == 1 | income_CTC == 1 | income_UC == 1) ~ 1,
                                                  TRUE ~ 0)) %>%
         mutate(children_updated = case_when(number_children == 0 ~ 0,
@@ -104,15 +108,17 @@ process_clean_save = function(file_path, nation, population_group){
                                      bmi >= 30 & bmi < 40 ~ "obese",
                                      bmi >= 40 ~ "morbidly obese",
                                      TRUE ~ "NA")) %>% 
+          browser() %>%
         mutate(intake = pal*rmr)  # calculating value of energy intake 
       
-      write_csv(df_2019_adult, here("inputs/processed/hse_2019.csv"))
+        browser()
+      # write_csv(df_2019_adult, here("inputs/processed/hse_2019.csv"))
       print("Output csv with processed data is saved here: inputs/processed/hse_2019.csv" )
       
 
     } else if (nation == "Scotland" & population_group == "Adult") {
       
-      browser()
+      
       # Scotland
       
       # select(CPSerialA, SYear,PSU, Strata, int19wt, cint19wt, bmival, htval, wtval, BMIvg5, CBMIg5_new, age, Sex, SIMD20_SGa, Ethnic05, totinc, eqv5_15, hedqul08)
@@ -138,7 +144,6 @@ process_clean_save = function(file_path, nation, population_group){
                simd = SIMD20_SGa,
                diabetes = diabete2,
                cardiovd = medtyp1B,
-               ethnicity = Ethnic05,
                id = CPSerialA,
                psu = PSU,
                wt_int = int19wt,
@@ -156,7 +161,7 @@ process_clean_save = function(file_path, nation, population_group){
                                    age >= 70 & age <= 74 ~ "70-74",
                                    age >= 75 ~ "75+",
                                    TRUE ~ "NA")) %>%
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, simd, diabetes, cardiovd, ethnicity, wt_int, psu, strata) %>% # select variables needed for analysis and would be inputs for modelling
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, simd, diabetes, cardiovd, wt_int, psu, strata) %>% # select variables needed for analysis and would be inputs for modelling
         mutate(simd_updated = case_when((simd == 1 | simd == 2) ~ 1,
                                         TRUE ~ 0)) %>%
         mutate(pal = 1.6,

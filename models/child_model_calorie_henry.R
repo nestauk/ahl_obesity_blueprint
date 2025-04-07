@@ -40,15 +40,6 @@ calculate_bmi_from_eichange_hox = function(df, daily_ei_change, nation, tags){
   
   uk90_bmi_refdata_100centiles = generate_bmi_refdata_100centiles(sitar::uk90)
   
-  # uk90_bmi_refdata_100centiles = uk90_bmi_refdata_100centiles %>%
-  #   select(-c(L.bmi, M.bmi, S.bmi)) %>%
-  #   unite(col = "sex_years", "sex", "years", sep = "_") %>%
-  #   pivot_longer(cols= c(starts_with("p")), names_to = "centile", values_to = "bmi") %>%
-  #   separate("sex_years", into = c("sex", "age"), sep = "_") %>%
-  #   mutate(centile = substr(centile, 3, nchar(centile)))
-  # 
-  
-  # read_csv(here("inputs/processed/hse_2019_children.csv"))
   
   # applying the henry equations
   df <- df %>%

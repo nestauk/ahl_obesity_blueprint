@@ -238,7 +238,7 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
       # prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
       
       if (year == 2){
-        
+        # browser()
         prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
         
       } else {
@@ -248,11 +248,6 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
         
         
       }
-      
-      prev_intervention <- apply(data[, prev_intervention_cols] == 2, 1, any) # data[, prev_intervention_cols] == 1 |
-      
-      data[prev_intervention, weight_regain_cols[year]] <- weight_regain # * data[prev_intervention, weight_var]
-      
       
     }
     
@@ -265,28 +260,23 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
 
 
 
+df_wales_cleaned = read_csv(here("inputs/processed/nsw_2019.csv"))
 
 
-process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
-
-
-
-df = read_csv(here("inputs/processed/hse_2019.csv"))
-
-
-df = df %>%
+df_wales_cleaned = df_wales_cleaned %>%
   mutate(eligibility = case_when(bmi >= 30 ~ 1, TRUE ~ 0))
 
 
-set.seed(610)
+set.seed(612)
 
-
-df_selected = select_intervention_sample(data = df, weight_var = "wt_int",
+# selecting individuals to receive treatment:
+df_selected = select_intervention_sample(data = df_wales_cleaned, weight_var = "wt_int",
                                          bmi_var = "bmi", num_years = 5,
                                          criteria_1 = "eligibility", criteria_1_value = 1,
                                          required_proportion_1 = 0.4, required_proportion_2 = 0.13)
 
 
+# assigning weight change values based on treatment status:
 post_df_adult = assign_weight_changes(data = df_selected, bodyweight_var = "weight",
                                       num_years = 5, weight_loss_1 = 0,
                                       weight_loss_2 = 10.7, weight_regain = (4.4/24)*12)
@@ -335,13 +325,6 @@ post_df_adult = post_df_adult %>%
                                  TRUE ~ "NA"))
 
 
-
-# survey design element created to account for survey weights and population level estimation of prevalance.
-design <-  svydesign(ids=~post_df_adult$psu, 
-                     nest = T,
-                     data=post_df_adult,
-                     weights=post_df_adult$wt_int)
-
 # A new dataframe is created to capture population level prevalence of different BMI categories in each year and is saved as a dataframe
 bmi_change = rbind(
   post_df_adult %>% 
@@ -380,15 +363,15 @@ bmi_change = bmi_change %>%
   as.data.frame()
 
 
+
+# display outputs:
+
 bmi_change_year = bmi_change %>%
   select(-c(n)) %>%
   pivot_wider(., names_from = BMI, values_from = freq) %>%
   select(type, underweight, normal, overweight, obese, `morbidly obese`)
 
 bmi_change_year
-
-# bmi year on year prevalence:
-write.csv(bmi_change_year, file = "outputs/policy_6/policy_6_updated_1_adult_england.csv")
 
 
 # Plot of year on year BMI category distribution
@@ -397,67 +380,26 @@ adult_bar_plot = bmi_change %>%
   geom_bar(stat = "identity", position = "dodge") +
   theme_ipsum() +
   labs(fill = "", 
-       title = "BMI Categories Distribution", 
-       y = "Frequency",
-       subtitle = "Population") +
+       title = "Wales | Policy 6", 
+       y = "Prevalence - %",
+       subtitle = "Adult | BMI Distribution ") +
   theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
   theme(legend.position = "top")
 
 adult_bar_plot
 
-ggsave(here("outputs/policy_6/policy_6_updated_1_impact_England_adult.png"), 
+
+# writing outputs to folder:
+ggsave(here("outputs/policy_6/policy_6_updated_1_impact_Wales_adult.png"), 
        plot = adult_bar_plot, 
        width = 10, 
        height = 6,
        bg='#ffffff')
 
 
-write.csv(post_df_adult, file = "outputs/policy_6/policy_6_updated_1_adult_england_bmi.csv")
+# bmi year on year prevalence:
+write_xlsx(bmi_change_year, path = "outputs/policy_6/policy_6_wales.xlsx")
 
-
-
-result_df = read_csv(here("outputs/policy_6/policy_6_updated_1_adult_england_bmi.csv"))
-
-
-
-number_treated = post_df_adult %>%
-  select(wt_int, intervention_year1, intervention_year2, intervention_year3, intervention_year4, intervention_year5) %>%
-  group_by(intervention_year1, intervention_year2, intervention_year3, intervention_year4, intervention_year5) %>%
-  mutate(wt_val = sum(wt_int))
-
-
-df_long <- post_df_adult %>%
-  select(wt_int, intervention_year1, intervention_year2, intervention_year3, intervention_year4, intervention_year5) %>%
-pivot_longer(cols = starts_with("intervention"),
-             names_to = "intervention",
-             values_to = "value")
-
-# Summarize the data
-summary_table <- df_long %>%
-  group_by(intervention, value) %>%
-  summarize(sum_wt_int = sum(wt_int, na.rm = TRUE))
-
-
-summary_table <- result_df %>%
-  # Gather the intervention columns into a long format
-  pivot_longer(
-    cols = starts_with("intervention"),
-    names_to = "intervention_type",
-    values_to = "intervention_value"
-  ) %>%
-  # Group by intervention type and value
-  group_by(intervention_type, intervention_value) %>%
-  # Sum the wt_int for each group
-  summarise(total_wt_int = sum(wt_int, na.rm = TRUE)) %>%
-  # Spread the results back to a wide format
-  pivot_wider(
-    names_from = intervention_value,
-    values_from = total_wt_int,
-    names_prefix = "value_"
-  ) %>%
-  # Replace NA with 0 for cleaner output
-  mutate(across(starts_with("value_"), ~replace_na(., 0))) 
-#  mutate(total = rowSums(select(., starts_with("value_")), na.rm = TRUE)) %>%
-#  select(intervention_type, everything())
+write.csv(post_df_adult, file = "outputs/policy_6/policy_6_adult_wales_bmi.csv")
 
 

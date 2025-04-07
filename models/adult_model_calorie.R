@@ -14,7 +14,7 @@ library(survey)
 #                                    4) bmi_percent_prevalence : Table of year wise percentage prevalence of each BMI category
 
 
-calculate_bmi_from_eichange = function(df, intake_change, implmentation_duration) {
+calculate_bmi_from_eichange = function(df, intake_change, implmentation_duration, tags = "") {
   
   output_list = list() # creating a list to store outputs to be returned from the function
   
@@ -47,8 +47,8 @@ calculate_bmi_from_eichange = function(df, intake_change, implmentation_duration
   # We are interested only in the BMI values at the end of each intervention year to estimate the distribution of bodyweights
   # the BMI values at the end of Year 1, Year 2, Year 3, Year 4 and Year 5 are collected and labelled with BMI categories.
   post_df_adult = post_df_adult %>%
-    select("id", "weight", "height", "age", "sex", "bmi", "wt_int", "psu", "intervention",
-           "strata", "pal", "rmr", "bmi_class", "intake", "intake_diff", "1", "365", "730", "1095", "1460", "1825" ) %>%
+    select("id", "weight", "height", "age", "sex", "bmi", "wt_int", "intervention", # "psu", "strata",
+           "pal", "rmr", "bmi_class", "intake", "intake_diff", "1", "365", "730", "1095", "1460", "1825" ) %>%
     rename(bmi_5 = "1825", bmi_0 = "1", bmi_1 = "365", bmi_2 = "730", bmi_3 = "1095", bmi_4 = "1460" ) %>%
     mutate(bmi_0_class = case_when(bmi_0 <= 18.5 ~ "underweight",
                                    bmi_0 > 18.5 & bmi_0 < 25 ~ "normal",
@@ -90,10 +90,10 @@ calculate_bmi_from_eichange = function(df, intake_change, implmentation_duration
   output_list[["post_df"]] = post_df_adult # Dataframe added to outputs list
   
   # survey design element created to account for survey weights and population level estimation of prevalance.
-  design <-  svydesign(ids=~post_df_adult$psu, 
-                       nest = T,
-                       data=post_df_adult,
-                       weights=post_df_adult$wt_int)
+  # design <-  svydesign(ids=~post_df_adult$psu, 
+  #                     nest = T,
+  #                     data=post_df_adult,
+  #                     weights=post_df_adult$wt_int)
   
   # A new dataframe is created to capture population level prevalence of different BMI categories in each year and is saved as a dataframe
   bmi_change = rbind(
@@ -138,9 +138,9 @@ calculate_bmi_from_eichange = function(df, intake_change, implmentation_duration
     geom_bar(stat = "identity", position = "dodge") +
     theme_ipsum() +
     labs(fill = "", 
-         title = "BMI Distribution", 
+         title = paste(tags), 
          y = "Prevalence - %",
-         subtitle = "Adult") +
+         subtitle = "Adult | BMI Distribution") +
     theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
     theme(legend.position = "top")
   

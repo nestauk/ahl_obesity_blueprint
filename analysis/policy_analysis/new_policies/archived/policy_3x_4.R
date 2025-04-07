@@ -1,20 +1,19 @@
 
 #############################################################################################
-# Policy 6 : Everyone with a BMI of 30 or above is offered a free referral to total diet    #
-#            replacement programme via primary care.                                        #
-#                                                                                           #
+# Policy 35 : Everyone with a BMI of 30 or above is offered a free referral to behavioural  #
+#             weight management programme                                                   #
 #                                                                                           #
 #############################################################################################
 
 # Description:
 
 # The evidence from the rapid review 
-# (https://docs.google.com/document/d/1D1AFdzW5WrkVtzi1Tamy1PpMQwtAQeMQnCCWuwDJudk/edit?usp=sharing) 
-# (quality assured by the EAG) showed that the interventions led to a weight loss of -10.7 kgs at the
+# (https://docs.google.com/document/d/1K20dg2D-G9J6F439gegPRD8Mly58xSnJmGXJMto_GYY/edit?usp=sharing) 
+# showed that the interventions led to a weight loss of -10.7 kgs at the
 # end of one year for those on TDR. The take-up rate for the programme was 40% of which 13% opted in 
 # to receive TDR.
-# Effect size: 10.7 kgs in the first year
-# weight regain: 2.2 kgs per year for two years
+# Effect size: 2.4 kgs in the first year
+# weight regain: 30% of weight lost regained each year
 # Eligibility: Adults with a BMI >=30
 
 # In the modelling we assume that those who receive the treatment once do not receive it again the
@@ -42,7 +41,7 @@ select_intervention_sample <- function(data, # sample_size, population_size,
                                        weight_var, bmi_var, num_years, 
                                        criteria_1, criteria_1_value, 
                                        required_proportion_1, required_proportion_2) {
-  # browser()
+  browser()
   
   # Add intervention columns for each year into the dataset
   intervention_cols <- paste0("intervention_year", 1:num_years)
@@ -114,7 +113,7 @@ select_intervention_sample <- function(data, # sample_size, population_size,
     # Update the intervention history to record people from the previous years who received the intervention
     intervention_history[selected_indices_original] <- TRUE
     
-    # browser()
+    browser()
     
     subset_data_filt <- data[data[[intervention_cols[year]]] == 1,] #
     
@@ -193,8 +192,8 @@ select_intervention_sample <- function(data, # sample_size, population_size,
 
 
 
-assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1, weight_loss_2, weight_regain) {
-  # browser()
+assign_weight_changes_3 <- function(data, bodyweight_var, num_years, weight_loss_1, weight_loss_2, weight_regain) {
+  browser()
   # Create weight loss and weight regain columns for each year
   weight_loss_cols <- paste0("weight_loss_y", 1:num_years)
   weight_regain_cols <- paste0("weight_regain_y", 1:num_years)
@@ -208,9 +207,9 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
       # Assign weight loss for individuals who received the intervention in the current year
       # evidence shows weight loss values for two years. In this case, it is being assumed that the total weight loss is split equally over two years
       # instead of assigning all the weight loss in one year
-      data[data[[intervention_col]] == 1, weight_loss_cols[year]] = -weight_loss_1 #-weight_loss_percent*0.5* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      data[data[[intervention_col]] == 1, weight_loss_cols[year]] = -weight_loss_1 
       
-      data[data[[intervention_col]] == 2, weight_loss_cols[year]] = -weight_loss_2 #-weight_loss_percent*0.5* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      # data[data[[intervention_col]] == 2, weight_loss_cols[year]] = -weight_loss_2
       
       #, weight_loss_cols[year+1] 
       
@@ -220,7 +219,7 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
       
       
     }
-    # browser()
+    browser()
     # weight regain to be assigned only from the year after intervention, so in this case, it would be one year of weight loss and weight regain in second year
     if (year > 1) {
       # prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
@@ -235,21 +234,21 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
       # data[prev_intervention & data[, paste0("weight_loss_y", year - 1)] < 0, weight_regain_cols[year]] <- weight_regain_1
       # data[prev_intervention & data[, paste0("weight_loss_y", year - 1)] < 0, weight_regain_cols[year+1]] <- weight_regain_1
       
-      # prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
+      prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
       
       if (year == 2){
         
-        prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
+        #  prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
         
       } else {
         
-      
-        prev_intervention_cols <- paste0("intervention_year", (year - 2):(year - 1))  
+        
+        #  prev_intervention_cols <- paste0("intervention_year", (year - 2):(year - 1)) #   
         
         
       }
       
-      prev_intervention <- apply(data[, prev_intervention_cols] == 2, 1, any) # data[, prev_intervention_cols] == 1 |
+      prev_intervention <- apply(data[, prev_intervention_cols] == 1, 1, any) # data[, prev_intervention_cols] == 1 |
       
       data[prev_intervention, weight_regain_cols[year]] <- weight_regain # * data[prev_intervention, weight_var]
       
@@ -265,8 +264,6 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
 
 
 
-
-
 process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
 
 
@@ -278,21 +275,20 @@ df = df %>%
   mutate(eligibility = case_when(bmi >= 30 ~ 1, TRUE ~ 0))
 
 
-set.seed(610)
+set.seed(373)
 
 
 df_selected = select_intervention_sample(data = df, weight_var = "wt_int",
                                          bmi_var = "bmi", num_years = 5,
                                          criteria_1 = "eligibility", criteria_1_value = 1,
-                                         required_proportion_1 = 0.4, required_proportion_2 = 0.13)
+                                         required_proportion_1 = 0.4, required_proportion_2 = 0)
 
 
-post_df_adult = assign_weight_changes(data = df_selected, bodyweight_var = "weight",
-                                      num_years = 5, weight_loss_1 = 0,
-                                      weight_loss_2 = 10.7, weight_regain = (4.4/24)*12)
+post_df_adult_3 = assign_weight_changes_3(data = df_selected, bodyweight_var = "weight",
+                                          num_years = 5, weight_loss_1 = 2.4,
+                                          weight_loss_2 = 0, weight_regain = 0.3*2.4)
 
-
-post_df_adult = post_df_adult %>%
+post_df_adult_3 = post_df_adult_3 %>%
   mutate(bw_y1 = weight + weight_loss_y1 + weight_regain_y1,
          bw_y2 = bw_y1 + weight_loss_y2 + weight_regain_y2,
          bw_y3 = bw_y2 + weight_loss_y3 + weight_regain_y3,
@@ -335,57 +331,54 @@ post_df_adult = post_df_adult %>%
                                  TRUE ~ "NA"))
 
 
-
-# survey design element created to account for survey weights and population level estimation of prevalance.
-design <-  svydesign(ids=~post_df_adult$psu, 
-                     nest = T,
-                     data=post_df_adult,
-                     weights=post_df_adult$wt_int)
-
 # A new dataframe is created to capture population level prevalence of different BMI categories in each year and is saved as a dataframe
-bmi_change = rbind(
-  post_df_adult %>% 
+bmi_change_3 = rbind(
+  post_df_adult_3 %>% 
     count(bmi_5_class, wt = wt_int) %>% 
     mutate(freq = n/sum(n)*100,
            type = "Year 5") %>% 
     rename(BMI = bmi_5_class),
-  post_df_adult %>% 
+  post_df_adult_3 %>% 
     count(bmi_4_class, wt = wt_int) %>% 
     mutate(freq = n/sum(n)*100,
            type = "Year 4") %>% 
     rename(BMI = bmi_4_class),
-  post_df_adult %>% 
+  post_df_adult_3 %>% 
     count(bmi_3_class, wt = wt_int) %>% 
     mutate(freq = n/sum(n)*100,
            type = "Year 3") %>% 
     rename(BMI = bmi_3_class),
-  post_df_adult %>% 
+  post_df_adult_3 %>% 
     count(bmi_2_class, wt = wt_int) %>% 
     mutate(freq = n/sum(n)*100,
            type = "Year 2") %>% 
     rename(BMI = bmi_2_class),
-  post_df_adult %>% 
+  post_df_adult_3 %>% 
     count(bmi_1_class, wt = wt_int) %>% 
     mutate(freq = n/sum(n)*100,
            type = "Year 1") %>% 
     rename(BMI = bmi_1_class),
-  post_df_adult %>% 
+  post_df_adult_3 %>% 
     count(bmi_class, wt = wt_int) %>% 
     mutate(freq = n/sum(n)*100,
            type = "Year 0") %>% 
     rename(BMI = bmi_class))
 
-bmi_change = bmi_change %>%
+bmi_change_3 = bmi_change_3 %>%
   mutate(BMI = factor(BMI, levels = c("underweight", "normal", "overweight", "obese", "morbidly obese"))) %>%
   as.data.frame()
 
 
-bmi_change_year = bmi_change %>%
+bmi_change_year_3 = bmi_change_3 %>%
   select(-c(n)) %>%
   pivot_wider(., names_from = BMI, values_from = freq) %>%
   select(type, underweight, normal, overweight, obese, `morbidly obese`)
 
-bmi_change_year
+bmi_change_year_3
+
+
+
+
 
 # bmi year on year prevalence:
 write.csv(bmi_change_year, file = "outputs/policy_6/policy_6_updated_1_adult_england.csv")
@@ -420,22 +413,22 @@ result_df = read_csv(here("outputs/policy_6/policy_6_updated_1_adult_england_bmi
 
 
 
-number_treated = post_df_adult %>%
+number_treated = post_df_adult_3 %>%
   select(wt_int, intervention_year1, intervention_year2, intervention_year3, intervention_year4, intervention_year5) %>%
   group_by(intervention_year1, intervention_year2, intervention_year3, intervention_year4, intervention_year5) %>%
   mutate(wt_val = sum(wt_int))
 
 
-df_long <- post_df_adult %>%
+df_long <- post_df_adult_3 %>%
   select(wt_int, intervention_year1, intervention_year2, intervention_year3, intervention_year4, intervention_year5) %>%
-pivot_longer(cols = starts_with("intervention"),
-             names_to = "intervention",
-             values_to = "value")
+  pivot_longer(cols = starts_with("intervention"),
+               names_to = "intervention",
+               values_to = "value")
 
 # Summarize the data
 summary_table <- df_long %>%
   group_by(intervention, value) %>%
-  summarize(sum_wt_int = sum(wt_int, na.rm = TRUE))
+  dplyr::summarize(sum_wt_int = sum(wt_int, na.rm = TRUE))
 
 
 summary_table <- result_df %>%

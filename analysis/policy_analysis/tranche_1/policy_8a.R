@@ -95,6 +95,10 @@ policy_8a_impact_england_child = calculate_bmi_from_eichange_hox(df = read_csv(h
                                                                  nation = "England", 
                                                                  tags = "Policy 8a" )
 
+policy_8a_impact_england_child_1 = calculate_bmi_from_eichange_hox(df = read_csv(here("inputs/processed/hse_2019_children.csv")),
+                                                                 daily_ei_change = 67,
+                                                                 nation = "England", 
+                                                                 tags = "Policy 8a" )
 
 
 
@@ -114,6 +118,10 @@ ggsave(here("outputs/policy_8a/policy_8a_impact_England_child.png"),
 # policy_8a_impact_england_child$bmi_percent_prevalence
 
 policy_8a_impact_england_child$bmi_prevalence_table
+test_df = policy_8a_impact_england_child$bmi_prevalence_table
+test_df_1 = policy_8a_impact_england_child_1$bmi_prevalence_table
+
+
 
 table_outputs[["england_child"]] = policy_8a_impact_england_child$bmi_prevalence_table
 

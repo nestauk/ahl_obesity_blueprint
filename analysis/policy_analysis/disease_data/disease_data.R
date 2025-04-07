@@ -6,7 +6,7 @@ library(tidyverse)
 library(readxl)
 library(writexl)
 # Set the directory path containing the CSV files
-folder_path <- "C:/Users/Anish.Chacko/Downloads/ci_avoided"
+folder_path <- "C:/Users/Anish.Chacko/Downloads/ci_avoided_update"
 
 # List all CSV files in the folder
 file_list <- list.files(path = folder_path, pattern = "*.csv", full.names = TRUE)
@@ -57,7 +57,7 @@ create_new_avoided <- function(data, years) {
     # new_avoided_cols_list[[year-2018]] = new_avoided_col
     
     data <- data %>%
-      mutate(!!new_avoided_col := ifelse((!!sym(avoided_col) - !!sym(ci_col)) < 0 & (!!sym(avoided_col) + !!sym(ci_col)) > 0, paste0("[", round(!!sym(avoided_col),0), "]*"), round(!!sym(avoided_col),0)))
+      mutate(!!new_avoided_col := ifelse((!!sym(avoided_col) - !!sym(ci_col)) < 0 & (!!sym(avoided_col) + !!sym(ci_col)) > 0, paste0("NS [", round(!!sym(avoided_col),0), "]*"), round(!!sym(avoided_col),0)))
     
   }
   
@@ -80,7 +80,7 @@ df_result <- create_new_avoided(data = avoided_df, years = years)
 
 
 
-write_xlsx(path = paste0(folder_path, "/disease_data_latest.xlsx"), x = df_result)
+write_xlsx(path = paste0(folder_path, "/disease_data_latest_1.xlsx"), x = df_result)
 
 
 

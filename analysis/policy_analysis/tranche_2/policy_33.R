@@ -48,14 +48,29 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 
 # Based on [A] and [C], the intake change = effect size - compensation effect = 78 kcals per person per day
 
-policy_33_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                             intake_change = -50,
-                                                             implmentation_duration = 365*5)
+# policy_33_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
+#                                                              intake_change = -50,
+#                                                              implmentation_duration = 365*5)
 
 policy_33_impact_england_adult_1 = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
                                                              intake_change = -78,
                                                              implmentation_duration = 365*5)
 
+# policy_33_impact_england_adult_2 = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
+#                                                              intake_change = -63,
+#                                                              implmentation_duration = 365*5)
+# 
+# policy_33_impact_england_adult_3 = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
+#                                                                intake_change = -38,
+#                                                                implmentation_duration = 365*5)
+# 
+# table_38 = policy_33_impact_england_adult_3$bmi_percent_prevalence
+# 
+# table_50 = policy_33_impact_england_adult$bmi_percent_prevalence
+# 
+# table_63 = policy_33_impact_england_adult_2$bmi_percent_prevalence
+# 
+# table_78 = policy_33_impact_england_adult_1$bmi_percent_prevalence
 
 # 1.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
