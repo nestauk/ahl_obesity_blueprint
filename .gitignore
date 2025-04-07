@@ -3,7 +3,17 @@
 .RData
 .Ruserdata
 .RDataTmp
+.xlsx
+.csv
+.png
+.xls
+.txt
+.png
+
 
 
 /inputs/data/*
+/outputs/
+
+
 
