@@ -1,8 +1,15 @@
 
+# setup
+rm(list = ls())
+gc()
+# library(tidyverse)
+# library(here)
+# library(aws.s3)
+
+source(file = "requirements.R")
 
 
 # add access information
-
 
 # Policy 8b: Saving required files:
 
@@ -247,7 +254,7 @@ final_df_1 = in_home_data %>%
   left_join(product_grouping_phe, by = key)
 
 # check that the no products with missing phe_group_final:
-unique(final_df$phe_groups_final)
+unique(final_df_1$phe_groups_final)
 
 # creating a column in the purchase data file with the max calories permitted as per guidance.
 # then we create a variable where the energy content of products is updated to the maximum kcal per product as per guidance.

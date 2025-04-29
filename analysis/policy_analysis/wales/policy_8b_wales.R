@@ -33,6 +33,26 @@ source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
 
+# add access information
+
+ 
+# Getting file with the share of kcal purchases from different modes
+purchase_mode <- s3read_using(FUN = read.csv,
+                                  bucket = "ahl-obesity-blueprint",
+                                  object = "inputs/processed/policy_8b/purchase_mode_aggregated.csv")
+
+# from this we know that ~11% of the purchases are done via restaurant specific delivery apps or 
+# third party delivery apps. This is approximately 33 kcals per person per day.
+
+# The evidence from the rapid review  
+# (https://docs.google.com/document/d/1xYDMQdCBmFuSpww7D6qXdRaNTsfEbG5hByr1HBhVd3Q/edit?usp=sharing) 
+# (quality assured by the EAG) showed that the intervention led to reduction in daily calorie intake
+# by 38 kcals for adults. This relates to about 1700 kcals of peoples diets.
+# Nesta's analysis of OOH sector purchase data has shown that 11% of the kcals purchased in the OOH sector
+# is via delivery apps and restaurant owned apps.
+# Therefore, a policy affecting 11% of ~300 kcals purchased in the OOH sector, i.e. 33 kcals, would lead to
+# 0.71 kcal reduction in daily calorie intake.
+
 
 table_outputs = list()
 
@@ -55,8 +75,8 @@ df_wales_cleaned = read_csv(here("inputs/processed/nsw_2019.csv"))
 # Based on [A] and [C], the intake change = effect size - compensation effect = -0.55 kcals
 
 policy_8b_impact_wales_adult = calculate_bmi_from_eichange(df = df_wales_cleaned,
-                                                             intake_change = -0.55,
-                                                             implmentation_duration = 365*5, tags = "Wales | Policy 8b")
+                                                           intake_change = -0.55,
+                                                           implmentation_duration = 365*5, tags = "Wales | Policy 8b")
 
 
 # 1.3. Outputs
@@ -89,101 +109,6 @@ write.csv(policy_8b_impact_wales_adult$post_df, file = "outputs/policy_8b/policy
 
 
 
-
-
-
-
-
-# add access information
-
-
-# Getting file with the latest channel labels
-channel_labelling <- s3read_using(FUN = read.csv,
-                                  bucket = "ahl-private-data",
-                                  object = "ooh/processed/channel_labelling_v1.csv") %>%
-  dplyr::select(shopcode, store_name, channel_level_1, channel_level_2 ) %>%
-  rename(updated_channel_level_2 = channel_level_2,
-         updated_channel_level_1 = channel_level_1)
-
-
-
-# Reading in OOH purchase datafile into a dataframe and updating with new channel variables:
-ooh_purchase_df <- s3read_using(FUN = read.csv,
-                                bucket = "ahl-private-data",
-                                object = "ooh/processed/descriptive_analysis/purchases_trip_analysis_with_spend_v2.csv") %>%
-  mutate(nation = case_when(region %in% c("South East", "London", "North East",
-                                          "South West", "West Midlands", "East Midlands",
-                                          "East of England", "Yorkshire and The Humber", "North West") ~ "England",
-                            region %in% c("Wales") ~ "Wales",
-                            region %in% c("Scotland") ~ "Scotland",
-                            TRUE ~ "Unknown"),
-         match_key = paste(channel, shop.description, sep = "_")) %>%
-  left_join(channel_labelling, by = c("shop_code" =  "shopcode"))
-
-
-hh_demog = s3read_using(FUN = read.csv,
-                        bucket = "ahl-private-data",
-                        object = "ooh/processed/household_demog_table.csv")
-
-
-
-# Updating dataframe with purchase mode variable, total spend and kcal
-processed_purchased_df = ooh_purchase_df %>%
-  mutate(trip_num = paste(hh_no, ind_no, week_no, day, trip_id, sep = "_")) %>%
-  mutate(purchase_mode = case_when(delivery.type %in% c("Just Eat - Delivery", "Deliveroo - Delivery", "Uber Eats - Delivery", "Just Eat - Collection",
-                                                        "Deliveroo - Collection") ~ "delivery_apps",
-                                   delivery.type %in% c("Restaurant's Web App Delivery",
-                                                        "Restaurant's Web App - Collection") ~ "restaurant_app_delivery",
-                                   delivery.type %in% c("Ordered at Counter - Collection") ~ "ordered_at_counter",
-                                   delivery.type %in% c("Rang to Order - Collection", "Rang to Order - Delivery") ~ "rang_to_order",
-                                   delivery.type %in% c("Not a Takeaway") ~ "in_premise")) %>%
-  mutate(total_spend = spend*gross_up_weight) %>%
-  mutate(kcal_tot = kcal_serving_combined * gross_up_weight * quantity) %>%
-  mutate(hh_ind = paste(hh_no, ind_no, sep = "_")) %>%
-  left_join(hh_demog, by = "hh_ind") %>%
-  mutate(date_ymd = ymd(date)) %>%
-  mutate(month_no = month(date_ymd),
-         year_no = year(date_ymd),
-         day_no = date(date_ymd)) %>%
-  filter(Age > 17) %>%
-  filter(year_no == 2021) %>%
-  filter(month_no %in% c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
-
-
-
-processed_purchased_df_4_12 = ooh_purchase_df %>%
-  mutate(trip_num = paste(hh_no, ind_no, week_no, day, trip_id, sep = "_")) %>%
-  mutate(purchase_mode = case_when(delivery.type %in% c("Just Eat - Delivery", "Deliveroo - Delivery", "Uber Eats - Delivery", "Just Eat - Collection",
-                                                        "Deliveroo - Collection") ~ "delivery_apps",
-                                   delivery.type %in% c("Restaurant's Web App Delivery",
-                                                        "Restaurant's Web App - Collection") ~ "restaurant_app_delivery",
-                                   delivery.type %in% c("Ordered at Counter - Collection") ~ "ordered_at_counter",
-                                   delivery.type %in% c("Rang to Order - Collection", "Rang to Order - Delivery") ~ "rang_to_order",
-                                   delivery.type %in% c("Not a Takeaway") ~ "in_premise")) %>%
-  mutate(total_spend = spend*gross_up_weight) %>%
-  mutate(kcal_tot = kcal_serving_combined * gross_up_weight * quantity) %>%
-  mutate(hh_ind = paste(hh_no, ind_no, sep = "_")) %>%
-  left_join(hh_demog, by = "hh_ind") %>%
-  mutate(date_ymd = ymd(date)) %>%
-  mutate(month_no = month(date_ymd),
-         year_no = year(date_ymd),
-         day_no = date(date_ymd)) %>%
-  filter(Age > 17) %>%
-  filter(year_no == 2021) %>%
-  filter(month_no %in% c(4, 5, 6, 7, 8, 9, 10, 11, 12))
-
-
-purchase_mode_df = processed_purchased_df %>%
-  group_by(purchase_mode) %>%
-  summarise(purchase_mode_wise_kcal = sum(kcal_serving_combined * gross_up_weight * quantity)) %>%
-  mutate(kcal_percent_share = (purchase_mode_wise_kcal/sum(purchase_mode_wise_kcal)) * 100)
-
-
-
-purchase_mode_df_4_12 = processed_purchased_df_4_12 %>%
-  group_by(purchase_mode) %>%
-  summarise(purchase_mode_wise_kcal = sum(kcal_serving_combined * gross_up_weight * quantity)) %>%
-  mutate(kcal_percent_share = (purchase_mode_wise_kcal/sum(purchase_mode_wise_kcal)) * 100)
 
 
 
