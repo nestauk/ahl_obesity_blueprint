@@ -12,8 +12,8 @@
 
 
 
-/inputs/data/*
-/outputs/*
+/inputs/
+/outputs/
 
 
 
