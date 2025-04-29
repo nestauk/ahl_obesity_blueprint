@@ -1,24 +1,33 @@
+# default implementation of Hall model using kcal change and sodium change as inputs:
 
+# clearing the environment
 rm(list = ls())
 
+# installing the hall model package:
 devtools::install_github("INSP-RH/bw")
 
+# adding in necessary libraries:
 library(tidyverse)
 library(here)
 library(bw)
 library(survey)
 library(Hmisc)
 
+# reading in population health survey data:
 df = read_csv(here("inputs/processed/hse_2019_1.csv"))
 
-# intake_change = -38 # kcals
+# chnage in sodium intake
 na_intake_change = -5 # mg per day of salt
 
-# kcal per day of calories
+
+# change in kcal intake per day
+# can give same or different values for intake change in different BMI groups:
 intake_change_ov = -0
 intake_change_ob = -0     
 intake_change_mob = -0    
 
+# this is the duration for which the we will simulate the weight loss
+# set to five year, but can change as per requirement to how many every years required.
 implmentation_duration = 365 * 5 # five years
 
 
@@ -34,14 +43,14 @@ df = df %>%  # processed dataset with variables such as height, weight, bmi, dai
 
 
 
-# creating the matrix (for the duration of implementation of the policy) with change in daily energy intake due to the policy
+# creating the matrix (for the duration of implementation of the policy) with change in daily energy
+# intake due to the policy
 ei_change <- t(apply(df, 1, function(x) rep(as.numeric(x["intake_diff"]), implmentation_duration)))
 
 
 
-# A matrix of change in salt consumption set to zero is another input to the model. This is set to zero as
-# information on change in salt consumption is not available from our rapid reviews
-# nachange <- t(apply(df, 1, function(x) rep(as.numeric(x["intake_diff"]), implmentation_duration)))
+# A matrix of change in salt consumption set to zero is another input to the model. This is set to the 
+# sodium intake change or duration of policy
 nachange <- t(apply(df, 1, function(x) rep(as.numeric(x["na_intake_diff"]), implmentation_duration)))
 
 # the bw package has a function called [adult_weight] that takes the following inputs:
@@ -159,127 +168,10 @@ bmi_change = bmi_change %>%
 
 
 # Output 2: Table of year wise prevalence of obesity
-
+# open and view this table to see the per year reduction in prevalence:
 bmi_change_year = bmi_change %>%
   select(-c(n)) %>%
   pivot_wider(., names_from = BMI, values_from = freq) %>%
   select(type, underweight, normal, overweight, obese, `morbidly obese`)
 
 bmi_change_year
-
-
-
-
-
-## hse 2019 input data:
-
-df_2019_adult <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", header = TRUE) %>% 
-  # browser() %>%
-  filter(WtVal>0 & HtVal>0 & Age35g >=7 ) %>% # remove missing height and weight and children; 
-  mutate(age = case_when(Age35g == 7 ~ ((16+19)/2) + 0.5,
-    Age35g == 8 ~ (20+24)/2, 
-    Age35g == 9 ~ (25+29)/2,
-    Age35g == 10 ~ (30+34)/2,
-    Age35g == 11 ~ (35+39)/2,
-    Age35g == 12 ~ (40+44)/2,
-    Age35g == 13 ~ (45+49)/2,
-    Age35g == 14 ~ (50+54)/2,
-    Age35g == 15 ~ (55+59)/2,
-    Age35g == 16 ~ (60+64)/2,
-    Age35g == 17 ~ (65+69)/2,
-    Age35g == 18 ~ (70+74)/2,
-    Age35g == 19 ~ (75+79)/2,
-    Age35g == 20 ~ (80+84)/2,
-    Age35g == 21 ~ (85+89)/2,
-    Age35g == 22 ~ (90),
-    TRUE ~ 0)) %>%
-  # browser() %>%
-  mutate(age_grp = case_when(#Age35g == 7 ~ (16+19)/2,
-    Age35g == 8 ~ "20-24", 
-    Age35g == 9 ~ "25-29",
-    Age35g == 10 ~ "30-34",
-    Age35g == 11 ~ "35-39",
-    Age35g == 12 ~ "40-44",
-    Age35g == 13 ~ "45-49",
-    Age35g == 14 ~ "50-54",
-    Age35g == 15 ~ "55-59",
-    Age35g == 16 ~ "60-64",
-    Age35g == 17 ~ "65-69",
-    Age35g == 18 ~ "70-74",
-    Age35g == 19 | Age35g == 20 | Age35g == 21 | Age35g == 22  ~ "75+",
-    TRUE ~ "NA")) %>%
-  rename(weight = WtVal,
-         height = HtVal,
-         sex = Sex,
-         bmi = BMIVal,
-         qimd = qimd19,
-         number_children = Nofch3,
-         income_JSA = srcin05d, # Job Seekers Allowance
-         income_IS = srcin07d,  # Income Support
-         income_PC = srcin08d,  # Pension Credit
-         income_CTC = srcin10d, # Child Tax Credit
-         income_UC = srcin14d,  # Universal Credit 
-         ethnicity = origin2,
-         diabetes = diabete2,
-         cardiovd = CardioTakg2,
-         id = SerialA,
-         psu = PSU_SCR,
-         strata = cluster94) %>%
-  # browser() %>%
-  mutate(income_support_status = case_when((income_JSA == 1 | income_IS == 1 | income_PC == 1 | income_CTC == 1 | income_UC == 1) ~ 1,
-                                           TRUE ~ 0)) %>%
-  mutate(children_updated = case_when(number_children == 0 ~ 0,
-                                      TRUE ~ 1)) %>%
-  dplyr::select(id, weight, height, age_grp, age, sex, bmi, qimd, children_updated, income_support_status, ethnicity, diabetes, cardiovd, wt_int, psu, strata )  %>% # select variables needed
-  mutate(qimd_updated = case_when((qimd == 4 | qimd == 5) ~ 1,
-                                  TRUE ~ 0)) %>%
-  mutate(pal = 1.6, # pal assumed to be 1.6 for the entire population to indicate a sendentary/ light active lifestyle
-         rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
-                         TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # sex = 2 female; rmr is calculated using Mifflin St Jeor Equations from Mifflin et al (1990)
-  mutate(bmi_class = case_when(bmi <= 18.5 ~ "underweight",
-                               bmi > 18.5 & bmi < 25 ~ "normal",
-                               bmi >= 25 & bmi < 30 ~ "overweight",
-                               bmi >= 30 & bmi < 40 ~ "obese",
-                               bmi >= 40 ~ "morbidly obese",
-                               TRUE ~ "NA")) %>% 
-  # browser() %>%
-  mutate(intake = pal*rmr)  # calculating value of energy intake 
-
-
-bmi_class_share = df_2019_adult %>% 
-  count(bmi_class, wt = wt_int) %>% 
-  mutate(freq = n/sum(n)*100)
-
-# mean intake by bmi class:
-mean_intake_df = df_2019_adult %>%
-  group_by(bmi_class) %>%
-  summarise(intakeM = round(wtd.mean(intake, weight = wt_int),1)) 
-
-
-# mean intake for all living with excess weight
-mean_intake_excess_weight = df_2019_adult %>%
-  filter(bmi_class %in% c("overweight", "obese", "morbidly obese")) %>%
-  summarise(intakeM = round(wtd.mean(intake, weight = wt_int),1)) %>%
-  as.numeric()
-
-# mean intake for the full population
-mean_intake_pop = df_2019_adult %>%
-  summarise(intakeM = round(wtd.mean(intake, weight = wt_int),1)) %>%
-  as.numeric()
-
-# updating the mean intake df with excess weight and population mean intake values
-mean_intake_df = mean_intake_df %>%
-  add_row(bmi_class = c("excess weight - mean", "population - mean"),
-          intakeM = c(mean_intake_excess_weight, mean_intake_pop))
-
-
-
-write_csv(df_2019_adult, here("inputs/processed/hse_2019_1.csv"))
-# print("Output csv with processed data is saved here: inputs/processed/hse_2019.csv" )
-
-
-df_2018 = read.table("C:/git/ahl_prevention/data/hse_2018.tab", sep = "\t", header = TRUE)
-
-write.csv(df_2018, "C:/git/ahl_prevention/data/hse_2018.csv", row.names = FALSE)
-
-test_df_2018 = read.csv(file = "C:/git/ahl_prevention/data/hse_2018.csv", header = TRUE)
