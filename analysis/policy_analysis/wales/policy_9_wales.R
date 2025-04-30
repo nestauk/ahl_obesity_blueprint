@@ -23,172 +23,23 @@ source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
 
-# Step 1: Estimating the impact of the policy using purchase data:
-
-# access info
-
-# add access info
-
-
 gb_pop_18 = 51718632
 days_model = 275
 
+# Step 1: Estimating the impact of the policy using aggregated product purchase data:
 
-# Getting file with the latest channel labels
-channel_labelling <- s3read_using(FUN = read.csv,
-                                  bucket = "ahl-private-data",
-                                  object = "ooh/processed/channel_labelling_v1.csv") %>%
-  dplyr::select(shopcode, store_name, channel_level_1, channel_level_2 ) %>%
-  rename(updated_channel_level_2 = channel_level_2,
-         updated_channel_level_1 = channel_level_1)
+# access info
 
 
-
-
-# Reading purchase datafile into a dataframe and updating with new channel variables:
-ooh_purchase_df <- s3read_using(FUN = read.csv,
-                                bucket = "ahl-private-data",
-                                object = "ooh/processed/descriptive_analysis/purchases_trip_analysis_with_spend_v2.csv") %>%
-  mutate(nation = case_when(region %in% c("South East", "London", "North East",
-                                          "South West", "West Midlands", "East Midlands",
-                                          "East of England", "Yorkshire and The Humber", "North West") ~ "England",
-                            region %in% c("Wales") ~ "Wales",
-                            region %in% c("Scotland") ~ "Scotland",
-                            TRUE ~ "Unknown"),
-         match_key = paste(channel, shop.description, sep = "_")) %>%
-  left_join(channel_labelling, by = c("shop_code" =  "shopcode"))
-
-# reading in household demographic information:
-hh_demog = s3read_using(FUN = read.csv,
-                        bucket = "ahl-private-data",
-                        object = "ooh/processed/household_demog_table.csv")
-
-
-
-# Updating dataframe with purchase mode variable, total spend and kcal
-# then joining in the housegold demographic data and filtering to include only what is in scope as per the OOH Analysis report:
-# (1) transactions for those aged 18 and over
-# (2) transactions in the months April to December 2021
-processed_purchased_df = ooh_purchase_df %>%
-  mutate(trip_num = paste(hh_no, ind_no, week_no, day, trip_id, sep = "_")) %>%
-  mutate(purchase_mode = case_when(delivery.type %in% c("Just Eat - Delivery", "Deliveroo - Delivery", "Uber Eats - Delivery", "Just Eat - Collection",
-                                                        "Deliveroo - Collection") ~ "delivery_apps",
-                                   delivery.type %in% c("Restaurant's Web App Delivery",
-                                                        "Restaurant's Web App - Collection") ~ "restaurant_app_delivery",
-                                   delivery.type %in% c("Ordered at Counter - Collection") ~ "ordered_at_counter",
-                                   delivery.type %in% c("Rang to Order - Collection", "Rang to Order - Delivery") ~ "rang_to_order",
-                                   delivery.type %in% c("Not a Takeaway") ~ "in_premise")) %>%
-  mutate(total_spend = spend*gross_up_weight) %>%
-  mutate(kcal_tot = kcal_serving_combined * gross_up_weight * quantity) %>%
-  mutate(hh_ind = paste(hh_no, ind_no, sep = "_")) %>%
-  left_join(hh_demog, by = "hh_ind") %>%
-  mutate(date_ymd = ymd(date)) %>%
-  mutate(month_no = month(date_ymd),
-         year_no = year(date_ymd),
-         day_no = date(date_ymd)) %>%
-  filter(Age > 17) %>%
-  filter(year_no == 2021) %>%
-  filter(month_no %in% c(4, 5, 6, 7, 8, 9, 10, 11, 12)) #1, 2, 3,
-
-# checking the kcal per person per day
-sum(processed_purchased_df$kcal_tot)/gb_pop_18/days_model
-
-
-# Grouping business channels into business groups:
-independent = c("full_service_independent", "fast_food_independent", "cafe_independent",
-                "pubs_bars_independent", "bakery_independent", "convenience_stores_independent",
-                "other_ooh", "supermarket_independent", "market_stalls", "leisure_venues", "workplace_canteen", 
-                "hospital_food_courts", "vending_machines", "education_settings")
-
-targets = c("pubs_bars_chain", "fast_food_chain", "full_service_chain", 
-            "bakery_chain", "cafe_chain", "cafe_dessert")
-
-retailers = c("supermarket_major", "convenience_stores_chain", "chemists", "discounters")
-
-chain = c("pubs_bars_chain", "fast_food_chain", "full_service_chain", 
-          "bakery_chain", "cafe_chain", "cafe_dessert", 
-          "hotels") #
-
-retailer_cafes = c("Asda Instore Cafe", "Debenhams Instore Café", "Tesco Cafe/Restaurant",
-                   "Sainsbury's Instore Cafe", "Morrisons Instore Cafe", "John Lewis Cafe/Restaurant",
-                   "Waitrose Instore Café", "M&S Instore Cafe")
-
-
-# Grouping products to match product categories as per the Calorie reduction guidelines:
-pizza = c("Pizza", "Pizza (slice)")
-
-pastry = c("Croissants", "Danish Pastries", "Pasties", "Savoury Pastry")
-
-sandwich = c("Breakfast roll / wrap / sandwich", "Sandwiches and wraps")
-
-other = c("Apple", "Banana", "Blueberries", "Cake Bars", "Cakes",
-          "Cherries", "Chewing Gum", "Chewy Bars", "Chilled Prepared Fruit",
-          "Chocolate Assortments", "Chocolate Bars", "Chocolate Biscuit Bars",
-          "Chocolate Confectionery", "Chocolate Spread", "Clementines",
-          "Coffee", "Cookie", "Cream", "Cream Filled Eggs", 
-          "Crunchy Bars", "Dips / Condiments", "Doughnuts", "Drink - fruit squash",
-          "Drink - mixer", "Energy Drinks", "Flapjack", "Flavoured Milk",
-          "Fruit Cherries+Peel", "Fruit Juice/Drink", "Fruit Snacking",
-          "Fruit+Nut Snacking", "Grapes", "Ice Cream", "Iced Coffee", "Iced Tea",
-          "Jams / Marmalades / Spreads / Honey", "Kiwi Fruit", "Melon", "Milk",
-          "Mineral Water", "Mini Eggs", "Mozzarella Dpprs/Chs Side", "Muffins",
-          "Nectarine", "Non Barcoded Prprd Fruit", "Nuts", "Olives", "Orange",
-          "Other Fruit", "Other Hot Drinks", "Other Sweet", "Pain Au Chocolate",
-          "Peach", "Pear", "Pineapple", "Plum", "Raspberries", "Ready to Serve Custard",
-          "Ready to Serve Desserts", "Satsuma", "Sauces",
-          "Small Swiss Roll", "Small Tarts", "Soft drink - carbonated flavours", "Sports Drinks",
-          "Strawberries", "Sugar Candy", "Sugar Confectionery", "Sugar Fruits",
-          "Sugar Liquorice Allsorts", "Sugar Mints", "Sugar Toffees", "Tea", "Teacakes",
-          "Tinned Fruit", "Yoghurt Drinks And Juices")
-
-savoury_snack = c("Savoury Crackers+Biscuits", "Crisps")
-
-
-# adding a variable to include the new business groupings in the purchase df:
-purchase_df_categorised = processed_purchased_df %>%
-  mutate(test = case_when(updated_channel_level_1 %in% targets ~ "targets",
-                          TRUE ~ "not_targets")) %>%
-  mutate(type = case_when(updated_channel_level_1 %in% independent ~ "independent",
-                          updated_channel_level_1 %in% chain ~ "chain",
-                          updated_channel_level_1 %in% retailers ~ "retailer",
-                          TRUE ~ "neither")) %>%
-  mutate(type = case_when(store_name %in% retailer_cafes ~ "retailer",
-                          TRUE ~ type))
-
-# checking that the kcal per person per day is still 310.5 kcals
-sum(purchase_df_categorised$kcal_tot)/gb_pop_18/days_model
-
-# adding in the new product groupings in the purchase df:
-purchase_products_df_categorised = purchase_df_categorised %>%
-  mutate(product_category = case_when(kcal_serving_combined <=500 ~ "meal_side",
-                                      kcal_serving_combined > 500 ~ "meal",
-                                      TRUE ~ "to_update")) %>%
-  mutate(product_category = case_when(Combined.category.cleaned %in% pastry ~ "pastry",
-                                      Combined.category.cleaned %in% pizza ~ "pizza",
-                                      Combined.category.cleaned %in% sandwich ~ "sandwich",
-                                      Combined.category.cleaned %in% savoury_snack ~ "other",
-                                      Combined.category.cleaned %in% other ~ "other",
-                                      TRUE ~ product_category))
-
-# checking that the kcal per person per day is still 310.5 kcals:
-sum(purchase_products_df_categorised$pop_kcal)/ gb_pop_18/ days_model
-
-
-# grouping the df by store, product type and kcals:
-purchase_products_df_categorised_grouped = purchase_products_df_categorised %>%
-  group_by(store, type, product_category, kcal_serving_combined) %>%
-  summarise(cross_prod = sum(gross_up_weight*quantity)) %>%
-  mutate(kcal_serving_wtd = (kcal_serving_combined*cross_prod/ cross_prod),
-         kcal_serving_tot = kcal_serving_combined*cross_prod)
-
-# checking that the kcal per person per day is still 310.5 kcals:
-sum(purchase_products_df_categorised_grouped$kcal_serving_tot)/ gb_pop_18/ days_model
+ooh_aggregated_product_table <- s3read_using(FUN = read.csv,
+                                             bucket = "ahl-obesity-blueprint",
+                                             object = "inputs/processed/policy_9/ooh_aggregated_product_table.csv")
 
 
 # Categorising products based on kcal thresholds on Page 18 of Calorie reduction programme technical guidance:
 # Then, we adjust the kcal values of the products that are above the threshold to be just below the threshold.
 # Then, we recalculate the total kcal per product = kcal per serving * cross prod where cross prod = quantity * gross up weight
-purchase_products_df_categorised_grouped = purchase_products_df_categorised_grouped %>%
+purchase_products_df_categorised_grouped = ooh_aggregated_product_table %>%
   ungroup()%>%
   mutate(updated_product_category = case_when(product_category == "meal" & kcal_serving_wtd < 860 ~ "meal_less_860",
                                               product_category == "meal" & kcal_serving_wtd > 860 & kcal_serving_wtd < 1345~ "meal_over_860",
@@ -264,8 +115,8 @@ df_wales_cleaned = read.csv(here("inputs/processed/nsw_2019.csv"))
 # Based on [A] and [C], the intake change = effect size - compensation effect = -3.4 kcals
 
 policy_9_impact_wales_adult = calculate_bmi_from_eichange(df = df_wales_cleaned,
-                                                            intake_change = -3.4,
-                                                            implmentation_duration = 365*5, tags= "Wales | Policy 9")
+                                                          intake_change = -3.4,
+                                                          implmentation_duration = 365*5, tags= "Wales | Policy 9")
 
 
 
