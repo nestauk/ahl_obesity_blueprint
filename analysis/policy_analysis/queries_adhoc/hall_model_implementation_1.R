@@ -12,12 +12,12 @@ library(Hmisc)
 df = read_csv(here("inputs/processed/hse_2019_1.csv"))
 
 # intake_change = -38 # kcals
-na_intake_change = -5 # mg per day of salt
+na_intake_change = 0 # mg per day of salt
 
 # kcal per day of calories
-intake_change_ov = -0
-intake_change_ob = -0     
-intake_change_mob = -0    
+intake_change_ov = -50
+intake_change_ob = -50    
+intake_change_mob = -50    
 
 implmentation_duration = 365 * 5 # five years
 

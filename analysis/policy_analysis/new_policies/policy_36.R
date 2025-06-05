@@ -1,11 +1,9 @@
 
 #########################################################################################
-# MUP Policy Option 1: Implement a 65p minimum unit pricing on alcohol sold in Englad   #
+# Policy 36 (MUP): Implement a 65p minimum unit pricing on alcohol sold in England      #
 #########################################################################################
 
-
-# All details for this policy can be found here - https://docs.google.com/document/d/1dWnjV9dU5eSV3GdUpn45eQzampI3e3iz4SRJCnmsGHs/edit?usp=sharing
-# Option 1 is based on an estimation of daily kcals from alcohol based on 2018-19 Nielsen data
+# All details for this policy can be found here - MUP - estimating daily kcal reduction [https://docs.google.com/document/d/1dWnjV9dU5eSV3GdUpn45eQzampI3e3iz4SRJCnmsGHs/edit?usp=sharing]
 
 rm(list = ls())
 gc()
@@ -15,99 +13,24 @@ library(bw)
 library(survey)
 library(Hmisc)
 
+source(file = "post_processing/post_processing.R")
+source(file = "requirements.R")
+source(file = "pre_processing/pre_processing_adult.R")
+source(file = "models/adult_model_calorie.R")
 
 table_outputs = list() # creating a list of table outputs to be saved as an excel file
 
-df_2019_adult <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", header = TRUE) %>% 
-  # browser() %>%
-  filter(WtVal>0 & HtVal>0 & Age35g >7 ) %>% # remove missing height and weight and children; 
-  mutate(age = case_when(Age35g == 7 ~ ((16+19)/2) + 0.5,
-    Age35g == 8 ~ (20+24)/2, 
-    Age35g == 9 ~ (25+29)/2,
-    Age35g == 10 ~ (30+34)/2,
-    Age35g == 11 ~ (35+39)/2,
-    Age35g == 12 ~ (40+44)/2,
-    Age35g == 13 ~ (45+49)/2,
-    Age35g == 14 ~ (50+54)/2,
-    Age35g == 15 ~ (55+59)/2,
-    Age35g == 16 ~ (60+64)/2,
-    Age35g == 17 ~ (65+69)/2,
-    Age35g == 18 ~ (70+74)/2,
-    Age35g == 19 ~ (75+79)/2,
-    Age35g == 20 ~ (80+84)/2,
-    Age35g == 21 ~ (85+89)/2,
-    Age35g == 22 ~ (90),
-    TRUE ~ 0)) %>%
-  # browser() %>%
-  mutate(age_grp = case_when(#Age35g == 7 ~ (16+19)/2,
-    Age35g == 8 ~ "20-24", 
-    Age35g == 9 ~ "25-29",
-    Age35g == 10 ~ "30-34",
-    Age35g == 11 ~ "35-39",
-    Age35g == 12 ~ "40-44",
-    Age35g == 13 ~ "45-49",
-    Age35g == 14 ~ "50-54",
-    Age35g == 15 ~ "55-59",
-    Age35g == 16 ~ "60-64",
-    Age35g == 17 ~ "65-69",
-    Age35g == 18 ~ "70-74",
-    Age35g == 19 | Age35g == 20 | Age35g == 21 | Age35g == 22  ~ "75+",
-    TRUE ~ "NA")) %>%
-  rename(weight = WtVal,
-         height = HtVal,
-         sex = Sex,
-         bmi = BMIVal,
-         qimd = qimd19,
-         number_children = Nofch3,
-         income_JSA = srcin05d, # Job Seekers Allowance
-         income_IS = srcin07d,  # Income Support
-         income_PC = srcin08d,  # Pension Credit
-         income_CTC = srcin10d, # Child Tax Credit
-         income_UC = srcin14d,  # Universal Credit 
-         ethnicity = origin2, # ethnicity
-         diabetes = diabete2, # diabetes
-         cardiovd = CardioTakg2, # cardiovascular disease
-         alcohol_overall = alcbase_19, # alcohol consumption (see data dictionary for variable info - https://docs.google.com/spreadsheets/d/1oSHJFYu5ht8ioHIvL-gS5uFvQ8rPfs9H-ZRPMu16riQ/edit?usp=sharing)
-         alcohol_male = alcbsmt_19, # alcohol consumption male
-         alcohol_female = alcbswt_19, # alcohol consumption female 
-         id = SerialA,
-         psu = PSU_SCR,
-         strata = cluster94) %>%
-  # browser() %>%
-  mutate(alc_updated = case_when(alcohol_overall >=1 & alcohol_overall<=3 ~ "non_drinker",
-                                 alcohol_overall >=4 & alcohol_overall<=7 ~ "low_risk",
-                                 alcohol_overall >=8 & alcohol_overall<=11 ~ "inc_risk",
-                                 alcohol_overall >=12 ~ "high_risk",
-                                 TRUE ~ "NA")) %>%
-  mutate(alc_female_updated = case_when(alcohol_female >=1 & alcohol_female<=2 ~ "non_drinker",
-                                        alcohol_female >=3 & alcohol_female<=5 ~ "low_risk",
-                                        alcohol_female >=6 & alcohol_female<=7 ~ "inc_risk",
-                                        alcohol_female >=8 ~ "high_risk",
-                                       TRUE ~ "NA")) %>%
-  mutate(alc_male_updated = case_when(alcohol_male >=1 & alcohol_male<=2 ~ "non_drinker",
-                                      alcohol_male >=3 & alcohol_male<=5 ~ "low_risk",
-                                      alcohol_male >=6 & alcohol_male<=7 ~ "inc_risk",
-                                      alcohol_male >=8 ~ "high_risk",
-                                        TRUE ~ "NA")) %>%
-  mutate(income_support_status = case_when((income_JSA == 1 | income_IS == 1 | income_PC == 1 | income_CTC == 1 | income_UC == 1) ~ 1,
-                                           TRUE ~ 0)) %>%
-  mutate(children_updated = case_when(number_children == 0 ~ 0,
-                                      TRUE ~ 1)) %>%
-  dplyr::select(id, weight, height, age_grp, age, sex, alc_updated, alcohol_overall, alc_male_updated,  alcohol_male, alc_female_updated, alcohol_female,  bmi, qimd, children_updated, income_support_status, ethnicity, diabetes, cardiovd, wt_int, psu, strata )  %>% # select variables needed
-  mutate(qimd_updated = case_when((qimd == 4 | qimd == 5) ~ 1,
-                                  TRUE ~ 0)) %>%
-  mutate(pal = 1.6, # pal assumed to be 1.6 for the entire population to indicate a sendentary/ light active lifestyle
-         rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
-                         TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # sex = 2 female; rmr is calculated using Mifflin St Jeor Equations from Mifflin et al (1990)
-  mutate(bmi_class = case_when(bmi <= 18.5 ~ "underweight",
-                               bmi > 18.5 & bmi < 25 ~ "normal",
-                               bmi >= 25 & bmi < 30 ~ "overweight",
-                               bmi >= 30 & bmi < 40 ~ "obese",
-                               bmi >= 40 ~ "morbidly obese",
-                               TRUE ~ "NA")) %>% 
-  # browser() %>%
-  mutate(intake = pal*rmr)  # calculating value of energy intake 
+# reading in HSE 2019 data and preparing it for implementing the Hall Model
 
+# Cleaning the input/ baseline data:
+process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
+
+
+# reading in the cleaned processed baseline data file:
+df_2019_adult = read_csv(here("inputs/processed/hse_2019.csv"))
+
+
+# Estimating the effect size, i.e. reduction in energy intake per person
 
 # Based on calculations in the linked document above (see Table 4)
 # we assign change in energy intake depending on drinking behaviour measured by number of units of alcohol per week
@@ -121,8 +44,26 @@ ei_change_50 = -14
 # we set the bmi threshold as 25 as we would like to apply the change in energy intake only for those with a BMI >=25
 bmi_threshold = 25
 
+# Values and Labels for alcohol_overall [HSE variable = alcbase_19]
+# Value = 1.0	Label = Never drank
+# Value = 2.0	Label = Ex-drinker
+# Value = 3.0	Label = Trivial drinker
+# Value = 4.0	Label = Non-zero, but under 1
+# Value = 5.0	Label = 1-7
+# Value = 6.0	Label = Over 7-10
+# Value = 7.0	Label = Over 10-14
+# Value = 8.0	Label = Over 14-21
+# Value = 9.0	Label = Over 21-28
+# Value = 10.0	Label = Over 28-35
+# Value = 11.0	Label = Over 35-50
+# Value = 12.0	Label = Over 50
+# Value = -9.0	Label = Refused
+# Value = -8.0	Label = Don't know
+# Value = -1.0	Label = Not applicable
+
 # As discussed above the intake change is assigned based on if an individuals alcohol consumption per week and
 # their BMI status. If these two conditions are not met then their intake change is assigned '0'.
+
 df_2019_adult_final = df_2019_adult %>%
   mutate(intake_change = case_when(alcohol_overall %in% c(1,2,3) ~ ei_change_0,
                                    alcohol_overall %in% c(4,5,6,7) & bmi >= bmi_threshold ~ ei_change_0_14,
@@ -159,8 +100,6 @@ model_weight <- adult_weight(bw = df_2019_adult_final$weight,
                              EIchange = ei_change,
                              NAchange = nachange,
                              days = implmentation_duration)
-
-
 
 
 # Extracting BMI values from the model and joining them to the HSE dataset for further analysis 
@@ -253,6 +192,31 @@ bmi_change = bmi_change %>%
   as.data.frame()
 
 
+
+# post processing
+# extracting the reduction in obesity prevalence 
+
+annual_obesity_prevalence_england = extract_relative_change(data = bmi_change_year)
+
+# Relative reduction in obesity prevalence in England = 1%
+
+# Adding to table outputs:
+table_outputs[["annual_obesity_prevalence_eng"]] = annual_obesity_prevalence_england
+
+# Estimating the annual value to government (benefit):
+
+annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_england, 
+                                              cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
+                                              duration = MODEL_CONSTANTS$MODEL_DURATION)
+
+# Average annual value to government compared to baseline = £0.6 billions
+
+# Adding to table outputs:
+table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov
+
+
+
+
 # Outputs:
 
 # Output 1: Table of year wise prevalence of obesity
@@ -283,17 +247,19 @@ adult_bar_plot = bmi_change %>%
 adult_bar_plot
 
 
-ggsave(here("outputs/new_policies/mup_option_1/mup_option_1.png"), 
+ggsave(here("outputs/new_policies/policy_36/policy_36.png"), 
        plot = adult_bar_plot, 
        width = 10, 
        height = 6,
        bg='#ffffff')
 
 
-
 # Outputs 3: summary results and detailed individual table:
 # bmi year on year prevalence:
-write_xlsx(path = "outputs/new_policies/mup_option_1/policy_mup_1_updated_england.xlsx", x = table_outputs)
+write_xlsx(path = "outputs/new_policies/policy_36/policy_36.xlsx", x = table_outputs)
 
 # Output 3: Cost Modelling input files:
-write.csv(post_df_adult, file = "outputs/new_policies/mup_option_1/policy_mup_1_updated_england_bmi.csv")
+write.csv(post_df_adult, file = "outputs/new_policies/policy_36/policy_36_adult_england_bmi.csv")
+
+
+

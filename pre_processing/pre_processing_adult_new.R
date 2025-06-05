@@ -17,7 +17,7 @@ library(dplyr)
 
 # function to clean and save the raw health survey data for both adults and children
 
-process_clean_save = function(file_path, nation, population_group){
+up_process_clean_save = function(file_path, nation, population_group){
   
   if (nation %in% c("England", "Scotland") & population_group %in% c("Adult", "Children")) {
     
@@ -38,6 +38,7 @@ process_clean_save = function(file_path, nation, population_group){
       # browser()
       # Age35g is a categorical variable of 5 year age bands for 16+, smallest possible grouping from HSE 2019
       # Age35g == 8 indicates all those in age group 20-24 years
+
       df_2019_adult <- read.table(here(file_path), sep = "\t", header = TRUE) %>% 
         filter(WtVal>0 & HtVal>0 & Age35g >7 ) %>% # remove missing height and weight and children; 
         mutate(age = case_when(#Age35g == 7 ~ (16+19)/2,
@@ -84,9 +85,8 @@ process_clean_save = function(file_path, nation, population_group){
                income_UC = srcin14d,  # Universal Credit 
                ethnicity = origin2,
                diabetes = diabete2,
-               cardiovd = CardioTakg2,
-               alcohol_overall = alcbase_19,
                diabetes_type = TypeD,
+               cardiovd = CardioTakg2,
                hypertension = HyperTakg2,
                lipid = LipidTakg2,
                platlets = AntiPlaTakg2,
@@ -108,21 +108,20 @@ process_clean_save = function(file_path, nation, population_group){
         mutate(cardiovd = case_when(cardiovd == 1 ~ 1,
                                     TRUE ~ 0)) %>%
         mutate(hypertension = case_when(hypertension == 1 ~ 1,
-                                        TRUE ~ 0)) %>%
-        mutate(lipid = case_when(lipid == 1 ~ 1,
-                                 TRUE ~ 0)) %>%
-        mutate(platlets = case_when(platlets == 1 ~ 1,
                                     TRUE ~ 0)) %>%
+        mutate(lipid = case_when(lipid == 1 ~ 1,
+                                    TRUE ~ 0)) %>%
+        mutate(platlets = case_when(platlets == 1 ~ 1,
+                                 TRUE ~ 0)) %>%
         mutate(ace_inhibitors = case_when(ace_inhibitors == 1 ~ 1,
-                                          TRUE ~ 0)) %>%
+                                 TRUE ~ 0)) %>%
         mutate(diuretics = case_when(diuretics == 1 ~ 1,
-                                     TRUE ~ 0)) %>%
+                                 TRUE ~ 0)) %>%
         mutate(anti_diabetics = case_when(anti_diabetics == 1 ~ 1,
-                                          TRUE ~ 0)) %>%
+                                     TRUE ~ 0)) %>%
         mutate(metformin = case_when(metformin == 1 ~ 1,
                                      TRUE ~ 0)) %>%
-        
-        dplyr::select(id, weight, height, age_grp, age, sex, bmi, qimd, alcohol_overall, children_updated, income_support_status,
+        dplyr::select(id, weight, height, age_grp, age, sex, bmi, qimd, children_updated, income_support_status,
                       ethnicity, diabetes, diabetes_type, cardiovd, hypertension, lipid, platlets, ace_inhibitors,
                       diuretics, anti_diabetics, metformin,   wt_int, psu, strata )  %>% # select variables needed
         mutate(qimd_updated = case_when((qimd == 4 | qimd == 5) ~ 1,
@@ -138,10 +137,10 @@ process_clean_save = function(file_path, nation, population_group){
                                      TRUE ~ "NA")) %>% 
         mutate(intake = pal*rmr)  # calculating value of energy intake 
       
-      write_csv(df_2019_adult, here("inputs/processed/hse_2019.csv"))
-      print("Output csv with processed data is saved here: inputs/processed/hse_2019.csv" )
+      write_csv(df_2019_adult, here("inputs/processed/hse_2019_2.csv"))
+      print("Output csv with processed data is saved here: inputs/processed/hse_2019_2.csv" )
       
-
+      
     } else if (nation == "Scotland" & population_group == "Adult") {
       
       browser()
@@ -420,9 +419,9 @@ process_clean_save = function(file_path, nation, population_group){
       
       write_csv(df_2019_child_sc, here("inputs/processed/shes_2019_children.csv"))
       print("Output csv with processed data is saved here: inputs/processed/shes_2019_children.csv")
-
+      
     }
-
+    
   } else {
     
     # If the country is neither "England" nor "Scotland", print an error message
