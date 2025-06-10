@@ -17,11 +17,15 @@
 # Eligibility:
 #   Adults Age: ≥ 18; BMI Group: ≥ 30
 # 
-# Weight loss
-#   Effect size: 2.4 kgs at the end of 1 year after programme [Rapid review - https://docs.google.com/document/d/1K20dg2D-G9J6F439gegPRD8Mly58xSnJmGXJMto_GYY/edit?usp=sharing]
-# 
-# Weight regain = 0.32 kg per year (every year after treatment) [Source - (b)]
-# 
+# Weight loss = 3.5 kg after the programme (c)
+#   Effect size: 3.545 kgs at the end of 1 year after programme  Pg 927, Figure 1, section 6.1.2 of Hartmann-Boyce 2014 [https://pmc.ncbi.nlm.nih.gov/articles/PMC4233997/pdf/obr0015-0920.pdf]
+#     We take a weighted average of the effect sizes from different papers under Group-based Commercial, please see calculation of this below
+#
+# Weight regain = 0.46 kg per year (b)
+#   To calculate the weight regain we subtract the weight regain after the programme from the weight
+#   regain at the end of 5 years and divide it by 5 to get the mean weight regain per year.
+#
+#
 # Number of people treated:
 #   We use the allocated annual budget and per person cost of delivering the programme to estimate the number of people who will receive treatment each year
 #     Number of people treated = ~1.2 million people per year
@@ -37,10 +41,14 @@
 
 # References:
 # (a) ONS 2019 Mid-Year Population Estimates - https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/analysisofpopulationestimatestool)
-# (b) Wilding JPH, Batterham RL, Davies M, Van Gaal LF, Kandler K, Konakli K, Lingvay I, McGowan BM, Oral TK, Rosenstock J, 
-#     Wadden TA, Wharton S, Yokote K, Kushner RF; STEP 1 Study Group. Weight regain and cardiometabolic effects after withdrawal of 
-#     semaglutide: The STEP 1 trial extension. Diabetes Obes Metab. 2022 Aug;24(8):1553-1564. doi: 10.1111/dom.14725. Epub 2022 May 19. 
-#     PMID: 35441470; PMCID: PMC9542252.
+# (b) Hartmann-Boyce J, Cobiac LJ, Theodoulou A, et al. Weight regain after behavioural weight management
+#     programmes and its impact on quality of life and cost effectiveness: Evidence synthesis and health
+#     economic analyses. Diabetes Obes Metab. 2023;25(2):526‐535. doi:10.1111/dom.14895
+# (c) Hartmann-Boyce J, Johns DJ, Jebb SA, Summerbell C, Aveyard P; Behavioural Weight Management Review 
+#     Group. Behavioural weight management programmes for adults assessed by trials conducted in everyday
+#     contexts: systematic review and meta-analysis. Obes Rev. 2014 Nov;15(11):920-32. doi: 10.1111/obr.12220.
+#     Epub 2014 Aug 11. PMID: 25112559; PMCID: PMC4233997.
+
 
 # setup
 rm(list = ls())
@@ -58,11 +66,39 @@ source(file = "post_processing/post_processing.R")
 
 table_outputs = list() # creating a list of table outputs to be saved as an excel file
 
+
+# calculating absolute weight loss:
+# We create a data frame to show the results from (c). This table is created from Page  Pg 927, Figure 1, section 6.1.2 in (c) Hartmann-Boyce et al. (2014)
+results_table <- data.frame(
+  study = c("Heshka 2003", "Jebb 2011", "Jolly 2011", "Jolly 2011", "Jolly 2011"),
+  mean = c(-4.1, -4.06, -2.1, -1.9, -3.5),
+  sample = c(211, 377, 100, 100, 100)
+)
+
+
+results_table = results_table %>%
+  mutate(mean_x_sample = mean * sample)
+
+weighted_weight_loss = weighted.mean(results_table$mean, results_table$sample)
+
+# calculating absolute weight regain:
+# From Hartmann-Boyce (2023), we get the weight loss after the programme and the weight loss at the end of 5 years:
+# (Please see section 3.4 in the paper)
+# weight loss in intervention group at the end of the programme: -4.9 kg
+weight_loss_treatment_group_programme_end = -4.9
+
+# weight loss in intervention group at the end of 5 years: -2.6 kg
+weight_loss_treatment_group_five_years = -2.6
+
+# we then calculate weight regain per year = (weight loss at five years - weight loss at treatment end)/5
+weight_regain_per_year = (weight_loss_treatment_group_five_years - weight_loss_treatment_group_programme_end)/ 5
+
+
 # Constants
-NUMBER_OF_PEOPLE_PER_YEAR = 1200000
+NUMBER_OF_PEOPLE_PER_YEAR = 1214285
 ENGLAND_ADULT_POPULATION = 44263393  # (a)
-WEIGHT_LOSS_ON_TREATMENT = 2.4
-WEIGHT_REGAIN_POST_TREATMENT = 0.32
+WEIGHT_LOSS_ON_TREATMENT = abs(weighted_weight_loss)
+WEIGHT_REGAIN_POST_TREATMENT = abs(weight_regain_per_year)
 
 
 
@@ -247,7 +283,7 @@ df = select_intervention_sample(data = df,
 
 
 # Assign weight changes to individuals who were selected in the previous step
-# We apply a weight loss of 2.4 kgs for those receiving the treatment and an annual weight regain of 0.32 kg
+# We apply a weight loss of 3.5 kgs for those receiving the treatment and an annual weight regain of 0.46 kg
 post_df_adult = assign_weight_changes(data = df,
                                       bodyweight_var = "weight",
                                       num_years = 5,
@@ -359,7 +395,7 @@ bmi_change_year
 # extracting the reduction in obesity prevalence 
 annual_obesity_prevalence_england = extract_relative_change(data = bmi_change_year)
 
-# Relative reduction in obesity prevalence in England = 5.15%
+# Relative reduction in obesity prevalence in England = 7.9%
 
 # Adding to table outputs:
 table_outputs[["annual_obesity_prevalence_eng"]] = annual_obesity_prevalence_england
@@ -369,7 +405,7 @@ annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_e
                                               cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
                                               duration = MODEL_CONSTANTS$MODEL_DURATION)
 
-# Average annual value to government compared to baseline = £2.57 billions
+# Average annual value to government compared to baseline = £3.84 billions
 
 # Adding to table outputs:
 table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov
@@ -400,8 +436,4 @@ ggsave(here("outputs/new_policies/policy_37/policy_37_impact_England_adult.png")
 # Outputs 3: summary results and detailed individual table:
 # bmi year on year prevalence:
 write_xlsx(path = "outputs/new_policies/policy_37/policy_37.xlsx", x = table_outputs)
-write.csv(post_df_adult, file = "outputs/new_policies/policy_37/policy_37_adult_england_bmi.csv")
-
-
-
-
+write.csv(post_df_adult, file = "outputs/new_policies/policy_37/policy_37_adult_england_bmi_1.csv")
