@@ -17,8 +17,8 @@
 # Eligibility:
 #   Adults Age: ≥ 18; BMI Group: ≥ 30
 # 
-# Weight loss = 3.5 kg after the programme (c)
-#   Effect size: 3.545 kgs at the end of 1 year after programme  Pg 927, Figure 1, section 6.1.2 of Hartmann-Boyce 2014 [https://pmc.ncbi.nlm.nih.gov/articles/PMC4233997/pdf/obr0015-0920.pdf]
+# Weight loss = 5.1 kg after the programme (c)
+#   Effect size: 5.1 kgs at the end of 1 year after programme  Supporting Information, Figure 9, section 6.1.2 of Hartmann-Boyce 2014 [https://pmc.ncbi.nlm.nih.gov/articles/PMC4233997/pdf/obr0015-0920.pdf]
 #     We take a weighted average of the effect sizes from different papers under Group-based Commercial, please see calculation of this below
 #
 # Weight regain = 0.46 kg per year (b)
@@ -37,6 +37,14 @@
 #     Unit cost of treatment in 2015 = £51.45 per person [Source]
 #     Adjusting for inflation = Original price x (CPI in 2015 / CPI in base year)
 #         51.45 x (135.4/100) = £70 per person per year
+#   However, it is unlikely that everyone offered the programme will enroll. We use stats from OHID to estimate the number of people who enroll#
+#   and the share of people who experience weight loss
+#   Number of people enrolling into the programme = 65% of those offered
+#   Number of people experiencing weight loss = 43% of those who enrolled the programme
+#   Therefore, in our context, the number of people enrolled after and offer = 65% x 1,214,285 = 789,285
+#   And number of people experiencing weight loss of those who enrolled = 43% x 789,285 = 339,393
+
+
 
 
 # References:
@@ -48,6 +56,10 @@
 #     Group. Behavioural weight management programmes for adults assessed by trials conducted in everyday
 #     contexts: systematic review and meta-analysis. Obes Rev. 2014 Nov;15(11):920-32. doi: 10.1111/obr.12220.
 #     Epub 2014 Aug 11. PMID: 25112559; PMCID: PMC4233997.
+# (d) OHID (2023) Adult tier 2 weight management services: Short statistical commentary September 2023, GOV.UK. Available at:
+#     https://www.gov.uk/government/statistics/adult-tier-2-weight-management-services-final-data-for-april-2021-to-december-2022/adult-tier-2-weight-management-services-short-statistical-commentary-september-2023 (Accessed: 11 June 2025).
+
+
 
 
 # setup
@@ -71,8 +83,8 @@ table_outputs = list() # creating a list of table outputs to be saved as an exce
 # We create a data frame to show the results from (c). This table is created from Page  Pg 927, Figure 1, section 6.1.2 in (c) Hartmann-Boyce et al. (2014)
 results_table <- data.frame(
   study = c("Heshka 2003", "Jebb 2011", "Jolly 2011", "Jolly 2011", "Jolly 2011"),
-  mean = c(-4.1, -4.06, -2.1, -1.9, -3.5),
-  sample = c(211, 377, 100, 100, 100)
+  mean = c(-4.9, -6.65, -3.3, -3.1, -4.4),
+  sample = c(176, 230, 68, 62, 78)
 )
 
 
@@ -94,8 +106,23 @@ weight_loss_treatment_group_five_years = -2.6
 weight_regain_per_year = (weight_loss_treatment_group_five_years - weight_loss_treatment_group_programme_end)/ 5
 
 
+# Number of people offered the programme:
+budget_allocation = 85000000
+unit_cost_bwmps = 70
+
+number_of_people_offered = budget_allocation / unit_cost_bwmps
+
+
+# calculating the number of people experiencing weight loss:
+share_enrolled = 0.65
+share_experiencing_weight_loss = 0.43
+
+number_enrolled_experiencing_weight_loss = share_enrolled * share_experiencing_weight_loss * number_of_people_offered
+
+
 # Constants
-NUMBER_OF_PEOPLE_PER_YEAR = 1214285
+
+NUMBER_OF_PEOPLE_EXPERINCING_WEIGHT_LOSS = number_enrolled_experiencing_weight_loss
 ENGLAND_ADULT_POPULATION = 44263393  # (a)
 WEIGHT_LOSS_ON_TREATMENT = abs(weighted_weight_loss)
 WEIGHT_REGAIN_POST_TREATMENT = abs(weight_regain_per_year)
@@ -273,7 +300,7 @@ set.seed(370)
 
 # Selecting the intervention sample each year who will receive the intervention:
 df = select_intervention_sample(data = df,
-                                sample_size = NUMBER_OF_PEOPLE_PER_YEAR,
+                                sample_size = NUMBER_OF_PEOPLE_EXPERINCING_WEIGHT_LOSS,
                                 population_size = ENGLAND_ADULT_POPULATION,
                                 weight_var = "wt_int",
                                 bmi_var = "bmi",
@@ -395,7 +422,7 @@ bmi_change_year
 # extracting the reduction in obesity prevalence 
 annual_obesity_prevalence_england = extract_relative_change(data = bmi_change_year)
 
-# Relative reduction in obesity prevalence in England = 7.9%
+# Relative reduction in obesity prevalence in England = 3.2%
 
 # Adding to table outputs:
 table_outputs[["annual_obesity_prevalence_eng"]] = annual_obesity_prevalence_england
@@ -405,7 +432,7 @@ annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_e
                                               cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
                                               duration = MODEL_CONSTANTS$MODEL_DURATION)
 
-# Average annual value to government compared to baseline = £3.84 billions
+# Average annual value to government compared to baseline = £1.58 billions
 
 # Adding to table outputs:
 table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov

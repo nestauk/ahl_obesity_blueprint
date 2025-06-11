@@ -1,6 +1,6 @@
 
 #############################################################################################
-# Policy 35 : Enforce provision of health warning labelling on retail packaging             #
+# Policy 35 : Enforce provision of FOP labelling on retail packaging                        #
 #                                                                                           #
 #############################################################################################
 
@@ -16,18 +16,9 @@
 # per person per day (b)
 # This is the effect if all foods have labels. However, we expect this policy to apply to only packaged goods
 # sold in supermarkets.
-# We know 89% (c) of daily calorie intake comes from Supermarkets and approximately 77% (d) come from food (excluding
-# Alcohol - Beer, Wine, Carbonated drinks, OOH Coffee, Total Milk, Ambient & Chilled Flavoured milk, Instant milk
-# & Yogurt Drinks & Juices).
-# While this policy applies to packaged food, we don’t have an estimate of the kcal contribution from packaged foods.
-# So, we use a proxy - kcal share of UPF foods (59.8%) (e)
-# Using this, if the change in daily intake due to the policy is 27 kcals, the change in intake due to foods that this
-# policy applies to = 59.8% x 77% x 27 = 12.4 kcals
 
-
-# Therefore, the change in energy intake = 51% x 27 kcals = 13.7
-# Applying compensation of 23% = 23% * 13.7 = 3.15
-# Net change in energy intake = 10.5 kcals
+# Applying compensation of 23% = 23% * 27 = 6.21
+# Net change in energy intake = 20.79 kcals
 
 
 # References:
@@ -77,7 +68,7 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # Based on [A] and [C], the intake change = effect size - compensation effect = -9.57 kcals
 
 policy_35_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                            intake_change = -9.57,
+                                                            intake_change = -20.79,
                                                             implmentation_duration = 365*5)
 
 # 1.3. Outputs
@@ -115,7 +106,7 @@ process_clean_save(file_path = "inputs/raw/shes19i_eul.tab", nation = "Scotland"
 # Based on [A] and [C], the intake change = effect size - compensation effect = -9.57 kcals
 
 policy_35_impact_scotland_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/shes_2019.csv")),
-                                                             intake_change = -9.57,
+                                                             intake_change = -20.79,
                                                              implmentation_duration = 365*5)
 # 2.3. Outputs
 # Bar plot of change in year on year distribution of different BMI categories
@@ -140,7 +131,7 @@ table_outputs[["scotland_adult"]] = policy_35_impact_scotland_adult$bmi_percent_
 annual_obesity_prevalence_england = extract_relative_change(data = policy_35_impact_england_adult$bmi_percent_prevalence)
 annual_obesity_prevalence_scotland = extract_relative_change(data = policy_35_impact_scotland_adult$bmi_percent_prevalence)
 
-# Relative reduction in obesity prevalence in England = 3.8%
+# Relative reduction in obesity prevalence in England = 7.34%
 
 # Adding to table outputs:
 table_outputs[["annual_obesity_prevalence_eng"]] = annual_obesity_prevalence_england
@@ -152,7 +143,7 @@ annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_e
                                               cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
                                               duration = MODEL_CONSTANTS$MODEL_DURATION)
 
-# Average annual value to government compared to baseline = £2.35 billions
+# Average annual value to government compared to baseline = £4.55 billions
 
 # Adding to table outputs:
 table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov
