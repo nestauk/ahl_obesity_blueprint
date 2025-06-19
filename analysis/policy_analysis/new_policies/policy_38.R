@@ -607,18 +607,44 @@ annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_e
 table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov
 
 
+bmi_change = bmi_change %>%
+  mutate(BMI_1 = case_when(BMI == "morbidly obese" ~ "Obesity class 3",
+                           BMI == "obese" ~ "Obesity class 1 & 2",
+                           BMI == "normal" ~ "Healthy weight",
+                           BMI == "underweight" ~ "Underweight",
+                           BMI == "overweight" ~ "Overweight",
+                           TRUE ~ BMI ),
+         type_1 = case_when(type == "Year 0" ~ "Baseline",
+                            TRUE ~ type))
+
+bmi_change = bmi_change %>%
+  mutate(BMI_1 = factor(BMI_1,
+                        levels = c("Underweight",
+                                   "Healthy weight",
+                                   "Overweight",
+                                   "Obesity class 1 & 2",
+                                   "Obesity class 3")))
+
+
+
 # Output 2: Plot of BMI distribution(bar charts)
 # Plot of year on year BMI category distribution
 adult_bar_plot = bmi_change %>%
-  ggplot(., aes(y = freq, x = BMI, fill = type)) + 
+  ggplot(., aes(y = freq, x = BMI_1, fill = type_1)) + 
   geom_bar(stat = "identity", position = "dodge") +
   theme_ipsum() +
   labs(fill = "", 
-       title = "BMI Categories Distribution", 
-       y = "Frequency",
-       subtitle = "Population") +
-  theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
-  theme(legend.position = "top")
+       title = "NHS Rollout of Tirzepatide (Mounjaro)", 
+       y = "Prevalence - %",
+       x = "BMI group",
+       subtitle = "Per year distribution by BMI Category") +
+  theme_ipsum(base_size = 7, axis_title_size = 6, axis_text_size = 7) + #, base_family="Averta"
+  theme(legend.position = "top",
+        legend.text = element_text(size = 9),
+        axis.title.y = element_text(size = 10, hjust = 0.5),  # y-axis title
+        axis.title.x = element_text(size = 10, hjust = 0.5, vjust = 0.9),  # x-axis title
+        axis.text.x = element_text(size = 7),    # x-axis tick labels
+        axis.text.y = element_text(size = 7)  )   # y-axis tick labels)
 
 adult_bar_plot
 

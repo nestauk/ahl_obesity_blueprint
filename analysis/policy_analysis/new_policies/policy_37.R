@@ -17,8 +17,8 @@
 # Eligibility:
 #   Adults Age: ≥ 18; BMI Group: ≥ 30
 # 
-# Weight loss = 5.1 kg after the programme (c)
-#   Effect size: 5.1 kgs at the end of 1 year after programme  Supporting Information, Figure 9, section 6.1.2 of Hartmann-Boyce 2014 [https://pmc.ncbi.nlm.nih.gov/articles/PMC4233997/pdf/obr0015-0920.pdf]
+# Weight loss = 3.9 kg after the programme (c)
+#   Effect size: 3.9 kgs at the end of 1 year after programme  
 #     We take a weighted average of the effect sizes from different papers under Group-based Commercial, please see calculation of this below
 #
 # Weight regain = 0.46 kg per year (b)
@@ -110,12 +110,12 @@ weight_regain_per_year = (weight_loss_treatment_group_five_years - weight_loss_t
 budget_allocation = 85000000
 unit_cost_bwmps = 70
 
-number_of_people_offered = budget_allocation / unit_cost_bwmps
+number_of_people_offered = budget_allocation / unit_cost_bwmps 
 
 
 # calculating the number of people experiencing weight loss:
-share_enrolled = 0.65
-share_experiencing_weight_loss = 0.43
+share_enrolled = 1
+share_experiencing_weight_loss = 0.45 # 0.43
 
 number_enrolled_experiencing_weight_loss = share_enrolled * share_experiencing_weight_loss * number_of_people_offered
 
@@ -124,8 +124,8 @@ number_enrolled_experiencing_weight_loss = share_enrolled * share_experiencing_w
 
 NUMBER_OF_PEOPLE_EXPERINCING_WEIGHT_LOSS = number_enrolled_experiencing_weight_loss
 ENGLAND_ADULT_POPULATION = 44263393  # (a)
-WEIGHT_LOSS_ON_TREATMENT = abs(weighted_weight_loss)
-WEIGHT_REGAIN_POST_TREATMENT = abs(weight_regain_per_year)
+WEIGHT_LOSS_ON_TREATMENT = 3.9 # abs(weighted_weight_loss)
+WEIGHT_REGAIN_POST_TREATMENT = 0.32# abs(weight_regain_per_year)
 
 
 
