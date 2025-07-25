@@ -47,3 +47,43 @@ extract_pound_benefit = function(data, cost, duration ){
   
 }
 
+
+extract_pound_benefit_by_class = function(data, cost_30_40, cost_over_40, duration ){
+  # browser()
+  data_df = data
+  
+  baseline_total_bmi_30_40 = data_df %>%
+    filter(type == "Year 0") %>%
+    pull(obese)
+  
+  baseline_total_bmi_over_40 = data_df %>%
+    filter(type == "Year 0") %>%
+    pull(`morbidly obese`)
+  
+  data_df = data_df %>%
+    mutate(absolute_change_bmi_30_40 = baseline_total_bmi_30_40 - obese) %>%
+    mutate(absolute_change_bmi_over_40 = baseline_total_bmi_over_40 - `morbidly obese`) %>%
+    mutate(relative_change_bmi_30_40 = (absolute_change_bmi_30_40/baseline_total_bmi_30_40)*100) %>%
+    mutate(relative_change_bmi_over_40 = (absolute_change_bmi_over_40/baseline_total_bmi_over_40)*100)
+  
+  
+  data_df = data_df %>%
+    mutate(value_to_gov_per_year_30_40 = (relative_change_bmi_30_40 * cost_30_40)/100) %>%
+    mutate(value_to_gov_per_year_over_40 = (relative_change_bmi_over_40 * cost_over_40)/100)
+  
+  average_annual_value_to_gov_30_40 = data_df %>%
+    select(value_to_gov_per_year_30_40) %>%
+    sum()/duration
+  
+  average_annual_value_to_gov_over_40 = data_df %>%
+    select(value_to_gov_per_year_over_40) %>%
+    sum()/duration
+  
+  total_average_annual_benefit = average_annual_value_to_gov_30_40 + average_annual_value_to_gov_over_40
+  
+  # print(paste0("Average annual value to government compared to baseline = £", round(total_average_annual_benefit, 2), "billions"))
+  
+  return(total_average_annual_benefit)
+  
+  
+}

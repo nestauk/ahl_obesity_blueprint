@@ -54,8 +54,8 @@ WEIGHT_REGAIN_POST_TREATMENT = 0
 COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
                           year2 = list(c1 = 14000, c2 = 47500),
                           year3 = list(c2 = 47500, c3 = 85714),
-                          year4 = list(c3 = 114286, c4 = 58462),
-                          year5 = list(c4 = 175385))
+                          year4 = list(c3 = 114285, c4 = 58462),
+                          year5 = list(c4 = 175384))
 
 table_outputs = list() # creating a list of table outputs to be saved as an excel file
 
