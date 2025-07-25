@@ -191,6 +191,12 @@ bmi_change = bmi_change %>%
   mutate(BMI = factor(BMI, levels = c("underweight", "normal", "overweight", "obese", "morbidly obese"))) %>%
   as.data.frame()
 
+bmi_change_year = bmi_change %>%
+  select(-c(n)) %>%
+  pivot_wider(., names_from = BMI, values_from = freq) %>%
+  select(type, underweight, normal, overweight, obese, `morbidly obese`)
+
+bmi_change_year
 
 
 # post processing
@@ -221,12 +227,6 @@ table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov
 
 # Output 1: Table of year wise prevalence of obesity
 
-bmi_change_year = bmi_change %>%
-  select(-c(n)) %>%
-  pivot_wider(., names_from = BMI, values_from = freq) %>%
-  select(type, underweight, normal, overweight, obese, `morbidly obese`)
-
-bmi_change_year
 
 table_outputs[["england_adult"]] = bmi_change_year
 

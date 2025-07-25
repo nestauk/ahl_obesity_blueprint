@@ -21,7 +21,7 @@
 #   Effect size: 3.9 kgs at the end of 1 year after programme  
 #     We take a weighted average of the effect sizes from different papers under Group-based Commercial, please see calculation of this below
 #
-# Weight regain = 0.46 kg per year (b)
+# Weight regain = 0.32 kg per year (b)
 #   To calculate the weight regain we subtract the weight regain after the programme from the weight
 #   regain at the end of 5 years and divide it by 5 to get the mean weight regain per year.
 #
@@ -39,10 +39,9 @@
 #         51.45 x (135.4/100) = £70 per person per year
 #   However, it is unlikely that everyone offered the programme will enroll. We use stats from OHID to estimate the number of people who enroll#
 #   and the share of people who experience weight loss
-#   Number of people enrolling into the programme = 65% of those offered
-#   Number of people experiencing weight loss = 43% of those who enrolled the programme
+#   Number of people experiencing weight loss = 45% of those who enrolled the programme
 #   Therefore, in our context, the number of people enrolled after and offer = 65% x 1,214,285 = 789,285
-#   And number of people experiencing weight loss of those who enrolled = 43% x 789,285 = 339,393
+#   And number of people experiencing weight loss of those who enrolled = 45% x 1,214,285 = 546428.6
 
 
 
@@ -52,10 +51,9 @@
 # (b) Hartmann-Boyce J, Cobiac LJ, Theodoulou A, et al. Weight regain after behavioural weight management
 #     programmes and its impact on quality of life and cost effectiveness: Evidence synthesis and health
 #     economic analyses. Diabetes Obes Metab. 2023;25(2):526‐535. doi:10.1111/dom.14895
-# (c) Hartmann-Boyce J, Johns DJ, Jebb SA, Summerbell C, Aveyard P; Behavioural Weight Management Review 
-#     Group. Behavioural weight management programmes for adults assessed by trials conducted in everyday
-#     contexts: systematic review and meta-analysis. Obes Rev. 2014 Nov;15(11):920-32. doi: 10.1111/obr.12220.
-#     Epub 2014 Aug 11. PMID: 25112559; PMCID: PMC4233997.
+# (c) Taylor K, Indulkar T, Thompson B, Pinkard C, Barron E, Frost T, Jayawardane P, Davies N, Bakhai C, Forouhi NG, Aveyard P, Jebb S, Valabhji J. 
+#     Early outcomes of referrals to the English National Health Service Digital Weight Management Programme. Obesity (Silver Spring). 2024 Jun;32(6):1083-1092.
+#     doi: 10.1002/oby.24024. Epub 2024 Apr 21. PMID: 38644161.
 # (d) OHID (2023) Adult tier 2 weight management services: Short statistical commentary September 2023, GOV.UK. Available at:
 #     https://www.gov.uk/government/statistics/adult-tier-2-weight-management-services-final-data-for-april-2021-to-december-2022/adult-tier-2-weight-management-services-short-statistical-commentary-september-2023 (Accessed: 11 June 2025).
 
@@ -422,7 +420,7 @@ bmi_change_year
 # extracting the reduction in obesity prevalence 
 annual_obesity_prevalence_england = extract_relative_change(data = bmi_change_year)
 
-# Relative reduction in obesity prevalence in England = 3.2%
+# Relative reduction in obesity prevalence in England = 3.9%
 
 # Adding to table outputs:
 table_outputs[["annual_obesity_prevalence_eng"]] = annual_obesity_prevalence_england

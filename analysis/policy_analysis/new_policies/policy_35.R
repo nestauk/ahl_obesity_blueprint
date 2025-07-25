@@ -68,7 +68,7 @@ process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = 
 # Based on [A] and [C], the intake change = effect size - compensation effect = -9.57 kcals
 
 policy_35_impact_england_adult = calculate_bmi_from_eichange(df = read_csv(here("inputs/processed/hse_2019.csv")),
-                                                            intake_change = -20.79,
+                                                            intake_change = -7.4,
                                                             implmentation_duration = 365*5)
 
 # 1.3. Outputs
