@@ -342,3 +342,89 @@ log_running_info <- function(log_df, year, cohort, eligible_population, sample_s
   return(rbind(log_df, new_row))
 }
 
+
+#' FUNCTION 3: Extract metric value for a specific treatment year
+#' 
+#' Retrieves a specified metric value for a given treatment year from the 
+#' year_summary dataframe. Returns NA if the year is not found.
+#'
+#' @param year Numeric. The treatment year to filter for (1-5).
+#' @param metric Character or symbol. The column name of the metric to extract
+#'   from year_summary (e.g., "weighted_n", "diabetes_rate", "mean_bmi").
+#' @param df dataframe aggregated by intervention year
+#'
+#' @return A numeric value of the  metric for the specified year,
+#'   or NA if the year is not present in the data.
+#'
+#' @note
+#' This function is designed to work within the run_single_iteration() 
+#' function where year_summary is created from intervention sample data.
+#'
+get_year_value <- function(year, metric, df = year_summary) {
+  val <- df %>%
+    filter(treatment_year == year) %>%
+    pull({{metric}})
+  return(ifelse(length(val) > 0, val, NA))
+}
+
+
+
+
+#' FUNCTION 4: Create density plot for metrics (year-specific or overall)
+#'
+#' @description
+#' Generates a density plot for a specified metric from sensitivity analysis results,
+#' with options for year-specific or overall metrics. Includes a vertical line 
+#' indicating the mean value.
+#'
+#' @param data A dataframe containing sensitivity analysis results with columns
+#'   for various metrics (e.g., relative_reduction, benefit) and year-specific 
+#'   metrics (e.g., diabetes_year1, bmi_year2).
+#' @param metric Character string specifying the metric to plot (e.g., "diabetes", 
+#'   "bmi", "relative_reduction", "benefit").
+#' @param year Optional numeric value (1-5) specifying the year for year-specific 
+#'   metrics. If NULL (default), plots the overall metric without year suffix.
+#' @param color fill color for the density plot. Default is "blue".
+#'
+#' @return A ggplot object displaying the density distribution of the specified 
+#'   metric with a red dashed vertical line at the mean value.
+
+plot_metric <- function(data, metric, year = NULL,
+                        color = "blue") {
+  
+  # Construct column name based on whether year is specified
+  if (!is.null(year)) {
+    col_name <- paste0(metric, "_year", year)
+  } else {
+    col_name <- metric
+  }
+  
+  # Check if column exists
+  if (!col_name %in% names(data)) {
+    stop(paste("Column", col_name, "not found in data"))
+  }
+  
+  # Calculate mean for vertical line
+  mean_val <- mean(data[[col_name]], na.rm = TRUE)
+  
+  
+  # Create title based on whether year is specified
+  if (!is.null(year)) {
+    title_text <- paste("Distribution of Year", year, metric)
+  } else {
+    title_text <- paste("Distribution of", metric)
+  }
+  
+  # Create plot
+  p <- ggplot(data, aes(x = .data[[col_name]])) +
+    geom_density(fill = color, alpha = 0.7) +
+    geom_vline(xintercept = mean_val, color = "red", 
+               linetype = "dashed", size = 1) +
+    labs(title = title_text,
+         subtitle = paste("Mean:", round(mean_val, 2)),
+         x = metric,
+         y = "Density") +
+    theme_ipsum()
+  
+  return(p)
+}

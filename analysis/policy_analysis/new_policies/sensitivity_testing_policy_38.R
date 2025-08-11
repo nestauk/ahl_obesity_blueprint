@@ -1,13 +1,14 @@
-# Sensitivity Analysis for Random Sampling
-# This script runs 1000 iterations of the main analysis with different random seeds
+# Sensitivity Analysis of random sampling for Tirzepatide roll-out
+# This analysis is being carried out to test the sensitivity of the outcome -
+# Relative reduction in obesity prevalence to weighted random sampling
 
-# Load required libraries
+# setup:
 library(tidyverse)
 library(here)
 library(writexl)
 library(parallel)
 
-# Source files
+# source files:
 source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
@@ -15,11 +16,10 @@ source(file = "config/config.R")
 source(file = "post_processing/post_processing.R")
 source(file = "analysis/policy_analysis/new_policies/utils.R")
 
-# Constants
-NUMBER_OF_PEOPLE_PER_YEAR = 1200000
+# constants:
 ENGLAND_ADULT_POPULATION = 44263393
-WEIGHT_LOSS_WITH_T2D = 0.185
-WEIGHT_LOSS_WITHOUT_T2D = 0.138
+WEIGHT_LOSS_WITH_T2D = 0.138
+WEIGHT_LOSS_WITHOUT_T2D = 0.185
 WEIGHT_REGAIN_POST_TREATMENT = 0
 COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
                           year2 = list(c1 = 14000, c2 = 47500),
@@ -28,8 +28,72 @@ COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
                           year5 = list(c4 = 175384))
 
 
-# Function to run a single iteration of the analysis
-run_single_iteration <- function(seed_value, df_2019_adult_with_cohorts, obesity_cost_30_40, obesity_cost_over_40, implementation_period) {
+# Functions:
+
+#' FUNCTION 1: Single iteration obesity impact estimation
+#'
+#' @description
+#' Performs one iteration of a simulation to assess the impact of Tir. policy.
+#' Simulates individual selection for treatment, weight loss, and calculates 
+#' resulting changes in obesity prevalence and economic benefits over a 5-year
+#' period. The function simulates one possible implementation scenario of the 
+#' obesity intervention policy by:
+#'    1. Randomly selecting eligible individuals according to cohort allocations
+#'       - uses the same func. select_intervention_sample() as in policy 38
+#'    2. Applying weight loss based on diabetes status (13.8% with T2D, 18.5% without)
+#'       - uses the same func. assign_weight_changes() as in policy 38
+#'    3. Calculating new BMI classifications over 5 years
+#'    4. Computing the reduction in obesity prevalence
+#'    5. Estimating economic benefits from reduced obesity
+#'
+#' @param seed_value Integer. Random seed for reproducible patient selection
+#' @param df_2019_adult_with_cohorts Dataframe containing eligible adult population 
+#'   with cohort assignments based on NICE/NHSE guidelines
+#' @param total_cost_obesity Numeric. Total cost of obesity to the healthcare system
+#' @param obesity_cost_30_40 Numeric. Cost associated with BMI 30-40 obesity
+#' @param obesity_cost_over_40 Numeric. Cost associated with BMI >40 obesity
+#' @param implementation_period Numeric. Number of years. Default = 5
+#'
+#' @return A dataframe with one row containing:
+#'   \itemize{
+#'     \item seed: The random seed used
+#'     \item baseline_obesity: Baseline obesity prevalence (%)
+#'     \item year5_obesity: Year 5 obesity prevalence (%)
+#'     \item reduction: Absolute reduction in obesity prevalence
+#'     \item relative_reduction: Relative reduction in obesity prevalence (%)
+#'     \item benefit: Economic benefit in pounds
+#'     \item n_year1-5: Sum of wt_int of people treated each year
+#'     \item diabetes_year1-5: Diabetes prevalence by treatment year
+#'     \item bmi_year1-5: Mean BMI by treatment year
+#'     \item weighted_n: Total weighted sample size
+#'   }
+#'
+#'
+#' @examples
+#' \dontrun{
+#' result <- run_single_iteration(
+#'   seed_value = 123,
+#'   df_2019_adult_with_cohorts = data,
+#'   total_cost_obesity = 1000000,
+#'   obesity_cost_30_40 = 500000,
+#'   obesity_cost_over_40 = 500000,
+#'   implementation_period = 5
+#' )
+#' }
+#'
+#' @seealso 
+#' \code{\link{select_intervention_sample}} for patient selection
+#' \code{\link{assign_weight_changes}} for weight loss assignment
+#' \code{\link{extract_pound_benefit_by_class}} for economic calculations
+#'
+#' @export
+
+run_single_iteration <- function(seed_value,
+                                 df_2019_adult_with_cohorts,
+                                 total_cost_obesity,
+                                 obesity_cost_30_40,
+                                 obesity_cost_over_40,
+                                 implementation_period = 5) {
   # browser()
   # Setting seed:
   set.seed(seed_value)
@@ -43,6 +107,36 @@ run_single_iteration <- function(seed_value, df_2019_adult_with_cohorts, obesity
     num_years = MODEL_CONSTANTS$MODEL_DURATION,
     cohort_var = "eligibility"
   )
+  
+  # selecting the required output table from previous step
+  selected_data <- intervention_sample$data
+  
+  # getting overall preavlence of diabetes
+  prop_diabetes <- mean(intervention_sample$data$cond_diabetes)
+  
+  # creating a single variable to identify the year in which an individual
+  # is treated
+  selected_data <- selected_data %>%
+    mutate(
+      treatment_year = case_when(
+        intervention_year1 == "Yes" ~ 1,
+        intervention_year2 == "Yes" ~ 2,
+        intervention_year3 == "Yes" ~ 3,
+        intervention_year4 == "Yes" ~ 4,
+        intervention_year5 == "Yes" ~ 5,
+        TRUE ~ NA_real_
+      )
+    )
+  
+  # Summary table by treatment year
+  year_summary <- selected_data %>%
+    group_by(treatment_year) %>%
+    summarise(
+      n = n(),
+      weighted_n = sum(wt_int),
+      diabetes_rate = weighted.mean(cond_diabetes, wt_int),
+      mean_bmi = weighted.mean(bmi, wt_int)
+    )
   
   # Assigning weight changes:
   post_df_adult <- assign_weight_changes(
@@ -98,7 +192,8 @@ run_single_iteration <- function(seed_value, df_2019_adult_with_cohorts, obesity
                                    TRUE ~ "NA"))
   
   
-  # A new dataframe is created to capture population level prevalence of different BMI categories in each year and is saved as a dataframe
+  # A new dataframe is created to capture population level prevalence of 
+  # different BMI categories in each year and is saved as a dataframe
   bmi_change = rbind(
     post_df_adult %>% 
       count(bmi_5_class, wt = wt_int) %>% 
@@ -134,7 +229,11 @@ run_single_iteration <- function(seed_value, df_2019_adult_with_cohorts, obesity
   
   # creating a table of year wise distribution of BMI categories
   bmi_change = bmi_change %>%
-    mutate(BMI = factor(BMI, levels = c("underweight", "normal", "overweight", "obese", "morbidly obese"))) %>%
+    mutate(BMI = factor(BMI, levels = c("underweight",
+                                        "normal",
+                                        "overweight",
+                                        "obese",
+                                        "morbidly obese"))) %>%
     as.data.frame()
   
   
@@ -159,12 +258,15 @@ run_single_iteration <- function(seed_value, df_2019_adult_with_cohorts, obesity
     summarise(baseline_obesity_prevalence = sum(freq))
   
   # Calculate reduction
-  reduction <- baseline_prevalence$baseline_obesity_prevalence - bmi_prevalence$obesity_prevalence_y5
+  reduction <- (baseline_prevalence$baseline_obesity_prevalence - 
+                  bmi_prevalence$obesity_prevalence_y5)
   
   value_to_gov = extract_pound_benefit_by_class(data = bmi_change_year,
+                                                total_cost = total_cost_obesity,
                                                 cost_30_40 = obesity_cost_30_40,
                                                 cost_over_40 = obesity_cost_over_40,
-                                                duration = implementation_period )
+                                                duration = implementation_period,
+                                                option = "option_1")
   
   # Return results
   return(data.frame(
@@ -173,15 +275,106 @@ run_single_iteration <- function(seed_value, df_2019_adult_with_cohorts, obesity
     year5_obesity = bmi_prevalence$obesity_prevalence_y5,
     reduction = reduction,
     relative_reduction = (reduction / baseline_prevalence$baseline_obesity_prevalence) * 100,
-    benefit = value_to_gov
+    benefit = value_to_gov,
+    
+    # Year 1 metrics
+    n_year1 = get_year_value(1, "weighted_n", df = year_summary),
+    diabetes_year1 = get_year_value(1, "diabetes_rate", df = year_summary),
+    bmi_year1 = get_year_value(1, "mean_bmi", df = year_summary),
+    
+    # Year 2 metrics
+    n_year2 = get_year_value(2, "weighted_n", df = year_summary),
+    diabetes_year2 = get_year_value(2, "diabetes_rate", df = year_summary),
+    bmi_year2 = get_year_value(2, "mean_bmi", df = year_summary),
+    
+    # Year 3 metrics
+    n_year3 = get_year_value(3, "weighted_n", df = year_summary),
+    diabetes_year3 = get_year_value(3, "diabetes_rate", df = year_summary),
+    bmi_year3 = get_year_value(3, "mean_bmi", df = year_summary),
+    
+    # Year 4 metrics
+    n_year4 = get_year_value(4, "weighted_n", df = year_summary),
+    diabetes_year4 = get_year_value(4, "diabetes_rate", df = year_summary),
+    bmi_year4 = get_year_value(4, "mean_bmi", df = year_summary),
+    
+    # Year 5 metrics
+    n_year5 = get_year_value(5, "weighted_n", df = year_summary),
+    diabetes_year5 = get_year_value(5, "diabetes_rate", df = year_summary),
+    bmi_year5 = get_year_value(5, "mean_bmi", df = year_summary),
+    
+    
+    # Additional useful metrics
+    n_selected = nrow(intervention_sample$data),
+    weighted_n = sum(intervention_sample$data$wt_int)
   ))
 }
 
-# Main sensitivity analysis
-run_sensitivity_analysis <- function(n_iterations = 1000, ob_costs_30_40, ob_costs_over_40, implementation_period) {
+
+
+#' FUNCTION 2: Main fucntion to run the sensitivity analysis
+#'
+#' @description
+#' Performs multiple iterations of the obesity intervention simulation. Creates
+#' cohort eligibility based on NICE/NHSE guidelines and runs simulations with
+#' different random seeds to check the sensitivity of obesity reduction 
+#' estimates to random selection
+#' The function performs the following steps:
+#'    Loads and processes the HSE 2019 adult population data
+#'    Applies NICE/NHSE eligibility criteria to assign individuals to cohorts
+#'    Runs n_iterations simulations with different random seeds
+#'    Each iteration randomly selects individuals and models intervention impact
+#'    Combines results for statistical analysis of policy uncertainty
+#'
+#' @param n_iterations Integer. Number of iterations to run (default: 1000)
+#' @param input_file_path Character. Path to the processed HSE 2019 data file 
+#'   (default: "inputs/processed/hse_2019.csv")
+#' @param ob_total_cost Numeric. Total cost of obesity 
+#' @param ob_costs_30_40 Numeric. Cost associated with BMI 30-40 obesity
+#' @param ob_costs_over_40 Numeric. Cost associated with BMI >40 obesity  
+#' @param implementation_period Numeric. Duration, default = 5
+#'
+#' @return A dataframe with n_iterations rows containing results from each simulation:
+#'        Each row represents one simulation iteration
+#'        Columns include obesity reduction - absolute and relative
+#'        benefits, disbetes prevalence, mean BMI per year
+#'
+#' @details
+#' }
+#' 
+#' Eligibility cohorts are based on BMI thresholds, comorbidity scores (ASCVD, 
+#' hypertension, dyslipidaemia, diabetes), and ethnicity adjustments for 
+#' South Asian populations.
+#'
+#' @examples
+#' \dontrun{
+#' # Run sensitivity analysis with 1000 iterations
+#' results <- run_sensitivity_analysis(
+#'   n_iterations = 1000,
+#'   ob_total_cost = 10000000,
+#'   ob_costs_30_40 = 5000000,
+#'   ob_costs_over_40 = 5000000,
+#'   implementation_period = 5
+#' )
+#' 
+#' # Analyze results
+#' mean(results$relative_reduction)
+#' sd(results$relative_reduction)
+#' }
+#'
+#' @note 
+#' Progress is displayed via pbapply progress bar. Failed iterations are logged
+#' and excluded from final results. Requires sufficient memory for parallel processing.
+#'
+
+run_sensitivity_analysis <- function(n_iterations = 1000,
+                                     input_file_path= "inputs/processed/hse_2019.csv",
+                                     ob_total_cost,
+                                     ob_costs_30_40,
+                                     ob_costs_over_40,
+                                     implementation_period) {
 
   
-  df_2019_adult <- read_csv(here("inputs/processed/hse_2019.csv"))
+  df_2019_adult <- read_csv(here(input_file_path))
   
   # Applying eligibility criteria to create cohorts:
   df_2019_adult_with_cohorts <- df_2019_adult %>%
@@ -224,6 +417,7 @@ run_sensitivity_analysis <- function(n_iterations = 1000, ob_costs_30_40, ob_cos
     tryCatch({
       run_single_iteration(s,
                            df_2019_adult_with_cohorts,
+                           total_cost_obesity = ob_total_cost,
                            obesity_cost_30_40 = ob_costs_30_40,
                            obesity_cost_over_40 = ob_costs_over_40,
                            implementation_period = implementation_period)
@@ -239,17 +433,25 @@ run_sensitivity_analysis <- function(n_iterations = 1000, ob_costs_30_40, ob_cos
   return(results_df)
 }
 
-# Running the sensitivity analysis:
+# Main analysis:
+
+# df to store results of the sensitivity analysis:
 sensitivity_results <- run_sensitivity_analysis(n_iterations = 1000,
+                                                input_file_path= "inputs/processed/hse_2019.csv",
+                                                ob_total_cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
                                                 ob_costs_30_40 = MODEL_CONSTANTS$COST_OBESITY_BMI_30_40,
                                                 ob_costs_over_40 = MODEL_CONSTANTS$COST_OBESITY_OVER_40,
                                                 implementation_period = MODEL_CONSTANTS$MODEL_DURATION)
 
-# Creating summary:
+
+# Outputs:
+
+# 1. Summary results:
 summary_stats <- sensitivity_results %>%
   summarise(
     mean_relative_reduction = round(mean(relative_reduction), 3),
     sd_relative_reduction = round(sd(relative_reduction), 3),
+    coeff_variation = round(sd(relative_reduction)/mean(relative_reduction), 3),
     min_relative_reduction = round(min(relative_reduction), 3),
     max_relative_reduction = round(max(relative_reduction), 3),
     mean_benefit = mean(benefit),
@@ -259,7 +461,6 @@ summary_stats <- sensitivity_results %>%
 print("Summary stats of obesity reduction and benefits:")
 print(summary_stats)
 
-# Create summary report
 summary_report <- list(
   summary_statistics = summary_stats,
   confidence_intervals = data.frame(
@@ -268,9 +469,26 @@ summary_report <- list(
     CI_95_upper = c(quantile(sensitivity_results$relative_reduction, 0.975))
   ))
 
+
+# 2. Density plot of relative reduction:
+relative_reduction_plot <- plot_metric(data = sensitivity_results, metric = "relative_reduction")
+
+# 3. Density plot of benefit:
+plot_metric(data = sensitivity_results, metric = "benefit")
+
+
+# Saving outputs:
+
+# 1. Summary results:
 write_xlsx(summary_report, 
            here("outputs/new_policies/policy_38/sensitivity_analysis_summary.xlsx"))
 
-# Saving detailed results
+# 2. Detailed results:
 write_csv(sensitivity_results, 
           here("outputs/new_policies/policy_38/sensitivity_analysis_results.csv"))
+
+# 3. Distribution plot of relative reduction:
+ggsave(here("outputs/new_policies/policy_38/distribution_plot_sensitivity.png"), 
+       plot = relative_reduction_plot,
+       width = 180, height = 120, units = "mm",
+       bg = "white")
