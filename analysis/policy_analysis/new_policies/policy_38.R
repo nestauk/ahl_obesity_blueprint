@@ -46,10 +46,9 @@ source(file = "post_processing/post_processing.R")
 
 
 # Constants:
-NUMBER_OF_PEOPLE_PER_YEAR = 1200000
 ENGLAND_ADULT_POPULATION = 44263393  # (a)
-WEIGHT_LOSS_WITH_T2D = 0.138 # 0.185
-WEIGHT_LOSS_WITHOUT_T2D = 0.185 # 0.138
+WEIGHT_LOSS_WITH_T2D = 0.138
+WEIGHT_LOSS_WITHOUT_T2D = 0.185
 WEIGHT_REGAIN_POST_TREATMENT = 0
 COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
                           year2 = list(c1 = 14000, c2 = 47500),

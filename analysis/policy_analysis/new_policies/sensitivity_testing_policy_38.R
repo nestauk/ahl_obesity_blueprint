@@ -436,7 +436,7 @@ run_sensitivity_analysis <- function(n_iterations = 1000,
 # Main analysis:
 
 # df to store results of the sensitivity analysis:
-sensitivity_results <- run_sensitivity_analysis(n_iterations = 1000,
+sensitivity_results <- run_sensitivity_analysis(n_iterations = 5000,
                                                 input_file_path= "inputs/processed/hse_2019.csv",
                                                 ob_total_cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
                                                 ob_costs_30_40 = MODEL_CONSTANTS$COST_OBESITY_BMI_30_40,
@@ -492,3 +492,33 @@ ggsave(here("outputs/new_policies/policy_38/distribution_plot_sensitivity.png"),
        plot = relative_reduction_plot,
        width = 180, height = 120, units = "mm",
        bg = "white")
+
+
+
+# Using the kmeans() function to find clusters in the sensitivity analysis:
+
+set.seed(42) 
+kmeans_result <- kmeans(sensitivity_results$relative_reduction, centers = 2)
+
+# 2. Add the cluster assignments back to your main dataframe
+sensitivity_results_with_clusters <- sensitivity_results %>%
+  mutate(peak_group = as.factor(kmeans_result$cluster))
+
+comparison_by_cluster <- sensitivity_results_with_clusters %>%
+  group_by(peak_group) %>%
+  summarise(
+
+    diff_diabetes_y1 = mean(diabetes_year1, na.rm = TRUE),
+    diff_diabetes_y2 = mean(diabetes_year2, na.rm = TRUE),
+    diff_diabetes_y3 = mean(diabetes_year3, na.rm = TRUE),
+    diff_diabetes_y4 = mean(diabetes_year4, na.rm = TRUE),
+    diff_diabetes_y5 = mean(diabetes_year5, na.rm = TRUE),
+    
+    diff_bmi_y1 = mean(bmi_year1, na.rm = TRUE),
+    diff_bmi_y2 = mean(bmi_year2, na.rm = TRUE),
+    diff_bmi_y3 = mean(bmi_year3, na.rm = TRUE),
+    diff_bmi_y4 = mean(bmi_year4, na.rm = TRUE),
+    diff_bmi_y5 = mean(bmi_year5, na.rm = TRUE)
+  )
+
+print(comparison_by_cluster)
