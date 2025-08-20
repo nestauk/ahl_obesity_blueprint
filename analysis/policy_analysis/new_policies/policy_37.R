@@ -10,38 +10,33 @@
 # The evidence comes from the results of the rapid review available here
 # - https://docs.google.com/document/d/1K20dg2D-G9J6F439gegPRD8Mly58xSnJmGXJMto_GYY/edit?usp=sharing
 
-# The evidence comes from the results of the rapid review available here
-# - https://docs.google.com/document/d/1hozT3EvH5fbl1W9CeIcrrr7TGpotYu07/edit?usp=sharing&ouid=102713518635256687243&rtpof=true&sd=true
-
 # 
 # Eligibility:
 #   Adults Age: ≥ 18; BMI Group: ≥ 30
 # 
 # Weight loss = 3.9 kg after the programme (c)
-#   Effect size: 3.9 kgs at the end of 1 year after programme  
-#     We take a weighted average of the effect sizes from different papers under Group-based Commercial, please see calculation of this below
+#   Effect size: 3.9 kgs at the end of 1 year after programme
 #
 # Weight regain = 0.32 kg per year (b)
-#   To calculate the weight regain we subtract the weight regain after the programme from the weight
-#   regain at the end of 5 years and divide it by 5 to get the mean weight regain per year.
-#
 #
 # Number of people treated:
-#   We use the allocated annual budget and per person cost of delivering the programme to estimate the number of people who will receive treatment each year
-#     Number of people treated = ~1.2 million people per year
+#   We use the allocated annual budget and per person cost of delivering the 
+#   programme to estimate the number of people who will be offered the treatment
+#   each year
+#   Number of people enrolled = ~1.2 million people per year
 #     Allocated budget / Unit cost per year = £85 mil / £70 = 1,214,285
-#
+#   
 #   Allocated budget = £85 million per year from the policy specification
-# 
 #   Cost of delivering the programme: £70 per person
 #     Unit cost of treatment in 2015 = £51.45 per person [Source]
 #     Adjusting for inflation = Original price x (CPI in 2015 / CPI in base year)
 #         51.45 x (135.4/100) = £70 per person per year
-#   However, it is unlikely that everyone offered the programme will enroll. We use stats from OHID to estimate the number of people who enroll#
-#   and the share of people who experience weight loss
-#   Number of people experiencing weight loss = 45% of those who enrolled the programme
-#   Therefore, in our context, the number of people enrolled after and offer = 65% x 1,214,285 = 789,285
-#   And number of people experiencing weight loss of those who enrolled = 45% x 1,214,285 = 546428.6
+#   However, it is unlikely that everyone offered the programme will take up 
+#   treatment We use stats Taylor et al. (2024) (c) to estimate the number of 
+#   people who enroll and the share of people who experience weight loss
+#   Number of people experiencing weight loss = 45% of those who enrolled
+#   And number of people experiencing weight loss of those who enrolled
+#           = 45% x 1,214,285 = 546428.6; rounding this to 546,429
 
 
 
@@ -77,32 +72,6 @@ source(file = "post_processing/post_processing.R")
 table_outputs = list() # creating a list of table outputs to be saved as an excel file
 
 
-# calculating absolute weight loss:
-# We create a data frame to show the results from (c). This table is created from Page  Pg 927, Figure 1, section 6.1.2 in (c) Hartmann-Boyce et al. (2014)
-results_table <- data.frame(
-  study = c("Heshka 2003", "Jebb 2011", "Jolly 2011", "Jolly 2011", "Jolly 2011"),
-  mean = c(-4.9, -6.65, -3.3, -3.1, -4.4),
-  sample = c(176, 230, 68, 62, 78)
-)
-
-
-results_table = results_table %>%
-  mutate(mean_x_sample = mean * sample)
-
-weighted_weight_loss = weighted.mean(results_table$mean, results_table$sample)
-
-# calculating absolute weight regain:
-# From Hartmann-Boyce (2023), we get the weight loss after the programme and the weight loss at the end of 5 years:
-# (Please see section 3.4 in the paper)
-# weight loss in intervention group at the end of the programme: -4.9 kg
-weight_loss_treatment_group_programme_end = -4.9
-
-# weight loss in intervention group at the end of 5 years: -2.6 kg
-weight_loss_treatment_group_five_years = -2.6
-
-# we then calculate weight regain per year = (weight loss at five years - weight loss at treatment end)/5
-weight_regain_per_year = (weight_loss_treatment_group_five_years - weight_loss_treatment_group_programme_end)/ 5
-
 
 # Number of people offered the programme:
 budget_allocation = 85000000
@@ -112,18 +81,16 @@ number_of_people_offered = budget_allocation / unit_cost_bwmps
 
 
 # calculating the number of people experiencing weight loss:
-share_enrolled = 1
-share_experiencing_weight_loss = 0.45 # 0.43
+share_experiencing_weight_loss = 0.45
 
-number_enrolled_experiencing_weight_loss = share_enrolled * share_experiencing_weight_loss * number_of_people_offered
+number_enrolled_experiencing_weight_loss = share_experiencing_weight_loss * number_of_people_offered
 
 
 # Constants
-
 NUMBER_OF_PEOPLE_EXPERINCING_WEIGHT_LOSS = number_enrolled_experiencing_weight_loss
 ENGLAND_ADULT_POPULATION = 44263393  # (a)
-WEIGHT_LOSS_ON_TREATMENT = 3.9 # abs(weighted_weight_loss)
-WEIGHT_REGAIN_POST_TREATMENT = 0.32# abs(weight_regain_per_year)
+WEIGHT_LOSS_ON_TREATMENT = 3.9 # from rapid review
+WEIGHT_REGAIN_POST_TREATMENT = 0.32 # from rapid review
 
 
 
@@ -430,7 +397,7 @@ annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_e
                                               cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
                                               duration = MODEL_CONSTANTS$MODEL_DURATION)
 
-# Average annual value to government compared to baseline = £1.58 billions
+# Average annual value to government compared to baseline = £1.98 billions
 
 # Adding to table outputs:
 table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov

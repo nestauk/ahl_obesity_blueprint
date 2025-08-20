@@ -215,7 +215,7 @@ annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_e
                                               cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
                                               duration = MODEL_CONSTANTS$MODEL_DURATION)
 
-# Average annual value to government compared to baseline = £0.6 billions
+# Average annual value to government compared to baseline = £0.58 billions
 
 # Adding to table outputs:
 table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov
