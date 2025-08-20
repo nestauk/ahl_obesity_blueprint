@@ -46,16 +46,15 @@ source(file = "post_processing/post_processing.R")
 
 
 # Constants:
-NUMBER_OF_PEOPLE_PER_YEAR = 1200000
 ENGLAND_ADULT_POPULATION = 44263393  # (a)
-WEIGHT_LOSS_WITH_T2D = 0.185
-WEIGHT_LOSS_WITHOUT_T2D = 0.138
+WEIGHT_LOSS_WITH_T2D = 0.138
+WEIGHT_LOSS_WITHOUT_T2D = 0.185
 WEIGHT_REGAIN_POST_TREATMENT = 0
 COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
                           year2 = list(c1 = 14000, c2 = 47500),
                           year3 = list(c2 = 47500, c3 = 85714),
-                          year4 = list(c3 = 114286, c4 = 58462),
-                          year5 = list(c4 = 175385))
+                          year4 = list(c3 = 114285, c4 = 58462),
+                          year5 = list(c4 = 175384))
 
 table_outputs = list() # creating a list of table outputs to be saved as an excel file
 
@@ -460,7 +459,7 @@ df_2019_adult_with_cohorts = df_2019_adult_eligibility %>%
     TRUE ~ 0))
 
 
-set.seed(101)
+set.seed(10)
 
 # From the NICE Guidelines we estimated the number of people in each year and cohort:
 print(COHORT_ALLOCATION)
@@ -597,9 +596,12 @@ annual_obesity_prevalence_england = extract_relative_change(data = bmi_change_ye
 table_outputs[["annual_obesity_prevalence_eng"]] = annual_obesity_prevalence_england
 
 # Estimating the annual value to government (benefit):
-annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_england, 
-                                              cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
-                                              duration = MODEL_CONSTANTS$MODEL_DURATION)
+annual_benefit_to_gov = extract_pound_benefit_by_class(data = bmi_change_year,
+                                                       total_cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
+                                                       cost_30_40 = obesity_cost_30_40,
+                                                       cost_over_40 = obesity_cost_over_40,
+                                                       duration = MODEL_CONSTANTS$MODEL_DURATION,
+                                                       option = "option_1")
 
 # Average annual value to government compared to baseline = £0.05 billions
 
@@ -661,4 +663,6 @@ write_xlsx(path = "outputs/new_policies/policy_38/policy_38.xlsx", x = table_out
 write.csv(post_df_adult, file = "outputs/new_policies/policy_38/policy_38_adult_england_bmi.csv")
 
 
+log_df = intervention_sample$running_log
 
+write.table(log_df, pipe("pbcopy"), sep="\t", row.names = FALSE)
