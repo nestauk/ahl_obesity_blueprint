@@ -257,9 +257,26 @@ run_single_iteration <- function(seed_value,
     filter(bmi_class %in% c("obese", "morbidly obese")) %>%
     summarise(baseline_obesity_prevalence = sum(freq))
   
+  # Calculating class 3 prevalence for year 5:
+  class_3_bmi_prevalence <- post_df_adult %>%
+    count(bmi_5_class, wt = wt_int) %>%
+    mutate(freq = n/sum(n)*100) %>%
+    filter(bmi_5_class %in% c("morbidly obese")) %>%
+    summarise(class_3_obesity_prevalence_y5 = sum(freq))
+  
+  # Calculating class 3 prevalence for baseline:
+  class_3_baseline_prevalence <- post_df_adult %>%
+    count(bmi_class, wt = wt_int) %>%
+    mutate(freq = n/sum(n)*100) %>%
+    filter(bmi_class %in% c("morbidly obese")) %>%
+    summarise(baseline_class_3_obesity_prevalence = sum(freq))
+  
   # Calculate reduction
   reduction <- (baseline_prevalence$baseline_obesity_prevalence - 
                   bmi_prevalence$obesity_prevalence_y5)
+  
+  reduction_class_3 <- (class_3_baseline_prevalence$baseline_class_3_obesity_prevalence -
+    class_3_bmi_prevalence$class_3_obesity_prevalence_y5)
   
   value_to_gov = extract_pound_benefit_by_class(data = bmi_change_year,
                                                 total_cost = total_cost_obesity,
@@ -275,6 +292,10 @@ run_single_iteration <- function(seed_value,
     year5_obesity = bmi_prevalence$obesity_prevalence_y5,
     reduction = reduction,
     relative_reduction = (reduction / baseline_prevalence$baseline_obesity_prevalence) * 100,
+    baseline_class_3 = class_3_baseline_prevalence$baseline_class_3_obesity_prevalence,
+    year5_class_3_obesity = class_3_bmi_prevalence$class_3_obesity_prevalence_y5,
+    reduction_class_3 = reduction_class_3,
+    relative_reduction_class_3 = (reduction_class_3/class_3_baseline_prevalence$baseline_class_3_obesity_prevalence) * 100,
     benefit = value_to_gov,
     
     # Year 1 metrics
@@ -412,7 +433,7 @@ run_sensitivity_analysis <- function(n_iterations = 1000,
   
   # Running iterations:
   cat("Running sensitivity analysis with", n_iterations, "iterations...\n")
-  
+  # browser()
   results <- pbapply::pblapply(seeds, function(s) {
     tryCatch({
       run_single_iteration(s,
@@ -455,7 +476,11 @@ summary_stats <- sensitivity_results %>%
     min_relative_reduction = round(min(relative_reduction), 3),
     max_relative_reduction = round(max(relative_reduction), 3),
     mean_benefit = mean(benefit),
-    sd_benefit = sd(benefit)
+    sd_benefit = sd(benefit),
+    mean_class_3_rel_reduction = round(mean(relative_reduction_class_3), 3),
+    sd_class_3_rel_reduction = round(sd(relative_reduction_class_3), 3),
+    min_class_3_rel_reduction = round(min(relative_reduction_class_3), 3),
+    max_class_3_rel_reduction = round(max(relative_reduction_class_3), 3),
   )
 
 print("Summary stats of obesity reduction and benefits:")
