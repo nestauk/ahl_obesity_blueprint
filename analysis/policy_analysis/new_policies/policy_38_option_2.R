@@ -38,7 +38,7 @@ library(here)
 library(writexl)
 
 
-source(file = "requirements.R")
+# source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
 source(file = "models/adult_model_calorie.R")
 source(file = "config/config.R")
@@ -50,20 +50,26 @@ ENGLAND_ADULT_POPULATION = 44263393  # (a)
 WEIGHT_LOSS_WITH_T2D = 0.138
 WEIGHT_LOSS_WITHOUT_T2D = 0.185
 WEIGHT_REGAIN_POST_TREATMENT = 0
-COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
-                          year2 = list(c1 = 14000, c2 = 47500),
-                          year3 = list(c2 = 47500, c3 = 85714),
-                          year4 = list(c3 = 114285, c4 = 58462),
-                          year5 = list(c4 = 175384))
+# COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
+#                           year2 = list(c1 = 14000, c2 = 47500),
+#                           year3 = list(c2 = 47500, c3 = 85714),
+#                           year4 = list(c3 = 114285, c4 = 58462),
+#                           year5 = list(c4 = 175384))
 
 
+# # current option 2
+# COHORT_ALLOCATION <- list(year1 = list(c1 = 21000),
+#                           year2 = list(c1 = 21000, c2 = 21000),
+#                           year3 = list(c2 = 45500, c3 = 45500),
+#                           year4 = list(c3 = 63000, c4 = 63000),
+#                           year5 = list(c4 = 126000))
 
-# 
-# COHORT_ALLOCATION <- list(year1 = list(c1 = 30000),
-#                           year2 = list(c1 = 12000, c2 = 48000),
-#                           year3 = list(c2 = 48000, c3 = 82000),
-#                           year4 = list(c3 = 90000, c4 = 90000),
-#                           year5 = list(c4 = 180000))
+# new option 2
+COHORT_ALLOCATION <- list(year1 = list(c1 = 21000),
+                          year2 = list(c1 = 8400, c2 = 33600),
+                          year3 = list(c2 = 32900, c3 = 58100),
+                          year4 = list(c3 = 81900, c4 = 44100),
+                          year5 = list(c4 = 126000))
 
 
 
@@ -108,7 +114,7 @@ table_outputs = list() # creating a list of table outputs to be saved as an exce
 #'       DesiredWeightSum, ActualWeightSum, NumEligibleIndividuals, NumSelected, and comments
 
 select_intervention_sample <- function(data, cohort_allocations, population_size, 
-                                         weight_var, num_years, cohort_var) {
+                                       weight_var, num_years, cohort_var) {
   
   op_list = list()
   running_log <- data.frame(
@@ -177,9 +183,9 @@ select_intervention_sample <- function(data, cohort_allocations, population_size
         if(sample_size > eligible_population) {
           
           msg = (paste0("The desired sample size (", sample_size, 
-                         ") is greater than the eligible population (", 
-                         eligible_population, ") for cohort ", cohort, " in year ", year, 
-                         ". Using all available individuals and including previous or subsequent cohorts in sample."))
+                        ") is greater than the eligible population (", 
+                        eligible_population, ") for cohort ", cohort, " in year ", year, 
+                        ". Using all available individuals and including previous or subsequent cohorts in sample."))
           
           comment_list = c(comment_list, msg)
           
@@ -250,7 +256,7 @@ select_intervention_sample <- function(data, cohort_allocations, population_size
         # Then we check if there are enough individuals in the sample to choose from
         if (length(remaining_indices) == 0) {
           msg = (paste0("Ran out of eligible individuals in cohort ", cohort, 
-                         " for year ", year, " before reaching target."))
+                        " for year ", year, " before reaching target."))
           # break
           comment_list = c(comment_list, msg)
         }
@@ -364,7 +370,7 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_p
       # evidence shows weight loss values for two years. In this case, it is being assumed that the weight loss occurs in the first year
       data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 1, weight_loss_cols[year]] = -weight_loss_percent_with_diabetes*1* data[data[[intervention_col]] == "Yes"  & data[["cond_diabetes"]] == 1, bodyweight_var]
       data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 0, weight_loss_cols[year]] = -weight_loss_percent*1* data[data[[intervention_col]] == "Yes"  & data[["cond_diabetes"]] == 0, bodyweight_var]
-       
+      
       data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 1, weight_loss_cols[year+1]] = -weight_loss_percent_with_diabetes*0* data[data[[intervention_col]] == "Yes"  & data[["cond_diabetes"]] == 1, bodyweight_var]
       data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 0, weight_loss_cols[year+1]] = -weight_loss_percent*0* data[data[[intervention_col]] == "Yes"  & data[["cond_diabetes"]] == 0, bodyweight_var]
       
@@ -444,11 +450,11 @@ df_2019_adult = read_csv(here("inputs/processed/hse_2019.csv"))
 
 df_2019_adult_eligibility = df_2019_adult %>%
   mutate(cond_ascvd = case_when(cardiovd == 1 | platlets == 1 | ace_inhibitors == 1 | diuretics == 1 | lipid == 1 ~ 1,
-                           TRUE ~ 0),
+                                TRUE ~ 0),
          cond_hypertension =  case_when(hypertension == 1 ~ 1,
                                         TRUE ~ 0),
          cond_dyslipidaemia = case_when(lipid == 1 ~ 1,
-                                         TRUE ~ 0),
+                                        TRUE ~ 0),
          cond_diabetes = case_when(diabetes_type == 1 | metformin == 1 | anti_diabetics == 1 ~ 1,
                                    TRUE ~ 0)) %>%
   mutate(eligibility_score = cond_ascvd + cond_hypertension + cond_dyslipidaemia + cond_diabetes)
@@ -474,7 +480,7 @@ df_2019_adult_with_cohorts = df_2019_adult_eligibility %>%
     TRUE ~ 0))
 
 
-set.seed(695)
+set.seed(593)
 
 # From the NICE Guidelines we estimated the number of people in each year and cohort:
 print(COHORT_ALLOCATION)
@@ -665,7 +671,7 @@ adult_bar_plot = bmi_change %>%
 
 adult_bar_plot
 
-ggsave(here("outputs/new_policies/policy_38/policy_38_impact_England_adult.png"), 
+ggsave(here("outputs/new_policies/policy_38_op2/policy_38_impact_England_adult_593.png"), 
        plot = adult_bar_plot, 
        width = 10, 
        height = 6,
@@ -674,8 +680,8 @@ ggsave(here("outputs/new_policies/policy_38/policy_38_impact_England_adult.png")
 
 # Outputs 3: summary results and detailed individual table:
 # bmi year on year prevalence:
-write_xlsx(path = "outputs/new_policies/policy_38/policy_38.xlsx", x = table_outputs)
-write.csv(post_df_adult, file = "outputs/new_policies/policy_38/policy_38_adult_england_bmi.csv")
+write_xlsx(path = "outputs/new_policies/policy_38_op2/policy_38_593.xlsx", x = table_outputs)
+write.csv(post_df_adult, file = "outputs/new_policies/policy_38_op2/policy_38_adult_england_bmi_593.csv")
 
 
 log_df = intervention_sample$running_log
@@ -698,6 +704,21 @@ cohort_year_allocation = post_df_adult %>%
   mutate(number_of_people = pct_share * ENGLAND_ADULT_POPULATION) %>%
   subset(year_allocation != "NA")
 
+cohort_year_allocation = post_df_adult %>%
+  mutate(year_allocation = case_when(intervention_year1 == "Yes" ~ "Y1",
+                                     intervention_year2 == "Yes" ~ "Y2",
+                                     intervention_year3 == "Yes" ~ "Y3",
+                                     intervention_year4 == "Yes" ~ "Y4",
+                                     intervention_year5 == "Yes" ~ "Y5",
+                                     TRUE ~ "NA")) %>%
+  rowwise() %>%
+  mutate(bmi_class_change = n_distinct(c_across(matches("(?i)bmi_\\d+_class")), na.rm = TRUE) > 1) %>%
+  ungroup()
+
+cohort_allocation_subset = cohort_year_allocation %>%
+  filter(year_allocation != "NA", !bmi_class_change)
+
+440583-(21000+42000+91000+126000+126000)
 
 bmi_over_40 = post_df_adult %>%
   filter(bmi >= 40)
@@ -706,42 +727,41 @@ bmi_over_40 = post_df_adult %>%
 plot_metric(data = bmi_over_40, metric = "bmi")
 
 
-plot_metric(data = post_df_adult, metric = "bmi")
-
+plot_metric(data = post_df_adult, metric = "bmi_y1")
+plot_metric(data = post_df_adult, metric = "bmi_y2")
+plot_metric(data = post_df_adult, metric = "bmi_y3")
+plot_metric(data = post_df_adult, metric = "bmi_y4")
 plot_metric(data = post_df_adult, metric = "bmi_y5")
-
-
 
 df_bmi = post_df_adult %>%
   dplyr::select(bmi, bmi_y1, bmi_y2, bmi_y3, bmi_y4, bmi_y5)
 
 
 df_bmi_over_40 = df_bmi %>%
-  #filter(bmi >= 40)
+  filter(bmi >= 40)
 
 df_long <- pivot_longer(df_bmi_over_40,
                         cols = everything(),
                         names_to = "year",
                         values_to = "bmi")
 
-
 ggplot(df_long, aes(x = bmi, color = year)) +
   
   # Add the density layer.
   # 'alpha' is set to 0.4 to make the fills semi-transparent,
   # so you can see the overlapping distributions.
-  geom_density(alpha = 0.4) +
+  geom_density(alpha = 0.4, trim = TRUE) +
   
   # Add titles and labels for clarity
   labs(
-    title = "Op 1: Dens Plot of BMI Over 5 Years",
+    title = "Op 2: Dens Plot of BMI Over 5 Years",
     x = "BMI",
     y = "Density",
     fill = "Year", # Legend title for fill
     color = "Year" # Legend title for color
   ) +
   
-  #coord_cartesian(xlim = c(30, NA)) + 
+  coord_cartesian(xlim = c(30, NA)) + 
   # Apply a clean theme
   theme_minimal() +
   
@@ -750,16 +770,4 @@ ggplot(df_long, aes(x = bmi, color = year)) +
     plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
     legend.position = "bottom"
   )
-
-
-df_test = post_df_adult %>%
-  mutate(change_check = case_when(bmi_class == bmi_5_class ~ "no_change",
-                                  TRUE ~ "yes_change"))
-
-
-test_bmi <- 76.8/((160/100)^2)
-case_when(test_bmi >= 25 & test_bmi < 30 ~ "overweight",
-          test_bmi >= 30 & test_bmi < 40 ~ "obese")
-
-print(test_bmi, digits = 20)
 

@@ -294,8 +294,8 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_p
       
     } else{
       
-      data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 1, weight_loss_cols[year]] = -weight_loss_percent*1* data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 1, bodyweight_var]
-      
+      data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 1, weight_loss_cols[year]] = -weight_loss_percent_with_diabetes*1* data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 1, bodyweight_var]
+      data[data[[intervention_col]] == "Yes" & data[["cond_diabetes"]] == 0, weight_loss_cols[year]] = -weight_loss_percent*1* data[data[[intervention_col]] == "Yes"  & data[["cond_diabetes"]] == 0, bodyweight_var]
       
     }
     # browser()

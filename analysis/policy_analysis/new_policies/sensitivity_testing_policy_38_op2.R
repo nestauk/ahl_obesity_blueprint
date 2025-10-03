@@ -21,11 +21,25 @@ ENGLAND_ADULT_POPULATION = 44263393
 WEIGHT_LOSS_WITH_T2D = 0.138
 WEIGHT_LOSS_WITHOUT_T2D = 0.185
 WEIGHT_REGAIN_POST_TREATMENT = 0
-COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
-                          year2 = list(c1 = 14000, c2 = 47500),
-                          year3 = list(c2 = 47500, c3 = 85714),
-                          year4 = list(c3 = 114285, c4 = 58462),
-                          year5 = list(c4 = 175384))
+# COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
+#                           year2 = list(c1 = 14000, c2 = 47500),
+#                           year3 = list(c2 = 47500, c3 = 85714),
+#                           year4 = list(c3 = 114285, c4 = 58462),
+#                           year5 = list(c4 = 175384))
+
+# current option 2
+# COHORT_ALLOCATION <- list(year1 = list(c1 = 21000),
+#                           year2 = list(c1 = 21000, c2 = 21000),
+#                           year3 = list(c2 = 45500, c3 = 45500),
+#                           year4 = list(c3 = 63000, c4 = 63000),
+#                           year5 = list(c4 = 126000))
+
+# new option 2
+COHORT_ALLOCATION <- list(year1 = list(c1 = 21000),
+                          year2 = list(c1 = 8400, c2 = 33600),
+                          year3 = list(c2 = 32900, c3 = 58100),
+                          year4 = list(c3 = 81900, c4 = 44100),
+                          year5 = list(c4 = 126000))
 
 
 # COHORT_ALLOCATION <- list(year1 = list(c1 = 19600),
@@ -33,12 +47,6 @@ COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
 #                           year3 = list(c2 = 33250, c3 = 60000),
 #                           year4 = list(c3 = 80000, c4 = 40923),
 #                           year5 = list(c4 = 122769))
-
-# COHORT_ALLOCATION <- list(year1 = list(c1 = 30000),
-#                           year2 = list(c1 = 12000, c2 = 48000),
-#                           year3 = list(c2 = 48000, c3 = 82000),
-#                           year4 = list(c3 = 118800, c4 = 61200),
-#                           year5 = list(c4 = 180000))
 
 
 
@@ -510,9 +518,10 @@ summary_report <- list(
 
 
 # 2. Density plot of relative reduction:
-relative_reduction_plot <- 
+relative_reduction_plot = 
 plot_metric(data = sensitivity_results, metric = "relative_reduction")
 
+class_3_relative_reduction_plot =
 plot_metric(data = sensitivity_results, metric = "relative_reduction_class_3")
 
 # 3. Density plot of benefit:
@@ -523,15 +532,21 @@ plot_metric(data = sensitivity_results, metric = "benefit")
 
 # 1. Summary results:
 write_xlsx(summary_report, 
-           here("outputs/new_policies/policy_38/sensitivity_results/summary_100pct.xlsx"))
+           here("outputs/new_policies/policy_38_op2/sensitivity_analysis/option_2_sens.xlsx"))
 
 # 2. Detailed results:
 write_csv(sensitivity_results, 
-          here("outputs/new_policies/policy_38/sensitivity_results/detailed_100pct.csv"))
+          here("outputs/new_policies/policy_38_op2/sensitivity_analysis/detailed_option_2_sens.csv"))
 
 # 3. Distribution plot of relative reduction:
-ggsave(here("outputs/new_policies/policy_38/sensitivity_results/relative_reduction_distrib.png"), 
+ggsave(here("outputs/new_policies/policy_38_op2/sensitivity_analysis/distrib_option_2_sens.png"), 
        plot = relative_reduction_plot,
+       width = 180, height = 120, units = "mm",
+       bg = "white")
+
+# 4. Distribution plot of relative reduction:
+ggsave(here("outputs/new_policies/policy_38_op2/sensitivity_analysis/class_3_distrib_option_2_sens.png"), 
+       plot = class_3_relative_reduction_plot,
        width = 180, height = 120, units = "mm",
        bg = "white")
 
@@ -563,3 +578,14 @@ comparison_by_cluster <- sensitivity_results_with_clusters %>%
   )
 
 print(comparison_by_cluster)
+
+
+df = read_csv(here("inputs/processed/hse_2019.csv"))
+
+df_filtered_over_40 = df %>%
+  filter(bmi>=40 & bmi <=45)
+
+plot_metric(data = df_filtered_over_40, metric = "bmi")
+
+
+
