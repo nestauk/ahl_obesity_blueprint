@@ -15,10 +15,6 @@ OP_2_COHORT_ALLOCATION <- list(year1 = list(c1 = 21000),
                               year5 = list(c4 = 126000))
 
 
-# set this:
-cohort = OP_2_COHORT_ALLOCATION
-
-
 
 source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
@@ -316,6 +312,10 @@ get_yearwise_bmi_category_counts <- function(data, pop_weight_col, treatment_col
 
 
 # Main analysis starts here:
+
+# Step 0: Choose option 1 (~570K people) or Option 2 (406K people)
+cohort = OP_2_COHORT_ALLOCATION
+
 
 # Step 1: reading in the cleaned processed baseline data file:
 df_2019_adult = read_csv(here("inputs/processed/hse_2019.csv"))
