@@ -113,3 +113,44 @@ extract_pound_benefit_by_class = function(data,
   
   
 }
+
+
+extract_relative_change = function(data){
+  
+  # browser()
+  data_df = data %>%
+    mutate(total_obesity = obese + `morbidly obese`)
+  
+  baseline_total_obesity = data_df %>%
+    filter(type == "Year 0") %>%
+    pull(total_obesity)
+  
+  baseline_class_3_obesity = data_df %>%
+    filter(type == "Year 0") %>%
+    pull(`morbidly obese`)
+  
+  data_df = data_df %>%
+    mutate(absolute_change = baseline_total_obesity - total_obesity) %>%
+    mutate(relative_change = (absolute_change/baseline_total_obesity)*100) %>%
+    mutate(absolute_class_3 = baseline_class_3_obesity - `morbidly obese`) %>%
+    mutate(relative_class_3 = (absolute_class_3/baseline_class_3_obesity)*100)
+  
+  
+  relative_change_obesity_prevalence = data_df %>%
+    filter(type == "Year 5") %>%
+    pull(relative_change)
+  
+  relative_change_class_3 = data_df %>%
+    filter(type == "Year 5") %>%
+    pull(relative_class_3)
+  
+  print(paste0("Relative reduction in obesity prevalence = ", round(relative_change_obesity_prevalence, 2), "%"))
+  print(paste0("Relative reduction in Class 3 obesity prevalence = ", round(relative_change_class_3, 2), "%"))
+  
+  return(data_df)
+  
+  
+}
+
+
+
