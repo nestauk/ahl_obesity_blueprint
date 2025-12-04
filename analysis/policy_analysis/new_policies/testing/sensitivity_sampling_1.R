@@ -15,6 +15,7 @@ source(file = "models/adult_model_calorie.R")
 source(file = "config/config.R")
 source(file = "post_processing/post_processing.R")
 source(file = "analysis/policy_analysis/new_policies/utils.R")
+source(file = "analysis/policy_analysis/new_policies/testing/new_sampling_utils.R")
 
 # constants:
 # ENGLAND_ADULT_POPULATION = 44263393
@@ -23,29 +24,8 @@ source(file = "analysis/policy_analysis/new_policies/utils.R")
 # WEIGHT_REGAIN_POST_TREATMENT = 0
 
 
-COHORT_ALLOCATION <- COHORT_10K
-path = "outputs/new_policies/policy_38/sens_samp_1/"
 
-# COHORT_ALLOCATION <- list(year1 = list(c1 = 28000),
-#                           year2 = list(c1 = 14000, c2 = 47500),
-#                           year3 = list(c2 = 47500, c3 = 85714),
-#                           year4 = list(c3 = 114285, c4 = 58462),
-#                           year5 = list(c4 = 175384))
-
-
-# COHORT_ALLOCATION <- list(year1 = list(c1 = 19600),
-#                           year2 = list(c1 = 9800, c2 = 33250),
-#                           year3 = list(c2 = 33250, c3 = 60000),
-#                           year4 = list(c3 = 80000, c4 = 40923),
-#                           year5 = list(c4 = 122769))
-
-# COHORT_ALLOCATION <- list(year1 = list(c1 = 30000),
-#                           year2 = list(c1 = 12000, c2 = 48000),
-#                           year3 = list(c2 = 48000, c3 = 82000),
-#                           year4 = list(c3 = 118800, c4 = 61200),
-#                           year5 = list(c4 = 180000))
-
-
+path_m1 = "outputs/new_policies/policy_38/sens_samp_1/"
 
 # Functions:
 
@@ -107,7 +87,7 @@ path = "outputs/new_policies/policy_38/sens_samp_1/"
 #'
 #' @export
 
-run_single_iteration <- function(seed_value,
+run_single_iteration_m1 <- function(seed_value,
                                  cohort_allocation_input,
                                  df_2019_adult_with_cohorts,
                                  total_cost_obesity,
@@ -119,7 +99,7 @@ run_single_iteration <- function(seed_value,
   set.seed(seed_value)
   
   # Selecting intervention sample:
-  intervention_sample <- select_intervention_sample(
+  intervention_sample <- select_intervention_sample_method_1(
     data = df_2019_adult_with_cohorts, 
     cohort_allocations = cohort_allocation_input,
     population_size = MODEL_CONSTANTS$ENGLAND_ADULT_POPULATION,
@@ -264,89 +244,108 @@ run_single_iteration <- function(seed_value,
   
   
   # Calculating obesity prevalence for year 5:
-  bmi_prevalence <- post_df_adult %>%
-    count(bmi_5_class, wt = wt_int) %>%
-    mutate(freq = n/sum(n)*100) %>%
-    filter(bmi_5_class %in% c("obese", "morbidly obese")) %>%
-    summarise(obesity_prevalence_y5 = sum(freq))
+  bmi_prevalence <- bmi_change %>%
+    filter(type %in% c("Year 5")) %>%
+    filter(BMI %in% c("obese", "morbidly obese")) %>%
+    pull(freq) %>%
+    sum()
   
+  
+  # bmi_prevalence <- post_df_adult %>%
+  #   count(bmi_5_class, wt = wt_int) %>%
+  #   mutate(freq = n/sum(n)*100) %>%
+  #   filter(bmi_5_class %in% c("obese", "morbidly obese")) %>%
+  #   summarise(obesity_prevalence_y5 = sum(freq))
+
   # Calculating obesity prevalence for baseline:
-  baseline_prevalence <- post_df_adult %>%
-    count(bmi_class, wt = wt_int) %>%
-    mutate(freq = n/sum(n)*100) %>%
-    filter(bmi_class %in% c("obese", "morbidly obese")) %>%
-    summarise(baseline_obesity_prevalence = sum(freq))
+  baseline_prevalence <- bmi_change %>%
+    filter(type %in% c("Year 0")) %>%
+    filter(BMI %in% c("obese", "morbidly obese")) %>%
+    pull(freq) %>%
+    sum()
+  
+  # baseline_prevalence <- post_df_adult %>%
+  #   count(bmi_class, wt = wt_int) %>%
+  #   mutate(freq = n/sum(n)*100) %>%
+  #   filter(bmi_class %in% c("obese", "morbidly obese")) %>%
+  #   summarise(baseline_obesity_prevalence = sum(freq))
   
   # Calculating class 3 prevalence for year 5:
-  class_3_bmi_prevalence <- post_df_adult %>%
-    count(bmi_5_class, wt = wt_int) %>%
-    mutate(freq = n/sum(n)*100) %>%
-    filter(bmi_5_class %in% c("morbidly obese")) %>%
-    summarise(class_3_obesity_prevalence_y5 = sum(freq))
+  # class_3_bmi_prevalence <- post_df_adult %>%
+  #   count(bmi_5_class, wt = wt_int) %>%
+  #   mutate(freq = n/sum(n)*100) %>%
+  #   filter(bmi_5_class %in% c("morbidly obese")) %>%
+  #   summarise(class_3_obesity_prevalence_y5 = sum(freq))
   
   # Calculating class 3 prevalence for baseline:
-  class_3_baseline_prevalence <- post_df_adult %>%
-    count(bmi_class, wt = wt_int) %>%
-    mutate(freq = n/sum(n)*100) %>%
-    filter(bmi_class %in% c("morbidly obese")) %>%
-    summarise(baseline_class_3_obesity_prevalence = sum(freq))
+  # class_3_baseline_prevalence <- post_df_adult %>%
+  #   count(bmi_class, wt = wt_int) %>%
+  #   mutate(freq = n/sum(n)*100) %>%
+  #   filter(bmi_class %in% c("morbidly obese")) %>%
+  #   summarise(baseline_class_3_obesity_prevalence = sum(freq))
   
   # Calculate reduction
-  reduction <- (baseline_prevalence$baseline_obesity_prevalence - 
-                  bmi_prevalence$obesity_prevalence_y5)
+  reduction <- (baseline_prevalence - bmi_prevalence)
   
-  reduction_class_3 <- (class_3_baseline_prevalence$baseline_class_3_obesity_prevalence -
-    class_3_bmi_prevalence$class_3_obesity_prevalence_y5)
+  # reduction_class_3 <- (class_3_baseline_prevalence$baseline_class_3_obesity_prevalence -
+  #                         class_3_bmi_prevalence$class_3_obesity_prevalence_y5)
   
-  value_to_gov = extract_pound_benefit_by_class(data = bmi_change_year,
-                                                total_cost = total_cost_obesity,
-                                                cost_30_40 = obesity_cost_30_40,
-                                                cost_over_40 = obesity_cost_over_40,
-                                                duration = implementation_period,
-                                                option = "option_1")
+  bmi_change_year_updated = extract_relative_change(data = bmi_change_year)
+  
+  value_to_gov = extract_value_to_gov(data = bmi_change_year_updated,
+                                      cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
+                                      duration = MODEL_CONSTANTS$MODEL_DURATION)
+  
+    # extract_pound_benefit_by_class(data = bmi_change_year,
+    #                                             total_cost = total_cost_obesity,
+    #                                             cost_30_40 = obesity_cost_30_40,
+    #                                             cost_over_40 = obesity_cost_over_40,
+    #                                             duration = implementation_period,
+    #                                             option = "option_1")
   
   # Return results
   return(data.frame(
     seed = seed_value,
-    baseline_obesity = baseline_prevalence$baseline_obesity_prevalence,
-    year5_obesity = bmi_prevalence$obesity_prevalence_y5,
+    baseline_obesity = baseline_prevalence,
+    year5_obesity = bmi_prevalence,
     reduction = reduction,
-    relative_reduction = (reduction / baseline_prevalence$baseline_obesity_prevalence) * 100,
-    baseline_class_3 = class_3_baseline_prevalence$baseline_class_3_obesity_prevalence,
-    year5_class_3_obesity = class_3_bmi_prevalence$class_3_obesity_prevalence_y5,
-    reduction_class_3 = reduction_class_3,
-    relative_reduction_class_3 = (reduction_class_3/class_3_baseline_prevalence$baseline_class_3_obesity_prevalence) * 100,
-    benefit = value_to_gov,
-    
+    relative_reduction = (reduction / baseline_prevalence) * 100,
+    # baseline_class_3 = class_3_baseline_prevalence$baseline_class_3_obesity_prevalence,
+    # year5_class_3_obesity = class_3_bmi_prevalence$class_3_obesity_prevalence_y5,
+    # reduction_class_3 = reduction_class_3,
+    # relative_reduction_class_3 = (reduction_class_3/class_3_baseline_prevalence$baseline_class_3_obesity_prevalence) * 100,
+    benefit = value_to_gov$avg_annual_value,
+
     # Year 1 metrics
     n_year1 = get_year_value(1, "weighted_n", df = year_summary),
     diabetes_year1 = get_year_value(1, "diabetes_rate", df = year_summary),
     bmi_year1 = get_year_value(1, "mean_bmi", df = year_summary),
-    
+
     # Year 2 metrics
     n_year2 = get_year_value(2, "weighted_n", df = year_summary),
     diabetes_year2 = get_year_value(2, "diabetes_rate", df = year_summary),
     bmi_year2 = get_year_value(2, "mean_bmi", df = year_summary),
-    
+
     # Year 3 metrics
     n_year3 = get_year_value(3, "weighted_n", df = year_summary),
     diabetes_year3 = get_year_value(3, "diabetes_rate", df = year_summary),
     bmi_year3 = get_year_value(3, "mean_bmi", df = year_summary),
-    
+
     # Year 4 metrics
     n_year4 = get_year_value(4, "weighted_n", df = year_summary),
     diabetes_year4 = get_year_value(4, "diabetes_rate", df = year_summary),
     bmi_year4 = get_year_value(4, "mean_bmi", df = year_summary),
-    
+
     # Year 5 metrics
     n_year5 = get_year_value(5, "weighted_n", df = year_summary),
     diabetes_year5 = get_year_value(5, "diabetes_rate", df = year_summary),
     bmi_year5 = get_year_value(5, "mean_bmi", df = year_summary),
-    
+
     
     # Additional useful metrics
     n_selected = nrow(intervention_sample$data),
-    weighted_n = sum(intervention_sample$data$wt_int)
+    weighted_n = sum(intervention_sample$data$wt_int),
+    pop_numbers = sum(intervention_sample$data$pop_estimate)
   ))
 }
 
@@ -407,47 +406,36 @@ run_single_iteration <- function(seed_value,
 #' and excluded from final results. Requires sufficient memory for parallel processing.
 #'
 
-run_sensitivity_analysis <- function(n_iterations = 1000,
+run_sensitivity_analysis_m1 <- function(n_iterations = 1000,
                                      cohort_alloc_input,
                                      input_file_path= "inputs/processed/hse_2019.csv",
                                      ob_total_cost,
                                      ob_costs_30_40,
                                      ob_costs_over_40,
                                      implementation_period) {
-
+  
   
   df_2019_adult <- read_csv(here(input_file_path))
   
   # Applying eligibility criteria to create cohorts:
-  df_2019_adult_with_cohorts <- df_2019_adult %>%
-    mutate(cond_ascvd = case_when(cardiovd == 1 | platlets == 1 | ace_inhibitors == 1 | 
-                                    diuretics == 1 | lipid == 1 ~ 1,
+  df_2019_adult_eligibility = df_2019_adult %>%
+    mutate(cond_ascvd = case_when(cardiovd == 1 | platlets == 1 | ace_inhibitors == 1 | diuretics == 1 | lipid == 1 ~ 1,
                                   TRUE ~ 0),
-           cond_hypertension = case_when(hypertension == 1 ~ 1,
-                                         TRUE ~ 0),
+           cond_hypertension =  case_when(hypertension == 1 ~ 1,
+                                          TRUE ~ 0),
            cond_dyslipidaemia = case_when(lipid == 1 ~ 1,
                                           TRUE ~ 0),
-           cond_diabetes = case_when(diabetes_type == 1 | metformin == 1 | 
-                                       anti_diabetics == 1 ~ 1,
+           cond_diabetes = case_when(diabetes_type == 1 | metformin == 1 | anti_diabetics == 1 ~ 1,
                                      TRUE ~ 0)) %>%
-    mutate(eligibility_score = cond_ascvd + cond_hypertension + 
-             cond_dyslipidaemia + cond_diabetes) %>%
+    mutate(eligibility_score = cond_ascvd + cond_hypertension + cond_dyslipidaemia + cond_diabetes) %>%
     mutate(eligibility = case_when(
-      (bmi >= 40) & eligibility_score >= 3 ~ 1,
-      (bmi >= 37.5 & ethnicity %in% c(2, 3, 4, 5)) & eligibility_score >= 3 ~ 1,
-      (bmi >= 40) & eligibility_score == 2 ~ 2,
-      (bmi >= 37.5 & ethnicity %in% c(2, 3, 4, 5)) & eligibility_score == 2 ~ 2,
-      (bmi >= 40) & eligibility_score == 2 & cond_diabetes == 1 ~ 3,
-      (bmi >= 37.5 & ethnicity %in% c(2, 3, 4, 5)) & eligibility_score == 2 & cond_diabetes == 1 ~ 3,
-      (bmi >= 40) & eligibility_score == 1 & cond_diabetes == 1 ~ 4,
-      (bmi >= 37.5 & ethnicity %in% c(2, 3, 4, 5)) & eligibility_score == 1 & cond_diabetes == 1 ~ 4,
-      (bmi >= 35 & bmi < 40) & eligibility_score >= 3 ~ 5,
-      (bmi >= 32.5 & bmi < 37.5 & ethnicity %in% c(2, 3, 4, 5)) & eligibility_score >= 3 ~ 5,
-      (bmi >= 35 & bmi < 40) & eligibility_score == 2 ~ 6,
-      (bmi >= 32.5 & bmi < 37.5 & ethnicity %in% c(2, 3, 4, 5)) & eligibility_score == 2 ~ 6,
-      (bmi >= 35 & bmi < 40) & eligibility_score == 2 & cond_diabetes == 1 ~ 7,
-      (bmi >= 32.5 & bmi < 37.5 & ethnicity %in% c(2, 3, 4, 5)) & eligibility_score == 2 & cond_diabetes == 1 ~ 7,
+      (bmi >= 30) ~ 1,
+      # (bmi >= 32.5 & ethnicity %in% c(2, 3, 4, 5)) ~ 1,
       TRUE ~ 0))
+  
+  df_2019_adult_with_cohorts = df_2019_adult_eligibility %>%
+    mutate(pop_share = wt_int/sum(wt_int)) %>%
+    mutate(pop_estimate = round(pop_share * MODEL_CONSTANTS$ENGLAND_ADULT_POPULATION, 0))
   
   # Creating a sequence of seeds:
   seeds <- 1:n_iterations
@@ -457,7 +445,7 @@ run_sensitivity_analysis <- function(n_iterations = 1000,
   # browser()
   results <- pbapply::pblapply(seeds, function(s) {
     tryCatch({
-      run_single_iteration(s,
+      run_single_iteration_m1(s,
                            df_2019_adult_with_cohorts,
                            total_cost_obesity = ob_total_cost,
                            obesity_cost_30_40 = ob_costs_30_40,
@@ -478,51 +466,74 @@ run_sensitivity_analysis <- function(n_iterations = 1000,
 
 # Main analysis:
 
-# df to store results of the sensitivity analysis:
-sensitivity_results <- run_sensitivity_analysis(n_iterations = 1000,
-                                                input_file_path= "inputs/processed/hse_2019.csv",
-                                                ob_total_cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
-                                                ob_costs_30_40 = MODEL_CONSTANTS$COST_OBESITY_BMI_30_40,
-                                                ob_costs_over_40 = MODEL_CONSTANTS$COST_OBESITY_OVER_40,
-                                                implementation_period = MODEL_CONSTANTS$MODEL_DURATION,
-                                                cohort_alloc_input = COHORT_10K)
+
+
+
+for (cohort_name in names(all_cohorts_1Y)) {
+  
+  cohort_data <- all_cohorts[[cohort_name]]
+  print(paste("working on cohort = ", cohort_name))
+  # df to store results of the sensitivity analysis:
+  sensitivity_results <- run_sensitivity_analysis_m1(n_iterations = 1000,
+                                                  input_file_path= "inputs/processed/hse_2019.csv",
+                                                  ob_total_cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
+                                                  ob_costs_30_40 = MODEL_CONSTANTS$COST_OBESITY_BMI_30_40,
+                                                  ob_costs_over_40 = MODEL_CONSTANTS$COST_OBESITY_OVER_40,
+                                                  implementation_period = MODEL_CONSTANTS$MODEL_DURATION,
+                                                  cohort_alloc_input = COHORT_10K_1Y)
+  
+  # 1. Summary results:
+  summary_stats <- sensitivity_results %>%
+    summarise(
+      mean_relative_reduction = round(mean(relative_reduction), 3),
+      sd_relative_reduction = round(sd(relative_reduction), 3),
+      coeff_variation = round(sd(relative_reduction)/mean(relative_reduction), 3),
+      min_relative_reduction = round(min(relative_reduction), 3),
+      max_relative_reduction = round(max(relative_reduction), 3),
+      mean_benefit = mean(benefit),
+      sd_benefit = sd(benefit),
+      # mean_class_3_rel_reduction = round(mean(relative_reduction_class_3), 3),
+      # sd_class_3_rel_reduction = round(sd(relative_reduction_class_3), 3),
+      # min_class_3_rel_reduction = round(min(relative_reduction_class_3), 3),
+      # max_class_3_rel_reduction = round(max(relative_reduction_class_3), 3),
+    )
+  
+  print(paste("Summary stats of mean obesity reduction: ", summary_stats$mean_relative_reduction) )
+  print(summary_stats)
+  
+  summary_report <- list(
+    summary_statistics = summary_stats,
+    confidence_intervals = data.frame(
+      metric = c("Relative Reduction"),
+      CI_95_lower = c(quantile(sensitivity_results$relative_reduction, 0.025)),
+      CI_95_upper = c(quantile(sensitivity_results$relative_reduction, 0.975))
+    ))
+  
+  # 1. Summary results:
+  write_xlsx(summary_report, 
+             here( paste(path_m1, "COHORT_10K_1Y", "_summary.xlsx" )))
+  
+  # 2. Detailed results:
+  write_csv(sensitivity_results, 
+            here(paste(path_m1, "COHORT_10K_1Y", "_detailed.csv")))
+  
+}
+
 
 
 # Outputs:
 
-# 1. Summary results:
-summary_stats <- sensitivity_results %>%
-  summarise(
-    mean_relative_reduction = round(mean(relative_reduction), 3),
-    sd_relative_reduction = round(sd(relative_reduction), 3),
-    coeff_variation = round(sd(relative_reduction)/mean(relative_reduction), 3),
-    min_relative_reduction = round(min(relative_reduction), 3),
-    max_relative_reduction = round(max(relative_reduction), 3),
-    mean_benefit = mean(benefit),
-    sd_benefit = sd(benefit),
-    mean_class_3_rel_reduction = round(mean(relative_reduction_class_3), 3),
-    sd_class_3_rel_reduction = round(sd(relative_reduction_class_3), 3),
-    min_class_3_rel_reduction = round(min(relative_reduction_class_3), 3),
-    max_class_3_rel_reduction = round(max(relative_reduction_class_3), 3),
-  )
-
-print("Summary stats of obesity reduction and benefits:")
-print(summary_stats)
-
-summary_report <- list(
-  summary_statistics = summary_stats,
-  confidence_intervals = data.frame(
-    metric = c("Relative Reduction"),
-    CI_95_lower = c(quantile(sensitivity_results$relative_reduction, 0.025)),
-    CI_95_upper = c(quantile(sensitivity_results$relative_reduction, 0.975))
-  ))
 
 
 # 2. Density plot of relative reduction:
 relative_reduction_plot <- 
-plot_metric(data = sensitivity_results, metric = "relative_reduction")
+  plot_metric(data = sensitivity_results, metric = "relative_reduction")
 
-plot_metric(data = sensitivity_results, metric = "relative_reduction_class_3")
+test_df_600K_method_2 = read_csv("/Users/anish.chacko/Documents/git/ahl_obesity_blueprint/outputs/new_policies/policy_38/sens_samp_1/method_2/ COHORT_600K_5Y _detailed.csv")
+
+plot_metric(data = test_df_600K_method_2, metric = "relative_reduction")
+
+# plot_metric(data = sensitivity_results, metric = "relative_reduction_class_3")
 
 # 3. Density plot of benefit:
 plot_metric(data = sensitivity_results, metric = "benefit")
@@ -530,13 +541,6 @@ plot_metric(data = sensitivity_results, metric = "benefit")
 
 # Saving outputs:
 
-# 1. Summary results:
-write_xlsx(summary_report, 
-           here( paste(path, deparse(substitute(COHORT_ALLOCATION)), "_summary.xlsx" )))
-
-# 2. Detailed results:
-write_csv(sensitivity_results, 
-          here(paste(path, deparse(substitute(COHORT_ALLOCATION)), "_detailed.xlsx")))
 
 # 3. Distribution plot of relative reduction:
 ggsave(here("outputs/new_policies/policy_38/sensitivity_results/relative_reduction_distrib.png"), 
@@ -557,7 +561,7 @@ sensitivity_results_with_clusters <- sensitivity_results %>%
 comparison_by_cluster <- sensitivity_results_with_clusters %>%
   group_by(peak_group) %>%
   summarise(
-
+    
     diff_diabetes_y1 = mean(diabetes_year1, na.rm = TRUE),
     diff_diabetes_y2 = mean(diabetes_year2, na.rm = TRUE),
     diff_diabetes_y3 = mean(diabetes_year3, na.rm = TRUE),

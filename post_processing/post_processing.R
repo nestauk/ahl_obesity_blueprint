@@ -48,6 +48,29 @@ extract_pound_benefit = function(data, cost, duration ){
 }
 
 
+extract_value_to_gov = function(data, cost, duration, print_results = FALSE ){
+  # browser()
+  outputs = list()
+  data_df = data %>%
+    mutate(value_to_gov_per_year = (relative_change * cost)/100)
+  
+  average_annual_value_to_gov = data_df %>%
+    select(value_to_gov_per_year) %>%
+    sum()/duration
+  
+  outputs[["avg_annual_value"]] = average_annual_value_to_gov
+  outputs[["full_table"]] = data_df
+  
+  if (print_results != FALSE) {
+    
+    print(paste0("Average annual value to government compared to baseline = £", round(average_annual_value_to_gov, 2), "billions"))
+  }
+  
+  return(outputs)
+  
+}
+
+
 extract_pound_benefit_by_class = function(data,
                                           total_cost = 74,
                                           cost_30_40,
@@ -115,7 +138,7 @@ extract_pound_benefit_by_class = function(data,
 }
 
 
-extract_relative_change = function(data){
+extract_relative_change = function(data, print_results = FALSE){
   
   # browser()
   data_df = data %>%
@@ -144,8 +167,11 @@ extract_relative_change = function(data){
     filter(type == "Year 5") %>%
     pull(relative_class_3)
   
+  if (print_results != FALSE)
+    {  
   print(paste0("Relative reduction in obesity prevalence = ", round(relative_change_obesity_prevalence, 2), "%"))
   print(paste0("Relative reduction in Class 3 obesity prevalence = ", round(relative_change_class_3, 2), "%"))
+  }
   
   return(data_df)
   

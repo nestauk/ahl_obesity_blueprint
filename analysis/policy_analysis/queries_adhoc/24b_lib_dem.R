@@ -1,56 +1,49 @@
 
 ################################################################################################### 
-# Policy 37 : Option 6: Behaviourial weight management programme                                  #
+# Policy24b : Extend access to pharmacotherapy so that approximately 3 million people (BMI≥30)    #
+#             receive Semaglutide each year.                                                      #
 #                                                                                                 #
 ###################################################################################################
+
+# Description:
 
 
 # Scope: England
 
 # The evidence comes from the results of the rapid review available here
-# - https://docs.google.com/document/d/1K20dg2D-G9J6F439gegPRD8Mly58xSnJmGXJMto_GYY/edit?usp=sharing
-
-# 
-# Eligibility:
-#   Adults Age: ≥ 18; BMI Group: ≥ 30
-# 
-# Weight loss = 3.9 kg after the programme (c)
-#   Effect size: 3.9 kgs at the end of 1 year after programme
-#
-# Weight regain = 0.32 kg per year (b)
-#
-# Number of people treated:
-#   We use the allocated annual budget and per person cost of delivering the 
-#   programme to estimate the number of people who will be offered the treatment
-#   each year
-#   Number of people enrolled = ~1.2 million people per year
-#     Allocated budget / Unit cost per year = £85 mil / £70 = 1,214,285
-#   
-#   Allocated budget = £85 million per year from the policy specification
-#   Cost of delivering the programme: £70 per person
-#     Unit cost of treatment in 2015 = £51.45 per person [Source]
-#     Adjusting for inflation = Original price x (CPI in 2015 / CPI in base year)
-#         51.45 x (135.4/100) = £70 per person per year
-#   However, it is unlikely that everyone offered the programme will take up 
-#   treatment We use stats Taylor et al. (2024) (c) to estimate the number of 
-#   people who enroll and the share of people who experience weight loss
-#   Number of people experiencing weight loss = 45% of those who enrolled
-#   And number of people experiencing weight loss of those who enrolled
-#           = 45% x 1,214,285 = 546428.6; rounding this to 546,429
+# - https://docs.google.com/document/d/1hozT3EvH5fbl1W9CeIcrrr7TGpotYu07/edit?usp=sharing&ouid=102713518635256687243&rtpof=true&sd=true
 
 
+# Effect size:
+# Those receiving any of the drug (Semaglutide) on average experience weight loss of 15.83% of their bodyweight
+# 100% of the weight loss assumed to be in first year, no weight change in year 2, weight gain will occur in year 3 when the individual goes off the drug
+# Weight regain is two-thirds of the lost weight (b)
+
+# Number of people reached:
+# We assume that  annually the policy manages to reach ~ 3 million people to have the maximum impact
+# So that over a period of five years the drug is rolled out to ~ 12.9 million people living with obesity as of 2019
+
+# Population estimate for adults in England equal and over 18 years of age = 44,263,393 (a)
+
+# Eligibility criteria for getting the drugs:
+# There is overlapping eligibility criteria for the three drugs - Semaglutide, Liraglutide 
+# which is summarised below to create a hybrid eligibility criteria that individuals must meet:
+# adults with bmi >= 30
+
+# Note: Also, people can receive the treatment only once in the modelling period of five years.
+# i.e. if someone receives the drug for two years in year 1,
+# they will not be eligible again in year 4 or year 5 to recieve the drug.
 
 
 # References:
 # (a) ONS 2019 Mid-Year Population Estimates - https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/analysisofpopulationestimatestool)
-# (b) Hartmann-Boyce J, Cobiac LJ, Theodoulou A, et al. Weight regain after behavioural weight management
-#     programmes and its impact on quality of life and cost effectiveness: Evidence synthesis and health
-#     economic analyses. Diabetes Obes Metab. 2023;25(2):526‐535. doi:10.1111/dom.14895
-# (c) Taylor K, Indulkar T, Thompson B, Pinkard C, Barron E, Frost T, Jayawardane P, Davies N, Bakhai C, Forouhi NG, Aveyard P, Jebb S, Valabhji J. 
-#     Early outcomes of referrals to the English National Health Service Digital Weight Management Programme. Obesity (Silver Spring). 2024 Jun;32(6):1083-1092.
-#     doi: 10.1002/oby.24024. Epub 2024 Apr 21. PMID: 38644161.
-# (d) OHID (2023) Adult tier 2 weight management services: Short statistical commentary September 2023, GOV.UK. Available at:
-#     https://www.gov.uk/government/statistics/adult-tier-2-weight-management-services-final-data-for-april-2021-to-december-2022/adult-tier-2-weight-management-services-short-statistical-commentary-september-2023 (Accessed: 11 June 2025).
+# (b) Wilding JPH, Batterham RL, Davies M, Van Gaal LF, Kandler K, Konakli K, Lingvay I, McGowan BM, Oral TK, Rosenstock J, 
+#     Wadden TA, Wharton S, Yokote K, Kushner RF; STEP 1 Study Group. Weight regain and cardiometabolic effects after withdrawal of 
+#     semaglutide: The STEP 1 trial extension. Diabetes Obes Metab. 2022 Aug;24(8):1553-1564. doi: 10.1111/dom.14725. Epub 2022 May 19. 
+#     PMID: 35441470; PMCID: PMC9542252.
+# (c) NHS (2023). Treatment - Obesity. [online] NHS. Available at: https://www.nhs.uk/conditions/obesity/treatment/. [Note this matches with NICE Guidelines for each drug]
+
+
 
 
 
@@ -64,37 +57,10 @@ library(writexl)
 
 source(file = "requirements.R")
 source(file = "pre_processing/pre_processing_adult.R")
-source(file = "models/adult_model_calorie.R")
-source(file = "config/config.R")
-source(file = "post_processing/post_processing.R")
-
-
-table_outputs = list() # creating a list of table outputs to be saved as an excel file
-
-
-
-# Number of people offered the programme:
-budget_allocation = 85000000
-unit_cost_bwmps = 70
-
-number_of_people_offered = budget_allocation / unit_cost_bwmps 
-
-
-# calculating the number of people experiencing weight loss:
-share_experiencing_weight_loss = 0.45
-
-number_enrolled_experiencing_weight_loss = share_experiencing_weight_loss * number_of_people_offered
-
-
-# Constants
-NUMBER_OF_PEOPLE_EXPERINCING_WEIGHT_LOSS = number_enrolled_experiencing_weight_loss
-ENGLAND_ADULT_POPULATION = 44263393  # (a)
-WEIGHT_LOSS_ON_TREATMENT = 3.9 # from rapid review
-WEIGHT_REGAIN_POST_TREATMENT = 0.32 # from rapid review
-
-
+# source(file = "models/adult_model_calorie.R")
 
 # functions:
+
 # function for choosing the intervention sample:
 # The logic for this function is explained here: https://docs.google.com/document/d/1b8eo_wgedOrJ-D5AWqIjCxmCr_yu-ez3EA6uZkwMvmQ/edit?usp=sharing
 select_intervention_sample <- function(data, sample_size, population_size, 
@@ -121,10 +87,16 @@ select_intervention_sample <- function(data, sample_size, population_size,
     
     # Calculate the number of people of eligible people in the population
     eligible_population <- round(eligible_proportion * population_size)
-    
+    # browser()
     # Check if the desired sample size is greater than the eligible population
     if (sample_size > eligible_population) {
-      stop("The desired sample size is greater than the population with BMI above the threshold.")
+      
+      # browser()
+      print(paste0("The desired sample size is greater than the population with BMI above the threshold. In year ",year ))
+      
+      sample_size = eligible_population - 10000
+      
+      # stop(paste0("The desired sample size is greater than the population with BMI above the threshold. In year",year ))
     }
     
     # Calculate the desired weight sum such that it would be representative of the sample size we want to choose
@@ -151,9 +123,15 @@ select_intervention_sample <- function(data, sample_size, population_size,
       current_weight_sum <- current_weight_sum + subset_data[[weight_var]][selected_index]
     }
     
+    # browser()
     # Check if the weighted sum of selected individuals is less than the desired weight sum
     selected_indices <- which(selected_individuals)
     
+    #if (sum(subset_data[[weight_var]][selected_indices]) < desired_weight_sum) {
+    #  remaining_indices <- which(!selected_individuals)
+    #  additional_index <- sample(remaining_indices, size = 1, prob = subset_data[[weight_var]][remaining_indices])
+    #  selected_individuals[additional_index] <- TRUE
+    #}
     
     # Get the row indices of the selected individuals in the original data frame
     selected_indices_original <- which(data[[criteria_1]] == criteria_1_value & !intervention_history)[selected_individuals]
@@ -184,30 +162,8 @@ select_intervention_sample <- function(data, sample_size, population_size,
 
 
 
-# FUNCTION: Assign Weight Changes
-#
-# This function assigns weight loss and weight regain values to individuals
-# based on their intervention status across multiple years. Individuals who
-# receive intervention in a given year experience weight loss, while those
-# who received intervention in previous years experience weight regain.
-
-#' @param data A data frame containing individual-level data with intervention
-#   status columns (intervention_year1, intervention_year2, etc.)
-#' @param bodyweight_var Character string specifying the name of the body weight
-#'   variable in the data frame (currently not used in function)
-#' @param num_years Integer specifying the number of years in the simulation
-#' @param weight_loss_1 Numeric value representing the amount of weight loss
-#'   (in kg) for individuals receiving intervention. This value will be applied
-#'    as negative weight change
-#' @param weight_loss_2 Numeric value for alternative weight loss amount (currently
-#'  not implemented in the function)
-#' @param weight_regain Numeric value representing the amount of weight regain (in kg)
-#'  for individuals who received intervention in previous years
-
-#' @return A data frame with the original data plus additional columns of weight loss and weight regain
-
-assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1, weight_loss_2, weight_regain) {
-  # browser()
+assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_percent, weight_regain) {
+  browser()
   # Create weight loss and weight regain columns for each year
   weight_loss_cols <- paste0("weight_loss_y", 1:num_years)
   weight_regain_cols <- paste0("weight_regain_y", 1:num_years)
@@ -216,29 +172,38 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
   for (year in 1:num_years) {
     intervention_col <- paste0("intervention_year", year)
     
-    if(year < num_years + 1){
+    if(year < 5){
       
       # Assign weight loss for individuals who received the intervention in the current year
-      data[data[[intervention_col]] == "Yes", weight_loss_cols[year]] = -weight_loss_1 
-
+      # evidence shows weight loss values for two years. In this case, it is being assumed that the total weight loss is split equally over two years
+      # instead of assigning all the weight loss in one year
+      data[data[[intervention_col]] == "Yes", weight_loss_cols[year]] = -weight_loss_percent*1* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      
+      data[data[[intervention_col]] == "Yes", weight_loss_cols[year+1]] = -weight_loss_percent*0* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      
+      #, weight_loss_cols[year+1] 
+      
     } else{
       
+      data[data[[intervention_col]] == "Yes", weight_loss_cols[year]] = -weight_loss_percent*1* data[data[[intervention_col]] == "Yes", bodyweight_var]
+      
       
     }
-
-    # weight regain to be assigned only from the year after intervention, so in this case, it would be weight loss in year 1,
-    # followed by weight regain in every year until end of simulation.
+    # weight regain to be assigned only from the year after intervention, so in this case, it would be two years of weight loss and weight regain in third year
+    # if (year > 2) {
     if (year > 1) {
-
-      # choosing the intervention 
       prev_intervention_cols <- paste0("intervention_year", 1:(year - 1))
-      
       prev_intervention <- apply(data[, prev_intervention_cols] == "Yes", 1, any)
       
-      data[prev_intervention, weight_regain_cols[year]] <- weight_regain
+      # Calculate weight regain based on weight loss in one of the two intervention years and calulated as 67% of two times weight loss in any one of the years
+      # two times weight loss in any one year is the total weight loss over two years.
+      weight_regain <- 0.67 *1*( 
+        data[prev_intervention, weight_loss_cols[year - 1], drop = TRUE]
+        # data[prev_intervention, weight_loss_cols[year - 2], drop = TRUE]
+      )
       
+      data[prev_intervention, weight_regain_cols[year]] <- -weight_regain
     }
-    
   } 
   
   return(data)
@@ -246,45 +211,49 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_1
 
 
 
-# Estimating the impact of the policy for adults in England:
+########
 
-# reading in HSE 2019 data and preparing it for implementing the Hall Model
+# Only Semaglutide
 
-# Cleaning the input/ baseline data:
-process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
+#############
 
-# reading in the cleaned processed baseline data file:
+
+
+# process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
+
 df = read_csv(here("inputs/processed/hse_2019.csv"))
 
-# Applying eligibility crietria. All those with a BMI over 30 are eligible to receive treatment
+
+
 df = df %>%
   mutate(eligibility = case_when(bmi >= 30 ~ 1,
                                  TRUE ~ 0))
 
-set.seed(370)
 
-# Selecting the intervention sample each year who will receive the intervention:
-df = select_intervention_sample(data = df,
-                                sample_size = 112500, #NUMBER_OF_PEOPLE_EXPERINCING_WEIGHT_LOSS,
-                                population_size = ENGLAND_ADULT_POPULATION,
-                                weight_var = "wt_int",
-                                bmi_var = "bmi",
-                                num_years = MODEL_CONSTANTS$MODEL_DURATION,
-                                criteria_1 = "eligibility",
-                                criteria_1_value = 1)
+test_df = df
 
 
-# Assign weight changes to individuals who were selected in the previous step
-# We apply a weight loss of 3.5 kgs for those receiving the treatment and an annual weight regain of 0.46 kg
-post_df_adult = assign_weight_changes(data = df,
-                                      bodyweight_var = "weight",
-                                      num_years = 5,
-                                      weight_loss_1 = WEIGHT_LOSS_ON_TREATMENT,
-                                      weight_loss_2 = 0,
-                                      weight_regain = WEIGHT_REGAIN_POST_TREATMENT)
+set.seed(245)
+# sample_size = 204918
+
+df_1 = select_intervention_sample(data = test_df,
+                                  sample_size = 3000000,
+                                  population_size = 44263393,
+                                  weight_var = "wt_int",
+                                  bmi_var = "bmi",
+                                  num_years = 5,
+                                  criteria_1 = "eligibility",
+                                  criteria_1_value = 1)
 
 
-# Calculating the new body weight, BMI and BMI Class for each individual:
+post_df_adult = assign_weight_changes(data = df_1, bodyweight_var = "weight", num_years = 5, weight_loss_percent = 0.1583, weight_regain = 0.67)
+
+# function to assign weight loss and weight regain:
+
+
+#post_df_adult = test_df_1
+
+
 post_df_adult = post_df_adult %>%
   mutate(bw_y1 = weight + weight_loss_y1 + weight_regain_y1,
          bw_y2 = bw_y1 + weight_loss_y2 + weight_regain_y2,
@@ -329,6 +298,12 @@ post_df_adult = post_df_adult %>%
 
 
 
+# survey design element created to account for survey weights and population level estimation of prevalance.
+design <-  svydesign(ids=~post_df_adult$psu, 
+                     nest = T,
+                     data=post_df_adult,
+                     weights=post_df_adult$wt_int)
+
 # A new dataframe is created to capture population level prevalence of different BMI categories in each year and is saved as a dataframe
 bmi_change = rbind(
   post_df_adult %>% 
@@ -362,7 +337,6 @@ bmi_change = rbind(
            type = "Year 0") %>% 
     rename(BMI = bmi_class))
 
-# creating a table of year wise distribution of BMI categories
 bmi_change = bmi_change %>%
   mutate(BMI = factor(BMI, levels = c("underweight", "normal", "overweight", "obese", "morbidly obese"))) %>%
   as.data.frame()
@@ -375,35 +349,11 @@ bmi_change_year = bmi_change %>%
 
 bmi_change_year
 
-table_outputs[["england_adult"]] = bmi_change_year
+
+write_xlsx(path = "outputs/lib_dem/policy_24b_lib_dem.xlsx", x = bmi_change_year)
 
 
 
-# Outputs:
-
-# Output 1: Table of year wise prevalence of obesity
-bmi_change_year
-
-# extracting the reduction in obesity prevalence 
-annual_obesity_prevalence_england = extract_relative_change(data = bmi_change_year)
-
-# Relative reduction in obesity prevalence in England = 3.9%
-
-# Adding to table outputs:
-table_outputs[["annual_obesity_prevalence_eng"]] = annual_obesity_prevalence_england
-
-# Estimating the annual value to government (benefit):
-annual_benefit_to_gov = extract_pound_benefit(data = annual_obesity_prevalence_england, 
-                                              cost = MODEL_CONSTANTS$COST_OF_OBESITY_IN_BILLIONS,
-                                              duration = MODEL_CONSTANTS$MODEL_DURATION)
-
-# Average annual value to government compared to baseline = £1.98 billions
-
-# Adding to table outputs:
-table_outputs[["annual_benefit_to_gov"]] = annual_benefit_to_gov
-
-
-# Output 2: Plot of BMI distribution(bar charts)
 # Plot of year on year BMI category distribution
 adult_bar_plot = bmi_change %>%
   ggplot(., aes(y = freq, x = BMI, fill = type)) + 
@@ -418,14 +368,11 @@ adult_bar_plot = bmi_change %>%
 
 adult_bar_plot
 
-ggsave(here("outputs/new_policies/policy_37/policy_37_impact_England_adult_reduced_reach.png"), 
+ggsave(here("outputs/lib_dem/policy_24b_lib_dem.png"), 
        plot = adult_bar_plot, 
        width = 10, 
        height = 6,
        bg='#ffffff')
 
 
-# Outputs 3: summary results and detailed individual table:
-# bmi year on year prevalence:
-write_xlsx(path = "outputs/new_policies/policy_37/policy_37_reduced_reach.xlsx", x = table_outputs)
-write.csv(post_df_adult, file = "outputs/new_policies/policy_37/policy_37_adult_england_bmi_1_reduced_reach.csv")
+write.csv(post_df_adult, file = "outputs/lib_dem/policy_24b_lib_dem_bmi.csv")

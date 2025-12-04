@@ -127,34 +127,40 @@ prep_data_for_plots <- function(df,
 
 
 create_density_plot_new <- function(data, 
-                                    baseline_data,
-                                bmi_col = "bmi", 
-                                weight_col = "pop_estimate", 
-                                option_col = "option",
-                                year_col = "year_allocation",
-                                year_val = 1) {
+                                    baseline_data = NULL,
+                                    bmi_col = "bmi", 
+                                    weight_col = "pop_estimate", 
+                                    option_col = "option",
+                                    year_col = "year_allocation",
+                                    year_val = 1,
+                                    plot_sub_title = "") {
   
   # browser()
   plot_data <- data
   plot_title <- paste("Density Plot of", bmi_col)
   intervention_col = paste0("intervention_year",year_val)
-  actual_selection_cols = paste0("actual_selected_year",year_val)
+  # actual_selection_cols = paste0("actual_selected_year",year_val)
   
   
-  if(year_val == 1){
-    data_to_add = baseline_data %>%
-      filter(bmi >= 40)
-  } else {
+  if(!is.null(baseline_data)){
     
-    if(year_val == 5){
+    if(year_val == 1){
       data_to_add = baseline_data %>%
         filter(bmi >= 30)
-      
     } else {
-      data_to_add = baseline_data %>%
-        filter(bmi >= 35)
+      
+      if(year_val == 5){
+        data_to_add = baseline_data %>%
+          filter(bmi >= 30)
+        
+      } else {
+        data_to_add = baseline_data %>%
+          filter(bmi >= 30)
+      }
     }
+    
   }
+  
   
   # If a year_value is provided, filter the data and update the title
   if (!is.null(year_val)) {
@@ -163,24 +169,33 @@ create_density_plot_new <- function(data,
       stop(paste("Error: Column '", year_col, "' not found in the data frame.", sep=""))
     }
     
-    plot_data <- data %>% 
-      filter(.data[[intervention_col]] == "Yes")
-    
-    
-    n_selected_op_1 = plot_data %>%
-      filter(option == "option_1") %>%
-      select(all_of(actual_selection_cols)) %>%
-      sum()
-
-    n_selected_op_2 = plot_data %>%
-      filter(option == "option_2") %>%
-      select(all_of(actual_selection_cols)) %>%
-      sum()
-        
-    plot_sub_title <- paste("Modelling year = ", year_val, "; Option 1 selection = ", n_selected_op_1, "; Option 2 selection = ", n_selected_op_2)
+    # plot_data <- data %>% 
+    #   filter(.data[[intervention_col]] == "Yes")
+    # 
+    # 
+    # n_selected_op_1 = plot_data %>%
+    #   filter(option == "option_1") %>%
+    #   select(all_of(actual_selection_cols)) %>%
+    #   sum()
+    # 
+    # n_selected_op_2 = plot_data %>%
+    #   filter(option == "option_2") %>%
+    #   select(all_of(actual_selection_cols)) %>%
+    #   sum()
+    # 
+    # #plot_sub_title <- paste("Modelling year = ", year_val, "; Option 1 selection = ", n_selected_op_1, "; Option 2 selection = ", n_selected_op_2)
   }
   
-  plot_data = rbind(plot_data, data_to_add)
+  if(is.null(baseline_data)){
+    
+    plot_data = plot_data
+    
+  } else {
+
+    plot_data = rbind(plot_data, data_to_add)
+    
+  }
+  
   
   # Create the plot
   p <- ggplot(plot_data, aes(x = .data[[bmi_col]], 
@@ -200,47 +215,93 @@ create_density_plot_new <- function(data,
 }
 
 
-# Main analysis:
+
+filter_data = function(df, col_name, col_value, option_val){
+  df_filtered = df %>%
+    filter({{col_name}} == col_value) %>%
+    mutate(option = option_val)
+  
+  return(df_filtered)
+}
+
+
+
+prep_data_create_plots = function(df_current, df_new, cols_current, cols_new){
+  
+  outputs = list()
+  
+  df_current_updated = determine_total_weight_loss_treatment_status(df = df_current,
+                                                                    weight_loss_cols =  c(weight_loss_y1,
+                                                                                          weight_loss_y2,
+                                                                                          weight_loss_y3,
+                                                                                          weight_loss_y4,
+                                                                                          weight_loss_y5),
+                                                                    yearly_treatment_status_cols = c(intervention_year1, intervention_year2,intervention_year3,intervention_year4,intervention_year5)) %>%
+    select(cols_current)
+  
+  df_current_filtered = filter_data(df = df_current_updated,
+                                    col_name = overall_treatment_status,
+                                    col_value = "Yes", option_val = "current")
+  
+  
+  df_new_updated = determine_total_weight_loss_treatment_status(df=df_new,
+                                                                weight_loss_cols =  c(weight_loss),
+                                                                yearly_treatment_status_cols = c(intervention_year1, intervention_year2,intervention_year3,intervention_year4,intervention_year5)) %>%
+    select(cols_new)
+  
+  
+  df_new_filtered = filter_data(df = df_new_updated,
+                                col_name = overall_treatment_status,
+                                col_value = "Yes", option_val = "new")
+  
+  
+  df_baseline = df_current_updated %>%
+    mutate(option = "baseline")
+  
+  combined_df = rbind(df_current_filtered, df_new_filtered)
+  
+  outputs[["combined_df"]] = combined_df
+  
+  outputs[["plot"]] = create_density_plot_new(data = combined_df,
+                                              baseline_data = df_baseline,
+                                              year_val = 1, 
+                                              plot_sub_title = paste("Current & New -", sample_name, "selection"))
+  
+  return(outputs)
+  
+}
+
 
 # reading in required datasets:
+cols_needed_current = c("id","height","weight","age_grp","bmi", "wt_int", 
+                   "pop_estimate", "year_allocation", 
+                   "intervention_year1","intervention_year2",
+                   "intervention_year3","intervention_year4",
+                   "intervention_year5",
+                   "overall_treatment_status"
+)
 
-df_output_option_1 = read_csv("outputs/new_policies/new_selection/new_sampling/option_1_detailed.csv")
-df_output_option_2 = read_csv("outputs/new_policies/new_selection/new_sampling/option_2_detailed.csv")
-
-
-# data preparation:
-df_op1_updated = determine_total_weight_loss_treatment_status(df=df_output_option_1,
-                                                              weight_loss_cols =  c(weight_loss_y1, weight_loss_y2, weight_loss_y3,weight_loss_y4,weight_loss_y5),
-                                                              yearly_treatment_status_cols = c(intervention_year1, intervention_year2,intervention_year3,intervention_year4,intervention_year5))
-
-df_op1_filtered_sample = df_op1_updated %>%
-  filter(overall_treatment_status == "Yes") %>%
-  mutate(option = "option_1")
-
-
-df_op2_updated = determine_total_weight_loss_treatment_status(df=df_output_option_2,
-                                                              weight_loss_cols =  c(weight_loss_y1, weight_loss_y2, weight_loss_y3,weight_loss_y4,weight_loss_y5),
-                                                              yearly_treatment_status_cols = c(intervention_year1, intervention_year2,intervention_year3,intervention_year4,intervention_year5))
-
-
-df_op2_filtered_sample = df_op2_updated %>%
-  filter(overall_treatment_status == "Yes") %>%
-  mutate(option = "option_2")
-
-df_baseline = df_op1_updated %>%
-  mutate(option = "baseline")
-
-combined_df = rbind(df_op1_filtered_sample, df_op2_filtered_sample)
-
-
-# plots:
-create_density_plot_new(data = combined_df, baseline_data = df_baseline, year_val = 1)
-create_density_plot_new(data = combined_df, baseline_data = df_baseline, year_val = 2)
-create_density_plot_new(data = combined_df, baseline_data = df_baseline, year_val = 3)
-create_density_plot_new(data = combined_df, baseline_data = df_baseline, year_val = 4)
-create_density_plot_new(data = combined_df, baseline_data = df_baseline, year_val = 5)
+cols_needed_new = c("id","height","weight","age_grp","bmi", "wt_int", "pop_estimate",
+                   "year_allocation", "intervention_year1", "intervention_year2",
+                   "intervention_year3","intervention_year4","intervention_year5",
+                   "overall_treatment_status"
+)
 
 
 
+# Main analysis:
+
+sample_name  = "600K"
+
+df_output_current = read_csv(paste0("outputs/new_policies/policy_38/method_1/sample_", sample_name, "_bmi.csv"))
+df_output_new = read_csv(paste0("outputs/new_policies/policy_38/method_2/sample_", sample_name, "_bmi.csv"))
+
+
+test = prep_data_create_plots(df_current = df_output_current,
+                              df_new = df_output_new,
+                              cols_current = cols_needed_current,
+                              cols_new = cols_needed_new)
+
+test$plot
 
 
