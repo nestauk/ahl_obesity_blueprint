@@ -1,9 +1,10 @@
 pkgLoad <- function( packages = "favourites" ) {
   
   if( length( packages ) == 1L && packages == "favourites" ) {
-    packages <- c( "tidyverse", "bw", "here", "Hmisc", "hrbrthemes", "viridis",
-                   "reshape2", "survey", "grid", "gridExtra", "spatstat", "magrittr",
-                   "furrr", "sitar", "writexl", "beepr", "devtools", "aws.s3"
+    packages <- c( "tidyverse", "bw", "here", "Hmisc", "viridis", "remotes",
+                   "reshape2", "survey", "grid", "gridExtra", "spatstat",
+                   "magrittr", "furrr", "sitar", "writexl", "beepr",
+                   "devtools", "aws.s3"
     )
   }
   
@@ -31,8 +32,4 @@ pkgLoad <- function( packages = "favourites" ) {
 
 pkgLoad()
 devtools::install_github("INSP-RH/bw")
-
-
-
-
-
+remotes::install_github("hrbrmstr/hrbrthemes")
