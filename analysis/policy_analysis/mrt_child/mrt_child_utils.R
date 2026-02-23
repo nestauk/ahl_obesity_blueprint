@@ -294,7 +294,7 @@ calculate_bmi_category <- function(age, sex, bmi, df_B) {
     
     category <- case_when(
       bmi < 18.5 ~ "underweight",
-      bmi>= 18.5 | bmi <25 ~ "normal",
+      bmi>= 18.5 & bmi <25 ~ "normal",
       bmi >= 25 & bmi <30 ~ "overweight",
       bmi >= 30 ~ "obese"
       
