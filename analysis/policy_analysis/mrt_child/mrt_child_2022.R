@@ -30,14 +30,14 @@ source(file = "analysis/policy_analysis/mrt_child/load_data_files.R") # all requ
 
 # inputs
 # Model with single kcal reduction
-change_in_daily_ei = 78.6
+change_in_daily_ei = 83
 
 # main ()
 
 # running model with HSE 2019 data
 policy_impact_england = calculate_bmi_from_eichange_hox(df = hse_2019_child %>% rename(baseline_intake = intake_hox),
                                                         daily_ei_change = change_in_daily_ei,
-                                                        compensation_factor = 0.23,
+                                                        compensation_factor = 0,
                                                         effect_weighting_df = new_effect_weighting,
                                                         nation = "England", 
                                                         tags = "MRT - New" )
@@ -46,7 +46,7 @@ policy_impact_england = calculate_bmi_from_eichange_hox(df = hse_2019_child %>% 
 # running model with Scotland data
 policy_impact_scotland = calculate_bmi_from_eichange_hox(df = shes_2019_child %>% rename(baseline_intake = intake_hox),
                                                          daily_ei_change = change_in_daily_ei,
-                                                         compensation_factor = 0.23,
+                                                         compensation_factor = 0,
                                                          effect_weighting_df = new_effect_weighting,
                                                          nation = "Scotland", 
                                                          tags = "MRT - New" )
