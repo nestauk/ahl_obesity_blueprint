@@ -2,7 +2,20 @@
 .Rhistory
 .RData
 .Ruserdata
+.RDataTmp
+.xlsx
+.csv
+.png
+.xls
+.txt
+.png
 
 
-/inputs/data/*
 
+/inputs/
+/outputs/
+
+
+
+output/
+.DS_Store

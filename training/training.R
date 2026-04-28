@@ -55,12 +55,12 @@ source(here("utils/find_EI.R"))
 
 
 ei_model <- list(id = df$id,
-     bw = df$weight,
-     ht = df$height/100,
-     age = df$age,
-     sex = df$sex,
-     weight_goal = df$weight*0.9,
-     days = 365,
-     ei_limit = 1000,
-     pal = 1.6) %>% 
+                 bw = df$weight,
+                 ht = df$height/100,
+                 age = df$age,
+                 sex = df$sex,
+                 weight_goal = df$weight*0.9,
+                 days = 365,
+                 ei_limit = 1000,
+                 pal = 1.6) %>% 
   pmap_dfr(., find_EI)

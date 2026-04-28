@@ -1,9 +1,12 @@
 library(here)
 library(tidyverse)
 
+(sum(df2019$wt_int[df2019$pregnant_status==1])/sum(df2019$wt_int))* 44000000
+
+
 
 df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", header = TRUE) %>% 
-  filter(WtVal>0 & HtVal>0 & Age35g >=7 ) %>% # remove missing height and weight and children
+  filter(WtVal>0 & HtVal>0 & Age35g > 7 ) %>% # remove missing height and weight and children
   mutate(age = case_when(Age35g == 7 ~ (16+19)/2,
                          Age35g == 8 ~ (20+24)/2,
                          Age35g == 9 ~ (25+29)/2,
@@ -25,10 +28,12 @@ df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", h
          height = HtVal,
          sex = Sex,
          bmi = BMIVal,
+         number_children = Nofch3,
+         pregnant_status = PregNTJ,
          id = SerialA,
          psu = PSU_SCR,
          strata = cluster94) %>% 
-  dplyr::select(id, weight, height, age, sex, bmi, wt_int, psu, strata )  %>% # select variables needed
+  dplyr::select(id, weight, height, age, age16g5, sex, bmi, number_children, pregnant_status, wt_int, psu, strata )  %>% # select variables needed
   mutate(pal = 1.6,
          rmr = case_when(sex == 1 ~ ((10 * weight) + (6.25 * height) - (5 * age) + 5),
                          TRUE ~ ((10 * weight) + (6.25 * height) - (5 * age) - 161))) %>% # sex = 2 female Miffin & St.Jeor
@@ -40,4 +45,30 @@ df2019 <- read.table(here("inputs/raw/hse_2019_eul_20211006.tab"), sep = "\t", h
                                TRUE ~ "NA")) %>% 
   mutate(intake = pal*rmr) 
 
-write_csv(df2019, here("inputs/processed/hse_2019.csv"))
+# write_csv(df2019, here("inputs/processed/hse_2019.csv"))
+
+
+
+
+bmi_change = rbind(
+  df2019 %>% 
+    count(bmi_class, wt = wt_int) %>% 
+    mutate(freq = n/sum(n)*100,
+           type = "baseline"))
+
+
+
+# Output 2: Table of year wise prevalence of obesity
+
+bmi_change_year = bmi_change %>%
+  select(-c(n)) %>%
+  pivot_wider(., names_from = bmi_class, values_from = freq) %>%
+  select(type, underweight, normal, overweight, obese, `morbidly obese`)
+
+bmi_change_year
+
+
+
+
+
+

@@ -1,7 +1,9 @@
 pkgLoad <- function( packages = "favourites" ) {
   
   if( length( packages ) == 1L && packages == "favourites" ) {
-    packages <- c( "tidyverse", "here", "Hmisc", "hrbrthemes", "viridis", "reshape2", "survey", "grid", "gridExtra", "spatstat", "magrittr", "furrr", "beepr", "devtools"
+    packages <- c( "tidyverse", "bw", "here", "Hmisc", "hrbrthemes", "viridis",
+                   "reshape2", "survey", "grid", "gridExtra", "spatstat", "magrittr",
+                   "furrr", "sitar", "writexl", "beepr", "devtools", "aws.s3"
     )
   }
   
@@ -25,7 +27,12 @@ pkgLoad <- function( packages = "favourites" ) {
   
 }
 
+#install.packages("sitar")
 
 pkgLoad()
 devtools::install_github("INSP-RH/bw")
+
+
+
+
 

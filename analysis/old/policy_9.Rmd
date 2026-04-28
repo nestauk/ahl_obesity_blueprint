@@ -1,0 +1,87 @@
+---
+title: "Blueprint for halving obesity in the UK"
+Author: Anish Chacko
+Organisation: Nesta
+output: html_notebook
+---
+
+### Policy Tranche 1
+
+List of policies included:
+
+| Policy ID | Policy Title                                                                                                                                                                  |
+|------------------|------------------------------------------------------|
+| 1         | Restrict screen (TV and online) advertising for HFSS products through introduction of a 2100-0530 watershed and restrictions on online paid advertising                       |
+| 2         | Restrict all outdoor advertising on public transport (i.e. all bus stops, train stations and tube stations, implemented via national regulation)                              |
+| 6         | Everyone with a BMI of 30 or above is offered a free referral to a behavioural weight loss programme (either 12-month TDR or 12-week education) via a primary care clinician. |
+| 7         | Enforce provision of nutri-score front-of-pack labelling on retail packaging                                                                                                  |
+| 9         | Mandate maximum calorie per single serve portion guidelines for the OOH sector                                                                                                |
+| 8a        | Fund and roll out a mass media campaign aiming to promote healthy eating                                                                                                      |
+| 23        | Restricting Checkout, End-of-Aisle, and Store Entrance Sales of Food and Drinks High in Fat, Salt, and Sugar (HFSS)                                                           |
+
+Calling libraries, functions and dataframes to be used later in the code:
+
+```{r}
+library(here)
+
+source(file = "C:/git/ahl_obesity_blueprint/requirements.R")
+
+getwd()
+
+
+source(file = "models/adult_model_calorie.R")
+source(file = "pre_processing/pre_processing_adult.R")
+
+```
+
+Policy 9: Mandate maximum calorie per single serve portion guidelines for the out of home sector
+
+The policy mandates all out of home businesses to reduce the calorie content of their products to meet the maximum calorie guidelines. A similar policy, on a voluntary basis, was proposed by Public Health England (PHE) under their [Calorie reduction programme](https://www.gov.uk/government/publications/calorie-reduction-guidelines-for-the-food-industry). The PHE guidelines indicate that for out of home businesses the target was to reduce the calorie content by 20% of the average calorie content of single serve portions.
+
+The evidence from the [rapid review](https://docs.google.com/document/d/1Mc9UahGny4g-gO_8mIzEHmMSgTQhhzZuDQ1Y-CQfYeg/edit?usp=sharing) (quality assured by the EAG) that identified a meta-analysis showed that a 40% reduction in portion sizes of products led to a reduction of 247 kcals in daily energy intake. In case of this policy, for a 20% reduction, we assume that the reduction in daily energy intake is approximately half of that reported by the review, that is 123.5 kcals `(intake_change)`.
+
+Estimating the prevalence of obesity
+
+```{r}
+
+process_clean_save(file_path = here("inputs/raw/hse_2019_eul_20211006.tab"),
+                   nation = "England")
+
+
+input_df = read_csv(here("inputs/processed/hse_2019.csv"))
+intake_change = -123.5
+implmnt_duration = 365*5
+
+
+adult_model_op = calculate_bmi_from_eichange(df = input_df,
+
+intake_change = intake_change, implmentation_duration = implmnt_duration)
+
+```
+
+```{r}
+
+
+
+adult_model_op$bmi_category_plot
+
+adult_model_op$bmi_percent_prevalence
+
+adult_model_op$category_plot
+
+
+
+
+
+
+```
+
+```{r}
+
+adult_model_op$bmi_percent_prevalence  
+```
+
+```{r}
+
+adult_model_op$category_plot
+```

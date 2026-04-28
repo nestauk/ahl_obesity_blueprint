@@ -1,0 +1,889 @@
+
+##########################################################
+# Script for function required to run the models.        #
+##########################################################
+
+
+# Note: As of now only the child modelling related functions are written here, in subsequent fixes,
+# all supporting functions called for implementing the Hall model will be moved here.
+
+# References:
+
+# 1. SACN (2011). Dietary Reference Values for Energy 2011. [online] Available at: 
+#    https://assets.publishing.service.gov.uk/media/5a7edb37ed915d74e33f2d8f/SACN_Dietary_Reference_Values_for_Energy.pdf.
+#
+# 2. Dalia Camacho-Garcia-Formenti and Rodrigo Zepeda-Tello (2018). bw: Dynamic Body Weight Models for Children and
+#    Adults. R package version 1.0.0.
+#
+# 3. NHS England (2023). National Child Measurement Programme, England, 2022/23 School Year. [online] NHS Digital. 
+#    Available at: https://digital.nhs.uk/data-and-information/publications/statistical/national-child-measurement-programme/2022-23-school-year/introduction.
+#
+# 4. Chapman, S., Baw, M., & Cole, T. (2022). rcpchgrowth (Version 4.2.8) [Computer software]. https://doi.org/10.5281/zenodo.6303587
+#
+# 5. Cole, T. (2023). statist7/sitar. GitHub. Available at: https://github.com/statist7/sitar [Accessed 27 Feb. 2024].
+#
+# 6. Cole TJ. (2012). The development of growth references and growth charts. Ann Hum Biol. 2012 Sep;39(5):382-94. 
+#    doi: 10.3109/03014460.2012.694475. Epub 2012 Jul 11. PMID: 22780429; PMCID: PMC3920659.
+
+
+
+library(tidyverse)
+library(here)
+library(bw)
+library(survey)
+library(sitar)
+library(jsonlite)
+
+
+
+# FUNCTION 1: Generate BMI Reference Data using UK90 growth charts
+
+#' Generate BMI Reference Data Using UK90 Growth Charts
+#'
+#' This function generates age- and sex-specific BMI reference data using the LMS 
+#' method based on UK90 growth charts. It calculates BMI values corresponding 
+#' to specific percentiles (2nd, 85th, and 95th) that are used for classifying 
+#' child BMI categories as per NCMP (NHS England, 2023).
+#'
+#'INPUTS:
+#' @param data_B Data frame. Input data containing age, sex, and the LMS parameters 
+#'               for BMI (`L.bmi`, `M.bmi`, `S.bmi`). The data must include:
+#'               - `years`: Age of the individual in years.
+#'               - `sex`: Sex of the individual.
+#'               - `L.bmi`, `M.bmi`, `S.bmi`: LMS parameters for BMI.
+#'               This data format can be obtained from the `uk90` function in the 
+#'               `sitar` package (Cole, 2023 - https://rdrr.io/cran/sitar/man/uk90.html).
+#'
+#' @return Data frame. A filtered and transformed dataset containing:
+#'         - `age`: Age in years (limited to 4 to 20 years, inclusive).
+#'         - `sex`: Sex of the individual.
+#'         - `p_2`: BMI value corresponding to the 2nd percentile.
+#'         - `p_85`: BMI value corresponding to the 85th percentile.
+#'         - `p_95`: BMI value corresponding to the 95th percentile.
+#'
+#' @details 
+#' - The LMS method is used to calculate z-scores and percentiles (Cole, 2012). 
+#' 
+#'   The formula for calculating a z-score is:
+#'   \deqn{z = ((X / M)^L - 1) / (L * S)}
+#'    where z is z-score;
+#'          X is a measurement (of bmi, height, weight etc);
+#'          L, M & S are parameters that summarise the normal distribution generated
+#'                   from a Box-Cox transformation of measurements at each age (Cole, 2012).
+#'                   (L = power of the Box-Cox transformation; M = Median; S = coefficient of variation)
+#'           
+#'   This formula is inverted to compute the measurement (X), given the L, M, 
+#'   and S parameters and the z-score:
+#'   \deqn{X = M * (1 + Z * L * S)^(1 / L)}
+#' - Using this formula, the BMI values for the 2nd, 85th, and 95th percentiles are calculated 
+#'   for each age and sex. We use these percentiles as they are the cutoffs used for 
+#'   underweight, overweight and obese categories as part of NCMP (NHS England, 2023)
+#'
+
+generate_bmi_refdata = function(data_B){
+  
+  bmi_refdata = data_B %>%
+    select(years, sex, L.bmi, M.bmi, S.bmi) %>%
+    subset(years >= as.double(4) & years <= as.double(20)) %>% # filtered to limit to ages between 4 and 20, both inclusive
+    mutate(p_2 = (M.bmi*(1 + L.bmi*S.bmi*-2.054)^(1/L.bmi)),
+           p_85 = (M.bmi*(1 + L.bmi*S.bmi*1.036)^(1/L.bmi)),
+           p_95 = (M.bmi*(1 + L.bmi*S.bmi*1.645)^(1/L.bmi))) %>%
+    select(years, sex, p_2, p_85, p_95) %>%
+    rename(age = years)
+  
+  return(bmi_refdata)
+  
+  
+}
+
+
+# FUNCTION 2: GENERATE BMI REFERENCE DATA FOR 100 PERCENTILES:
+
+#' Generate BMI Reference Data with Percentiles
+#' 
+#' Calculates BMI reference data and percentiles for ages 4-20 years using the LMS method.
+#' 
+#' @param data_B DataFrame containing columns: years, sex, L.bmi, M.bmi, S.bmi. These inputs
+#'                         are taken from UK90 Growth Charts package SITAR
+#' @param format_table Logical, if TRUE returns wide format, if FALSE returns long format
+#' 
+#' @return DataFrame with:
+#'   - Wide format (format_table=TRUE): age, sex, and percentile columns (p_1 to p_99.6)
+#'   - Long format (format_table=FALSE): sex, age, centile, bmi columns
+#' 
+#' @details
+#' Uses LMS method to calculate BMI percentiles:
+#' Centile at age t = M * (1 + L*S*qnorm(centile/100))^(1/L)
+#'  where,
+#'    L, M & S are parameters that summarise the normal distribution generated
+#'             from a Box-Cox transformation of measurements at each age (Cole, 2012)
+#'             (L = power of the Box-Cox transformation; M = Median; S = coefficient of variation)
+#'    qnorm(centile/100) is the z score
+#' 
+#' Calculates percentiles 1-99 and 99.6th percentile
+
+
+generate_bmi_refdata_100centiles = function(data_B, format_table = FALSE){
+  
+  #browser()
+  
+  bmi_refdata = data_B %>%
+    select(years, sex, L.bmi, M.bmi, S.bmi) %>%
+    subset(years >= as.double(4) & years <= as.double(20))
+  
+  for( x in 1:100){
+    
+    if (x <= 99) {
+      
+      x = x/100
+      
+      bmi_refdata = bmi_refdata %>%
+        mutate(!!paste0("p","_",(x*100)) := M.bmi*(1 + L.bmi*S.bmi*qnorm(x))^(1/L.bmi))
+      # rowwise() %>%
+      # mutate(!!paste0("p","_",(x*100)) := M.bmi[y]*(1 + L.bmi[y]*S.bmi[y]*qnorm(x))^(1/L.bmi[y]))
+      
+      
+    } else{
+      #browser()
+      x = 0.996
+      
+      bmi_refdata = bmi_refdata %>%
+        mutate(!!paste0("p","_",(x*100)) := M.bmi*(1 + L.bmi*S.bmi*qnorm(x))^(1/L.bmi))
+      
+    }
+  }
+  
+  
+  if(format_table == TRUE){
+    
+    bmi_refdata = bmi_refdata %>%
+      rename(age = years)
+    
+  } else{
+    
+    bmi_refdata = bmi_refdata %>%
+      select(-c(L.bmi, M.bmi, S.bmi)) %>%
+      unite(col = "sex_years", "sex", "years", sep = "_") %>%
+      pivot_longer(cols= c(starts_with("p")), names_to = "centile", values_to = "bmi") %>%
+      separate("sex_years", into = c("sex", "age"), sep = "_") %>%
+      mutate(centile = substr(centile, 3, nchar(centile)))
+    
+  }
+  
+  return(bmi_refdata)
+  
+}
+
+
+
+
+
+# FUNCTION 3: CALCULATE BMI CATEGORY:
+
+#' Calculate BMI Category
+#'
+#' This function determines the BMI category of a child or adult based on the 
+#' BMI value, age, sex, and reference BMI percentiles (derived using the LMS 
+#' method from UK90 growth charts). The categories are classified as 
+#' "underweight," "normal," "overweight," or "obese" using cutoffs defined by 
+#' the NCMP (NHS England, 2023).
+#'
+#' @param age Numeric. The age of the individual (in years). If the age is greater 
+#'            than 20, adult BMI thresholds are used for classification.
+#' @param sex Character or numeric. The sex of the individual ("male", "female", 1, or 2). 
+#'            "male" and 1 are treated as male, while "female" and 2 are treated as female.
+#' @param bmi Numeric. The body mass index (BMI) of the individual.
+#' @param df_B Data frame. A reference table containing BMI percentile cutoffs with columns 
+#'             `age`, `sex`, `p_2`, `p_85`, and `p_95`. These represent the 2nd, 85th, 
+#'             and 95th BMI percentiles for the corresponding age and sex.
+#'
+#' @return Character. The BMI category: "underweight," "normal," "overweight," or "obese."
+#'
+#' @details 
+#' - For individuals aged 20 years or younger, BMI is compared against the 
+#'   percentiles from the reference table (`df_B`) to assign a category.
+#' - The categories for children are:
+#'   - `<= 2nd percentile`: "underweight"
+#'   - `> 2nd & < 85th percentile`: "normal"
+#'   - `>= 85th & < 95th percentile`: "overweight"
+#'   - `>= 95th percentile`: "obese"
+#' - For individuals over 20 years, adult BMI thresholds are used:
+#'   - `< 18.5`: "underweight"
+#'   - `18.5 to < 25`: "normal"
+#'   - `25 to < 30`: "overweight"
+#'   - `>= 30`: "obese"
+#'
+
+calculate_bmi_category <- function(age, sex, bmi, df_B) {
+  #browser()
+  
+  if (age <= 20){
+    
+    if (sex == "female" | sex == 2){
+      sex = 2
+    } else { if(sex == "male" | sex == 1){
+      
+      sex = 1
+      
+    } }
+    
+    #browser()
+    percentile_2 <- df_B$p_2[which(df_B$age == age & df_B$sex == sex)]
+    percentile_85 <- df_B$p_85[which(df_B$age == age & df_B$sex == sex)]
+    percentile_95 <- df_B$p_95[which(df_B$age == age & df_B$sex == sex)]
+    
+    category <- case_when(
+      bmi <= percentile_2 ~ "underweight",
+      bmi > percentile_2 & bmi < percentile_85 ~ "normal",
+      bmi >= percentile_85 & bmi < percentile_95 ~ "overweight",
+      bmi >= percentile_95 ~ "obese"
+    )
+    
+  } else{
+    
+    category <- case_when(
+      bmi < 18.5 ~ "underweight",
+      bmi>= 18.5 | bmi <25 ~ "normal",
+      bmi >= 25 & bmi <30 ~ "overweight",
+      bmi >= 30 ~ "obese"
+      
+    )
+    
+    
+  }
+  
+  
+  return(category)
+}
+
+
+
+# FUNCTION 4: CALCULATE PROPORTIONAL CHANGE IN ENERGY INTAKE:
+
+# Calculate Proportional Energy Intake (EI) Change
+#
+#  This function calculates the proportional change in energy intake (EI) 
+#  based on an individual's age, sex, BMI, and a specified change in intake. 
+#' It uses reference BMI and proportional weight change data to determine 
+#' the proportional change in energy intake.
+#'
+#' INPUTS:
+#' @param age Numeric. The age of the individual (in years). Values are floored.
+#' @param sex Character or numeric. The sex of the individual ("male", "female", 1, or 2). 
+#'            "male" and 1 are treated as male, while "female" and 2 are treated as female.
+#' @param bmi Numeric. The body mass index (BMI) of the individual. 
+#'            If NULL, no calculations are performed.
+#' @param intake_change Numeric. The change in energy intake to be applied.
+#' @param bmi_ref_data Data frame. Reference data for BMI corresponding to age and sex. It contains the columns
+#'                     `age`, `sex`, `bmi`, and `centile`. This reference data is from UK90 Growth charts. 
+#'                     We use this to identify the closest BMI percentile of the child based on age, sex and current BMI.
+#' @param prop_weight_data Data frame. Proportional weight data containing columns 
+#'                         `age`, `sex`, and `weight`. Used to calculate the proportional 
+#'                         change in energy intake. This reference data is located here:
+#'                         (inputs\ref_data\effect_weighting.csv)
+#'
+#' @return Numeric. The proportional energy intake change. Returns 0 if the individual's BMI 
+#'         percentile is at or below the 10th percentile.
+#'
+#' @details 
+#' - The function determines the closest BMI percentile for the individual using the provided 
+#'   BMI reference data.
+#' - If the percentile is less than or equal to 10, the proportional intake change is set to 0.
+#' - Otherwise, the function calculates the proportional intake change using the 
+#'   effect weighting data for the corresponding age & sex and the change in energy intake.
+
+
+calculate_proportional_ei_change = function(age, sex, bmi, intake_change, bmi_ref_data, prop_weight_data){
+  
+  #browser()
+  
+  age = floor(age)
+  
+  if (sex == "female" | sex == 2){
+    sex = 2
+  } else { if(sex == "male" | sex == 1){
+    
+    sex = 1
+    
+  } }
+  
+  
+  if (!is.null(bmi)){
+    
+    age_row <- bmi_ref_data[bmi_ref_data$age == age & bmi_ref_data$sex == sex,]
+    
+    closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
+    closest_percentile <- age_row$centile[closest_percentile_index]
+    
+    
+    if(closest_percentile <= 10){
+      
+      prop_intake_change = 0
+      
+    } else{
+      
+      effect_weight = prop_weight_data$weight[prop_weight_data$age == age & prop_weight_data$sex == sex]
+      
+      prop_intake_change = effect_weight*intake_change
+      
+      
+    }
+    
+  }
+  
+  return(prop_intake_change)
+  
+}
+
+
+
+
+############################################
+############################################
+##   PLEASE IGNORE ALL CODE BELOW         ##
+##                                        ##
+############################################
+############################################
+
+
+# 
+# 
+# # 1. FUNCTION 1: Look up energy intake
+# # function to look-up energy intake for children as they grow (age)
+# # INPUTS:
+# # Function takes age, sex and reference data as input,
+# # the function the looks up the reference data to find the incremental energy intake  required for 
+# # the child to grow. The look-up table is generated based on the Estimated Average Requirement (EAR)
+# # estimated and published in Table 8 (SACN, 2011). All values refer to daily energy intake reported in
+# # kcals per day.
+# 
+# # OUTPUTS:
+# # Output is the value of the updated daily energy intake for age and sex in kcals.
+# 
+# lookup_energy_intake = function(age, sex, data_B){
+#   #browser()
+#   # checks that the inout is for a child i.e. less than 19 years of age
+#   if (age <19){
+#     
+#     age = ceiling(age) # round up the age as the published DRI values are for integer ages, eg. child is 5.5, it rounds up to 6.
+#     age_row_prev <- data_B[data_B$age == age - 1 & data_B$sex == sex, ] # get row for the previous age, eg. datarow for age 5
+#     age_row <- data_B[data_B$age == age & data_B$sex == sex, ] # get row for current age, eg. datarow for age 6
+#     
+#     ei_age_prev = age_row_prev$population_kcal # get the recommended DRI for previous age
+#     ei_age = age_row$population_kcal # get recommended DRI for current age
+#     
+#     # get population level mean excess energy intake for combinations of age and sex
+#     # excess energy intake values for sex and age group taken from Calorie Reformulation Report (DHSC - UK Gov, 2017)
+#     ei_excess = case_when(age >= 5 & age <= 10 & sex == 1 ~ 21,
+#                           age >= 11 & age <= 15 & sex == 1 ~ 69,
+#                           age >= 16 & age <= 18 & sex == 1 ~ 104,
+#                           age >= 5 & age <= 10 & sex == 2 ~ 34,
+#                           age >= 11 & age <= 15 & sex == 2 ~ 63,
+#                           age >= 16 & age <= 18 & sex == 2 ~ 44)
+#     
+#     ei_excess = 0 # set to zero for now as we decide who should receive excess calorie intake - specific BMI groups or all children
+#     
+#     net_energy_intake = (ei_age - ei_age_prev) + ei_excess # net increment in energy intake for child growth
+#   } else{
+#     # incase of children aged 19 and above, set incremental energy intake for growth = 0 kcals
+#     net_energy_intake = 0
+#     
+#   }
+#   return(net_energy_intake)
+#   
+# }
+# 
+# # FUNCTION 2: Generate SACN Estimated Average Requirements (EAR) age and sex wise reference data 
+# 
+# # INPUTS:
+# # input to the function is the path to a csv file store in the input refdata files.
+# # this csv was generated from Table 8 in Dietary Reference Values for Energy (SACN, 2011)
+# 
+# # OUTPUTS:
+# # Function reads a csv and returns a dataframe.
+# 
+# generate_sacn_dietary_intake = function(input_path){
+#   
+#   df = read_csv(input_path)
+#   
+#   return(df)
+#   
+# }
+# 
+# 
+# # FUNCTION 3: Generate Energy Matrix:
+# # function to generate the daily energy intake matrix for five years for children based on
+# # daily energy intake provided at day 0, 365, 730, 1095, 1460 and 1825 of the intervention
+# # which corresponds to baseline and end of each one of the five years of the intervention
+# # Within the function, we call 'energy_build' (Camacho-Garcia-Formenti & Zepeda-Tello, 2018)
+# # function written as part of the 'bw' package. The 'Brownian' interpolation is used as it 
+# # is thought to represent typical energy intake patterns in comparison to 'Linear', 
+# # 'Exponential', 'Stepwise', 'Lograthmic' etc.
+# 
+# # INPUTS:
+# # input to the matrix is a row that contains energy intakes at points in time listed above.
+# 
+# # OUTPUTS:
+# # output is a dataframe where each column represents an individual and each row represents
+# # a day in five years.
+# 
+# generate_interpolated_energy <- function(row) {
+#   #browser()
+#   
+#   # values in the row are added to a list
+#   energy_values <- c(as.numeric(row["intake_hox"]),
+#                      as.numeric(row["ei_365"]),
+#                      as.numeric(row["ei_730"]),
+#                      as.numeric(row["ei_1095"]),
+#                      as.numeric(row["ei_1460"]),
+#                      as.numeric(row["ei_1825"]))
+#   
+#   # energy build expects a list of energy values, along with time points (in days) and interpolation method
+#   interpolated_energy <- energy_build(energy_values, c(0, 365, 730, 1095, 1460, 1825), interpolation = "Brownian")
+#   
+#   return(interpolated_energy)
+#   
+# }
+# 
+# # FUNCTION 4: Look up projected height:
+# 
+# # INPUTS:
+# # function to estimate the future height of the child given current age, sex, height, years
+# # grown, and reference data. 
+# 
+# 
+# # The function takes the input age and sex and filters the ref 
+# # data to return rows with height and percentile values. Then compares the input height to
+# # each of the heights in the filtered row to return the percentile it matches the closest.
+# # This is the percentile at baseline. We assume that the child grows along this percentile.
+# # Reference data is available for until age 20 (inclusive). For future ages above that, we
+# # that the child's height stays the same as at 20.
+# 
+# # OUTPUTS:
+# # The function returns the value of the projected height at a different age.
+# 
+# #test_ht = lookup_projected_height(age = 6, sex = 2, height = 104.3, data_B = height_refdata_100centile, years_added = 1)
+# #test_ht_1 = lookup_projected_height(age = 6, sex = "female", height = 104.3, data_B = height_refdata_100centile, years_added = 1)
+# 
+# lookup_projected_height <- function(age, sex, height, data_B, years_added) {
+#   # browser()
+#   # recoding sex to numeric value from character
+#   if (sex == "female" | sex == 2){
+#     sex = 2
+#   } else { if(sex == "male" | sex == 1){
+#     
+#     sex = 1
+#     
+#   } }
+#   
+#   
+#   age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
+#   
+#   closest_percentile_index <- which.min(abs(age_row$height - height))
+#   closest_percentile <- age_row$centile[closest_percentile_index]
+#   
+#   
+#   age_future <- age + years_added
+#   
+#   if (age_future <= 20){
+#     
+#     projected_height <- data_B$height[data_B$age == age_future & data_B$centile == closest_percentile & data_B$sex == sex]
+#     
+#     
+#   } else{   if(age_future == 21) {
+#     
+#     
+#     projected_height <- data_B$height[data_B$age == (age_future - 1) & data_B$centile == closest_percentile & data_B$sex == sex] 
+#     
+#     
+#   } else{ if(age_future == 22){
+#     
+#     projected_height <- data_B$height[data_B$age == (age_future - 2) & data_B$centile == closest_percentile & data_B$sex == sex]   
+#     
+#   } else{ if(age_future == 23){
+#     
+#     projected_height <- data_B$height[data_B$age == (age_future - 3) & data_B$centile == closest_percentile & data_B$sex == sex]
+#     
+#   }
+#     
+#   }
+#     
+#   }
+#     
+#   }
+#   
+#   return(projected_height)
+# }
+# 
+# 
+# 
+# 
+# # FUNCTION 6: Generate height reference data
+# 
+# # INPUTS:
+# # function that takes two JSON files and combines them to create a dataframe. The two inputs are
+# # JSON files of UK90 height reference data taken from RCPCH digital growth charts repo for male
+# # and female (Chapman, Baw & Cole, 2022). They files can be accessed here:
+# # https://github.com/rcpch/digital-growth-charts-server/tree/live/chart-data
+# # The JSON files have been downloaded from the link and stored in inputs\ref_data:
+# # cole-nine-centiles-uk-who-female-height.json
+# # cole-nine-centiles-uk-who-male-height.json
+# # These files contain for males and females - z-score, centile, age and height
+# 
+# # OUTPUTS:
+# # The function outputs a dataframe where for each age and sex, centile wise height is recorded.
+# 
+# 
+# generate_height_refdata = function(input_1, input_2){
+#   
+#   female_ht_json = read_json(input_1, simplifyVector = FALSE)
+#   
+#   male_ht_json = read_json(input_2, simplifyVector = FALSE)
+#   
+#   
+#   rcpch_4_uk90child_female_ht = female_ht_json[[4]][["uk90_child"]][["female"]][["height"]]
+#   rcpch_4_uk90child_male_ht = male_ht_json[[4]][["uk90_child"]][["male"]][["height"]]
+#   
+#   
+#   female_ht_df = tibble(height_percentile_f = rcpch_4_uk90child_female_ht)
+#   male_ht_df   = tibble(height_percentile_m = rcpch_4_uk90child_male_ht)
+#   
+#   
+#   female_ht_df_1 = as.data.frame (female_ht_df %>%
+#                                     unnest_wider(height_percentile_f) %>%
+#                                     select(sds, centile, data) %>%
+#                                     unnest_longer(data) %>%
+#                                     select(sds, centile, data) %>%
+#                                     unnest_wider(data)) %>%
+#     select(sds, centile, x, y) %>%
+#     mutate(sex = 2) %>%
+#     distinct()
+#   
+#   male_ht_df_1 = as.data.frame (male_ht_df %>%
+#                                   unnest_wider(height_percentile_m) %>%
+#                                   select(sds, centile, data) %>%
+#                                   unnest_longer(data) %>%
+#                                   select(sds, centile, data) %>%
+#                                   unnest_wider(data)) %>%
+#     select(sds, centile, x, y) %>%
+#     mutate(sex = 1) %>%
+#     distinct()
+#   
+#   height_refdata = rbind(female_ht_df_1, male_ht_df_1) %>%
+#     rename(age = x,
+#            height = y)
+#   
+#   return(height_refdata)
+#   
+# }
+# 
+# # function to generate bmi ref data
+# 
+# 
+# #test_func = generate_bmi_refdata_100centiles(data_B = sitar::uk90, format_table = TRUE)
+# 
+# 
+# # function to generate height ref data
+# 
+# generate_height_refdata_100centiles = function(data_B){
+# 
+#   #browser()
+#   
+#   ht_refdata = data_B %>%
+#     select(years, sex, L.ht, M.ht, S.ht) %>%
+#     subset(years >= as.double(4) & years <= as.double(20))
+#   
+#   for( x in 1:100){
+#     
+#     if (x <= 99) {
+#       
+#       x = x/100
+#       
+#       
+#       
+#       ht_refdata = ht_refdata %>%
+#         mutate(!!paste0("p","_",(x*100)) := M.ht*(1 + L.ht*S.ht*qnorm(x))^(1/L.ht))
+#       # rowwise() %>%
+#       # mutate(!!paste0("p","_",(x*100)) := M.bmi[y]*(1 + L.bmi[y]*S.bmi[y]*qnorm(x))^(1/L.bmi[y]))
+#       
+#       
+#       
+#       
+#       
+#     } else{
+#       #browser()
+#       x = 0.996
+#       
+#       ht_refdata = ht_refdata %>%
+#         mutate(!!paste0("p","_",(x*100)) := M.ht*(1 + L.ht*S.ht*qnorm(x))^(1/L.ht))
+#       
+#     }
+#   }
+#   
+#   return(ht_refdata)
+# 
+# } 
+# 
+# #bmi_ref_data = generate_bmi_refdata_100centiles(sitar::uk90)
+# 
+# #test_func = lookup_bmi_percentile_category(age = 6, 
+# #                               bmi = 14.13838, 
+# #                               data_B = bmi_ref_data,
+# #                               sex = 1, value_to_calculate = "bmi_centile_and_category")
+# 
+# lookup_bmi_percentile_category <- function(age, sex, bmi, data_B, value_to_calculate) {
+#   #browser()
+#   op_list = list()
+#   
+#   if(!(value_to_calculate == "bmi_category" || value_to_calculate == "bmi_centile" || value_to_calculate == "bmi_centile_and_category")){
+# 
+#     warning("value_to_calculate is a REQUIRED input and ONLY accepts: 'bmi_centile' | 'bmi_category' | 'bmi_centile_and_category'.")
+#     
+#   } else{
+#     
+#     # recoding sex to numeric value from character
+#     if (sex == "female" | sex == 2){
+#       sex = 2
+#     } else { if(sex == "male" | sex == 1){
+#       
+#       sex = 1
+#       
+#     } }
+#     
+#     #browser()
+#     age_row <- data_B[data_B$age == age & data_B$sex == sex, ]
+#     closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
+#     closest_percentile <- as.numeric(age_row$centile[closest_percentile_index]) 
+#     bmi_value = data_B[data_B$age == age & data_B$sex == sex & data_B$centile == closest_percentile,]
+#     
+#     
+#     p_2 = data_B$bmi[data_B$age == age & data_B$sex == sex & data_B$centile == 2]
+#     p_85 = data_B$bmi[data_B$age == age & data_B$sex == sex & data_B$centile == 85]
+#     p_95 = data_B$bmi[data_B$age == age & data_B$sex == sex & data_B$centile == 95]
+#     
+# 
+#     category <- case_when(
+#       bmi <= p_2  ~ "underweight",
+#       bmi > p_2 & bmi < p_85 ~ "normal",
+#       bmi >= p_85 & bmi < p_95 ~ "overweight",
+#       bmi >= p_95 ~ "obese")
+#     
+#         
+#     
+#     op_list[["bmi_centile"]] = (closest_percentile)
+#     
+# #    category <- case_when(
+# #      closest_percentile <= 2  ~ "underweight",
+# #      closest_percentile > 2 & closest_percentile < 85 ~ "normal",
+# #      closest_percentile >= 85 & closest_percentile < 95 ~ "overweight",
+# #      closest_percentile >= 95 ~ "obese")
+#     
+#     op_list[["bmi_category"]] = category
+#   }
+#   
+#   if(value_to_calculate == "bmi_category"){
+#     
+#     return(op_list$bmi_category)
+#     
+#   } else{
+#     
+#     if(value_to_calculate == "bmi_centile"){
+#       
+#       
+#       return(op_list$bmi_centile)
+#       
+#     } else{
+#       
+#       if(value_to_calculate == "bmi_centile_and_category"){
+#         
+#         return(op_list)
+#         
+#       }
+#       
+#       
+#     }
+#     
+#     
+#   }
+#   
+# }
+# 
+# 
+# 
+# # function to lookup projected bmi
+# 
+# lookup_projected_bmi <- function(age, sex, bmi, data_B, years_added) {
+#   
+#   # recoding sex to numeric value from character
+#   if (sex == "female" | sex == 2){
+#     sex = 2
+#   } else { if(sex == "male" | sex == 1){
+#     
+#     sex = 1
+#     
+#   } }
+#   
+#   #browser()
+#   age_row <- data_B[data_B$age == age & data_B$sex == sex,]
+#   
+#   closest_percentile_index <- which.min(abs(age_row$bmi - bmi))
+#   closest_percentile <- age_row$centile[closest_percentile_index]
+#   
+#   
+#   age_future <- age + years_added
+#   
+#   if (age_future <= 20){
+#     
+#     projected_bmi <- data_B$bmi[data_B$age == age_future & data_B$centile == closest_percentile & data_B$sex == sex]
+#     
+#     
+#   } else{   if(age_future == 21) {
+#     
+#     projected_bmi <- data_B$bmi[data_B$age == (age_future - 1) & data_B$centile == closest_percentile & data_B$sex == sex]
+#     # projected_bmi <- data_B$y[data_B$x == (age_future - 1) & data_B$centile == closest_percentile & data_B$sex == sex] 
+#     
+#     
+#   } else{ if(age_future == 22){
+#     
+#     projected_bmi <- data_B$bmi[data_B$age == (age_future - 2) & data_B$centile == closest_percentile & data_B$sex == sex]
+#     # projected_height <- data_B$y[data_B$x == (age_future - 2) & data_B$centile == closest_percentile & data_B$sex == sex]   
+#     
+#   } else{ if(age_future == 23){
+#     
+#     projected_bmi <- data_B$bmi[data_B$age == (age_future - 3) & data_B$centile == closest_percentile & data_B$sex == sex]
+#     # projected_height <- data_B$y[data_B$x == (age_future - 3) & data_B$centile == closest_percentile & data_B$sex == sex]
+#     
+#   }
+#     
+#   }
+#     
+#   }
+#     
+#   }
+#   
+#   return(projected_bmi)
+# }
+# 
+# 
+# 
+# lookup_excess_energy_intake = function(age, sex, data_B){
+#   #browser()
+#   # checks that the inout is for a child i.e. less than 19 years of age
+#   if (age <19){
+#     
+#     age = ceiling(age) # round up the age as the published DRI values are for integer ages, eg. child is 5.5, it rounds up to 6.
+#     #age_row_prev <- data_B[data_B$age == age - 1 & data_B$sex == sex, ] # get row for the previous age, eg. datarow for age 5
+#     #age_row <- data_B[data_B$age == age & data_B$sex == sex, ] # get row for current age, eg. datarow for age 6
+#     
+#     #ei_age_prev = age_row_prev$population_kcal # get the recommended DRI for previous age
+#     #ei_age = age_row$population_kcal # get recommended DRI for current age
+#     
+#     # get population level mean excess energy intake for combinations of age and sex
+#     # excess energy intake values for sex and age group taken from Calorie Reformulation Report (DHSC - UK Gov, 2017)
+#     ei_excess = case_when(age >= 5 & age <= 10 & sex == 1 ~ 21,
+#                           age >= 11 & age <= 15 & sex == 1 ~ 69,
+#                           age >= 16 & age <= 18 & sex == 1 ~ 104,
+#                           age >= 5 & age <= 10 & sex == 2 ~ 34,
+#                           age >= 11 & age <= 15 & sex == 2 ~ 63,
+#                           age >= 16 & age <= 18 & sex == 2 ~ 44)
+#     
+#     #ei_excess = 0 # set to zero for now as we decide who should receive excess calorie intake - specific BMI groups or all children
+#     
+#     net_energy_intake = ei_excess # net increment in energy intake for child growth
+#   } else{
+#     # incase of children aged 19 and above, set incremental energy intake for growth = 0 kcals
+#     net_energy_intake = 0
+#     
+#   }
+#   return(net_energy_intake)
+#   
+# }
+# 
+# 
+# 
+# #old
+# function(age, sex, intake_change, data_B){
+#   #browser()
+#   
+#   age = floor(age)
+#   
+#   if (sex == "female" | sex == 2){
+#     sex = 2
+#   } else { if(sex == "male" | sex == 1){
+#     
+#     sex = 1
+#     
+#   } }
+#   
+#   effect_weight = data_B$weight[data_B$age == age & data_B$sex == sex]
+#   
+#   prop_intake_change = effect_weight*intake_change
+#   
+#   
+#   return(prop_intake_change)
+#   
+# }
+# 
+# 
+# #new
+# 
+# 
+# # test_1 = calculate_intake_change(age = 6, sex = 2, bmi = 15.627169, intake_change = 20, bmi_ref_data = bmi_refdata_100centiles, prop_weight_data = effect_weighting)
+# 
+# 
+# 
+# # FUNCTION to update bmi value to the required percentile based on age and sex of the individual
+# # function works rowwise and should initiate rowwise() before applying this function to a dataset
+# update_bmi = function(age, sex, update_to_centile, data_B){
+#   
+#   # browser()
+#   
+#   tryCatch(
+#     
+#     {
+#       # recoding sex to numeric value from character
+#       if (sex == "female" | sex == 2){
+#         
+#         sex = 2
+#         
+#       } else { if(sex == "male" | sex == 1){
+#         
+#         sex = 1
+#         
+#       } }
+#       
+#       
+#       # filtering ref data by age, sex and required percentile
+#       filtered_row = data_B[data_B$age == age & data_B$sex == sex & data_B$centile == update_to_centile,]
+#       
+#       # getting the bmi value for input age, sex and percentile
+#       bmi_value = filtered_row$bmi
+#       
+#       return(bmi_value)
+#     },
+#     
+#     
+#     error = function(e) {
+#       
+#       
+#       error_message = paste("Please ensure that the function is applied rowwise on a dataframe. An error occured:", conditionMessage(e))
+#       
+#     }
+#   )
+#   
+# }
+# 
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+
