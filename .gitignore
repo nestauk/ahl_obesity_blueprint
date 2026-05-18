@@ -9,7 +9,8 @@
 .xls
 .txt
 .png
-
+.DS_Store
+outputs/
 
 
 /inputs/
@@ -17,5 +18,3 @@
 
 
 
-output/
-.DS_Store

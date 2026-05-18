@@ -1,9 +1,6 @@
 
 ################################################################################################### 
-# Policy 24a : Extend access to pharmacological interventions by providing an extra £500 million  #
-#              per year of ring-fenced funding to provide increased access to NICE recommended    #
-#              weight loss treatments (Liraglutide and Semaglutide)                               #
-#                                                                                                 #
+# Tirzpatide                                                                                        #
 ###################################################################################################
 
 # Updates:
@@ -19,11 +16,13 @@
 
 
 # Effect size:
-# Those receiving any of the two drugs (Liraglutide and Semaglutide) on average experience weight loss of 11.1% of their bodyweight
-# 100% of the weight loss assumed to be in first year, no weight change in year 2, weight gain will occur in year 3 when the individual goes off the drug
-# Weight regain is two-thirds of the lost weight (b)
+# Those receiving any of the two drugs (Terzepatide) on average experience weight loss of 20% of their bodyweight
+# 100% of the weight loss assumed to be in first year, no weight change in year 2, 
+# weight gain will occur in year 3 when the individual goes off the drug
+# Weight regain is two thirds of the lost weight (b)
 
 # Number of people reached:
+# 220,000 people reached
 # The cost of the three drugs per month are assumed to be - Semaglutide: £130, Liraglutide: £150
 # Average of cost across the two drugs = £140 per month
 # As per NICE guidelines, individuals can be on the drugs for a max of two years:
@@ -33,9 +32,8 @@
 # Population estimate for adults equal and over 18 years of age = 44,263,393 (a)
 
 # Eligibility criteria for getting the drugs:
-# There is overlapping eligibility criteria for the three drugs - Semaglutide, Liraglutide 
 # which is summarised below to create a hybrid eligibility criteria that individuals must meet:
-# (bmi >= 30) | (bmi >= 27.5 + ethnicity = Black (2), Asian (3))
+# (bmi >= 35 + comorbidity) | (bmi >= 27.5 + ethnicity = Black (2), Asian (3) + comorbidity)
 
 
 # References:
@@ -209,22 +207,22 @@ assign_weight_changes <- function(data, bodyweight_var, num_years, weight_loss_p
 
 
 
-process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
+# process_clean_save(file_path = "inputs/raw/hse_2019_eul_20211006.tab", nation = "England", population_group = "Adult")
 
 df = read_csv(here("inputs/processed/hse_2019.csv"))
 
 
 df = df %>%
-  mutate(eligibility = case_when(bmi >= 30 ~ 1,
-                                 # (bmi >= 30 & bmi < 35) & (cardiovd == 1 | diabetes == 1) ~ 1,
-                                 (bmi >= 27.5 & ethnicity %in% c(2, 3)) ~ 1,    # , 4, 5
+  mutate(eligibility = case_when(# bmi >= 30 ~ 1,
+                                 (bmi >= 35) & (cardiovd == 1 | diabetes == 1) ~ 1,
+                                 (bmi >= 32.5 & ethnicity %in% c(2, 3) & (cardiovd == 1 | diabetes == 1)) ~ 1,    # , 4, 5
                                  TRUE ~ 0))
 
 
-set.seed(249)
+# set.seed(278)
 
 df = select_intervention_sample(data = df,
-                                sample_size = 148810, # 204918, 148810
+                                sample_size = 73333, # 204918, 148810
                                 population_size = 44263393,
                                 weight_var = "wt_int",
                                 bmi_var = "bmi",
@@ -234,7 +232,8 @@ df = select_intervention_sample(data = df,
 
 
 
-post_df_adult = assign_weight_changes(data = df, bodyweight_var = "weight", num_years = 5, weight_loss_percent = 0.111, weight_regain = 0.67)
+post_df_adult = assign_weight_changes(data = df, bodyweight_var = "weight", num_years = 5,
+                                      weight_loss_percent = 0.201, weight_regain = 0.67)
 
 
 
@@ -333,54 +332,6 @@ bmi_change_year = bmi_change %>%
 
 bmi_change_year
 
-# bmi year on year prevalence:
-write.csv(bmi_change_year, file = "outputs/policy_24_3/policy_24_3_updated_adult_england.csv")
-
-## delete after use
-
-bmi_change = bmi_change %>%
-  mutate(BMI_1 = case_when(BMI == "morbidly obese" ~ "Obesity class 3",
-                           BMI == "obese" ~ "Obesity class 1 & 2",
-                           BMI == "normal" ~ "Healthy weight",
-                           BMI == "underweight" ~ "Underweight",
-                           BMI == "overweight" ~ "Overweight",
-                           TRUE ~ BMI ),
-         type_1 = case_when(type == "Year 0" ~ "Baseline",
-                            TRUE ~ type))
-
-bmi_change = bmi_change %>%
-  mutate(BMI_1 = factor(BMI_1,
-                        levels = c("Underweight",
-                                   "Healthy weight",
-                                   "Overweight",
-                                   "Obesity class 1 & 2",
-                                   "Obesity class 3")))
-
-
-# Output 2: Plot of BMI distribution(bar charts)
-# Plot of year on year BMI category distribution
-adult_bar_plot = bmi_change %>%
-  ggplot(., aes(y = freq, x = BMI_1, fill = type_1)) + 
-  geom_bar(stat = "identity", position = "dodge") +
-  theme_ipsum() +
-  labs(fill = "", 
-       title = "Ext. access to GLP-1s (Saxenda & Wegovy)", 
-       y = "Prevalence - %",
-       x = "BMI group",
-       subtitle = "Per year distribution by BMI Category") +
-  theme_ipsum(base_size = 7, axis_title_size = 6, axis_text_size = 7) + #, base_family="Averta"
-  theme(legend.position = "top",
-        legend.text = element_text(size = 9),
-        axis.title.y = element_text(size = 10, hjust = 0.5),  # y-axis title
-        axis.title.x = element_text(size = 10, hjust = 0.5, vjust = 0.9),  # x-axis title
-        axis.text.x = element_text(size = 7),    # x-axis tick labels
-        axis.text.y = element_text(size = 7)  )   # y-axis tick labels)
-
-adult_bar_plot
-
-## delete after use
-
-
 
 # Plot of year on year BMI category distribution
 adult_bar_plot = bmi_change %>%
@@ -396,11 +347,17 @@ adult_bar_plot = bmi_change %>%
 
 adult_bar_plot
 
-ggsave(here("outputs/policy_24_3/policy_24_3_updated_impact_England_adult.png"), 
-       plot = adult_bar_plot, 
-       width = 10, 
-       height = 6,
-       bg='#ffffff')
 
+# uncomment for outputs:
 
-write.csv(post_df_adult, file = "outputs/policy_24_3/policy_24_3_updated_adult_england_bmi.csv")
+# bmi year on year prevalence:
+# write.csv(bmi_change_year, file = "outputs/policy_24_3/policy_24_3_updated_adult_england.csv")
+
+# ggsave(here("outputs/policy_24_3/policy_24_3_updated_impact_England_adult.png"), 
+#        plot = adult_bar_plot, 
+#        width = 10, 
+#        height = 6,
+#        bg='#ffffff')
+# 
+# 
+# write.csv(post_df_adult, file = "outputs/policy_24_3/policy_24_3_updated_adult_england_bmi.csv")
