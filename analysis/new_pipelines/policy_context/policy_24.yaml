@@ -1,0 +1,23 @@
+policy_name: "Introduce healthiness targets for large retailers"
+ 
+# Change in kcal intake:
+kcal_intake_change: -78
+compensation_factor: 0
+
+treated_per_year: 148810
+
+
+# The evidence from https://blueprint.nesta.org.uk/wp-content/uploads/2024/10/Introduce-healthiness-targets-for-large-retailers.pdf
+# showed that the intervention led to reduction in daily calorie intake by 78 kcal for adults. 
+# The review did not include evidence on how this would affect daily calorie intake in children.
+# The source of the evidence also indicates that compensatory behaviour was accounted for while reporting
+# out the final estimates of daily calorie reductions.
+df = select_intervention_sample(data = df,
+                                sample_size = 148810, # 204918, 148810
+                                population_size = 44263393,
+                                weight_var = "wt_int",
+                                bmi_var = "bmi",
+                                num_years = 5,
+                                criteria_1 = "eligibility",
+                                criteria_1_value = 1)
+

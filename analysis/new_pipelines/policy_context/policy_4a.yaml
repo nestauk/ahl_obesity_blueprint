@@ -1,0 +1,12 @@
+policy_name: "Ban HFSS volume promotions in food retail businesses"
+ 
+# Change in kcal intake:
+kcal_intake_change: -2.6
+
+
+# The evidence from the rapid review  
+# (https://docs.google.com/document/d/1Q2l1H2bHlEO2t6rK2fpbR43z3_qa8EJ_6h_CcjIEMDo/edit?usp=sharing) 
+# (quality assured by the EAG) showed that the intervention led to reduction in daily calorie intake
+# by 2.6 kcal for adults. The policy was found to reduce daily calorie intake in children by 2.48 kcals.
+# The source of the evidence also indicates that compensatory behaviour was accounted for while reporting
+# out the final estimates of daily calorie reductions.

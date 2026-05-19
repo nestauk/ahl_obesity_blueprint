@@ -1,0 +1,16 @@
+policy_name: "Mandate the out of home (OOH) sector to implement maximum calorie limits"
+ 
+# Change in kcal intake:
+kcal_intake_change: -0.5
+compensation_factor: 0
+
+
+# The evidence from the rapid review  
+# (https://docs.google.com/document/d/1Q2l1H2bHlEO2t6rK2fpbR43z3_qa8EJ_6h_CcjIEMDo/edit?usp=sharing) 
+# (quality assured by the EAG) showed that the intervention led to reduction in daily calorie intake
+# by 2.6 kcal for adults. The policy was found to reduce daily calorie intake in children by 2.48 kcals.
+# In addition, several reports have indicated that about 20-25% of the daily calorie intake for adults
+# come from the OOH sector. Considering that 80% of the daily calorie intake is reduced by 2.6 kcals, 20%
+# is likely to be reduced by 0.52 kcals per day. Similarly for children it would be 0.62 kcals per day.
+# The source of the evidence also indicates that compensatory behaviour was accounted for while reporting
+# out the final estimates of daily calorie reductions.

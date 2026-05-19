@@ -1,0 +1,4 @@
+policy_name: "Mandate retailers and manufacturers to implement maximum calorie limits"
+ 
+# Change in kcal intake:
+kcal_intake_change: -4.31

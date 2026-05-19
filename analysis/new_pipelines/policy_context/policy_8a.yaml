@@ -1,0 +1,10 @@
+policy_name: "Restrict in-store HFSS positioning"
+ 
+# Change in kcal intake:
+kcal_intake_change: -60
+
+
+# The evidence from the rapid review 
+# (https://docs.google.com/document/d/1xYDMQdCBmFuSpww7D6qXdRaNTsfEbG5hByr1HBhVd3Q/edit?usp=sharing) 
+# (quality assured by the EAG) showed that the interventions led to a reduction of 60 kcals in daily
+# energy intake of adults and 67 kcals in daily energy intake of children.

@@ -1,0 +1,9 @@
+policy_name: "Tax sugar and salt sold in processed foods"
+kcal_intake_change: -44.9
+
+
+# The evidence from the IFS report
+# (https://ifs.org.uk/sites/default/files/output_url_files/WP202121-The-impact-of-a-tax-on-added-sugar-and-salt.pdf) 
+# indicates that the intervention removes 44.9 kcals from a persons daily calorie intake.
+# It is not clear if a compensation effect has been applied, hence, before modelling the impact,
+# a compensation effect was be applied.

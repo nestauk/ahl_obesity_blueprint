@@ -1,0 +1,15 @@
+policy_name: "Mandate the out of home (OOH) sector to implement maximum calorie limits"
+ 
+# Change in kcal intake:
+kcal_intake_change: -1.001
+
+
+# The evidence from the rapid review  
+# (https://docs.google.com/document/d/16rShohZPMtiC_TiBe7mdIaJ76L2AfT9KWNlyWgpOCZc/edit) (quality assured
+# by the EAG) showed that the intervention managed to remove 48.6 kcals available in public spaces.
+# Workplace & canteens together form about 10.3% of the trips that individuals make in the out of home sector.
+# In addition, it is also known that ~ 20% of the daily calorie intake comes from the out of home sector.
+# The specific channel where this reduction in availability occurs is 10.3% of 20% of a persons daily calorie 
+# intake which is 2.06% of a persons daily calorie intake.
+# therefore, a 48.6 kcal reduction in availability could result in removal of 1.001 kcals from an adults daily
+# calorie intake.

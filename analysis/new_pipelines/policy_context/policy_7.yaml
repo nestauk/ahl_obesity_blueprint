@@ -1,0 +1,38 @@
+policy_name: "Enforce front-of-pack labelling"
+ 
+# Change in kcal intake:
+kcal_intake_change: -7.4
+
+
+# The evidence from the rapid review 
+# (https://docs.google.com/document/d/14JAqWmVOcdobuuGJeO4GIuxDPA28wtxb9UhIim7VP2Q/edit?usp=sharing) 
+# (quality assured by the EAG) showed that the interventions led to a reduction of ~27 kcals in daily
+# energy intake of adults.
+
+# Our rapid review found FOPL could lead to 0.05 SMD difference in intake.
+# Using Holland et al. (2018) (Page 27, Figure 4) we convert the SMD to equivalent kcal measure -27 kcal
+# per person per day (b)
+# As the conversion from SMD to kcals is based on NDNS data, we adjust for underreporting in the NDNS by uplifting the estimate by 32% (c)
+# Next, as the estimate is on the overall diet, we exclude OOH calorie contribution (11%) (d)
+# Simialrly, we exclude kcals from non-packaged food that wouldn't be covered by this policy - 11% (d)
+# Next, we adjust for FOPL coverage at baseline. Govt Stats estimate that 
+# approximately 66% of the food products have FOPL (e). Implying that this policy would only affect 34% of the remaining kcals
+
+# Next we apply compensation sation effect of 23% to estimate the final change in energy intake to be 7.4 kcals
+
+# References:
+# (a) Rauber F, Louzada MLDC, Martinez Steele E, et alUltra-processed foods and excessive free sugar intake
+#     in the UK: a nationally representative cross-sectional studyBMJ Open 2019;9:e027546. 
+#     doi: 10.1136/bmjopen-2018-027546
+#
+# (b) Hollands GJ, Shemilt I, Marteau TM, Jebb SA, Lewis HB, Wei Y, Higgins JPT, Ogilvie D. Portion, package 
+#     or tableware size for changing selection and consumption of food, alcohol and tobacco. Cochrane Database
+#     of Systematic Reviews 2015, Issue 9. Art. No.: CD011045. DOI: 10.1002/14651858.CD011045.pub2.
+# (c) A government statistical service perspective on official estimates of Calorie Consumption: 2019 update (2019) 
+#    A Government Statistical Service perspective on official estimates of calorie consumption: 2019 update - Office for 
+#    National Statistics. Available at: https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/conditionsanddiseases/methodologies/agovernmentstatisticalserviceperspectiveonofficialestimatesofcalorieconsumption2019update. 
+# (d) Improving diets to halve obesity across Britain - Nesta (https://www.nesta.org.uk/data-visualisation-and-interactive/improving-diets-to-halve-obesity-across-britain/)
+# (d) Nesta - Internal Analysis for (c) - https://docs.google.com/spreadsheets/d/1dYgYIV-uO0VL76T4jKeEcJx92ROKFhR4DvJYBLkZ660/edit?gid=1103962484#gid=1103962484
+# (e) Skotarenko, L. (2018). The UK’s Voluntary Front of Pack Nutrition Labelling Scheme. [online] London: Department of Health. Available at:
+#     https://food.ec.europa.eu/document/download/df7f5741-cc84-4071-8a4e-482acc0f552f_en?filename=comm_ahac_20180423_pres3.pdf.
+
