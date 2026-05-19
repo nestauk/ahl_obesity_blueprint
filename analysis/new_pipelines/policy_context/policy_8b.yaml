@@ -1,0 +1,13 @@
+policy_name: "Mandate the out of home (OOH) sector to implement maximum calorie limits"
+ 
+# Change in kcal intake:
+kcal_intake_change: -0.71
+
+# The evidence from the rapid review  
+# (https://docs.google.com/document/d/1xYDMQdCBmFuSpww7D6qXdRaNTsfEbG5hByr1HBhVd3Q/edit?usp=sharing) 
+# (quality assured by the EAG) showed that the intervention led to reduction in daily calorie intake
+# by 38 kcals for adults. This relates to about 1700 kcals of peoples diets.
+# Nesta's analysis of OOH sector purchase data has shown that 10.6% of the kcals purchased in the OOH sector
+# is via delivery apps and restaurant owned apps.
+# Therefore, a policy affecting 10.6% of ~300 kcals purchased in the OOH sector, would lead to
+# 0.71 kcal reduction in daily calorie intake.

@@ -1,0 +1,4 @@
+policy_name: "Mandate the out of home (OOH) sector to implement maximum calorie limits"
+ 
+# Change in kcal intake:
+kcal_intake_change: -21.3

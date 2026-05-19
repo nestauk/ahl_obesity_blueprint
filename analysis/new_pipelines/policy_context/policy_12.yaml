@@ -1,0 +1,46 @@
+policy_name: "Incentivise reformulation of HFSS"
+ 
+# Change in kcal intake:
+kcal_intake_change: -4.96
+
+
+# The evidence is from the rapid review  
+# (https://docs.google.com/document/d/1Q2l1H2bHlEO2t6rK2fpbR43z3_qa8EJ_6h_CcjIEMDo/edit?usp=sharing) 
+# (quality assured by the EAG) supplemented by additional calculation:
+
+
+# Number of in-home product categories = 1750 [1]
+# Number of in-home products = 128,432
+
+
+# number of OOH products = 13925 [1]
+
+# 40% of British shopper baskets in in-home purchases are HFSS products = 40% of 128432 = 51373 [2]
+# 66% of OOH products are HFSS = 66% of 13925 = 9152 [1] 
+
+# Total number of products in-home + out of home = 142,357
+# Total HFSS Products = 51373 (in-home) + 9152 (OOH) = 60,525
+
+
+# Reformulation Pot = £500 million
+# Assuming per product reformulation on average = £500,000 (Awaiting information from FDF Scotland on this)
+# number of products that can be reformulated = 1000
+
+# Percentage of HFSS products that can be reformulated = 1000/60525 = 1.65%
+# Percentage of all products that can be reformulated = 1000/142357 = 0.7%
+
+# Average calorie densiyt of OOH products = 1.92 kcal/gm
+# average calorie density of in-home products = 2 kcal/gm
+
+# On average, when participants consumed foods all foods in a day with lower energy density, they consumed 709 fewer
+# calories per day compared to when they consumed all foods in a day with higher energy density.
+
+# Therefore, if 0.7% of all products were reformulated, then individuals would consume:
+# 0.7% x 709 = 4.96 kcals  i.e. 4.96 kcals fewer per day on average per day
+
+
+
+# [1] Nesta Analysis of OOH food and drink data from market research company (2024)
+# [2] Kantar (2021). Competing effectively in a HFSS- regulated world. 
+#     Access at: https://www.kantar.com/uki/  inspiration/fmcg/2021-wp-competing-effectively-in-ahfss-regulated-world
+# [3] Nesta Analysis of In Home food and drink data from market research company (2023)

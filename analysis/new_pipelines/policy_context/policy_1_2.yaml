@@ -1,0 +1,9 @@
+policy_name: "Restrict advertising of HFSS products"
+ 
+# Change in kcal intake:
+kcal_intake_change: -59.6
+
+
+# The evidence from the rapid review  
+# (https://docs.google.com/document/d/1U1JH_KI8IGBaN4cNXyW1A0H_k5LmW94C1VBATPDD8jA/edit?usp=sharing) 
+# (quality assured by the EAG) showed that the intervention reduced daily calorie intake by 59.6 kcals.
