@@ -8,9 +8,8 @@
 
 
 # Effect size/ change in daily energy intake (DEI):
-# The change in energy intake = 78.61 kcals
-# Source: Please see row 12, column E here - https://docs.google.com/spreadsheets/d/1QqID7tA-9ocNwHXX83C58qN2bShddMZJUJgguR4AqFw/edit?usp=sharing
-
+# The change in energy intake = 83 kcals without compensation & 64 kcals with compensation
+# Source: Scenario D1 (Main) in https://docs.google.com/spreadsheets/d/1tizxBbYHBedkmKfWfrEBCIO56sjHwX3uHZlwB5TB40M/edit?usp=sharing
 
 
 
@@ -29,27 +28,27 @@ source(file = "analysis/policy_analysis/mrt_child/load_data_files.R") # all requ
 
 
 # inputs
-# Model with single kcal reduction
-change_in_daily_ei = 83
+# Kcal reduction per person per day without compensation:
+kcal_reduction_without_compensation = 83
 
 # main ()
 
 # running model with HSE 2019 data
 policy_impact_england = calculate_bmi_from_eichange_hox(df = hse_2019_child %>% rename(baseline_intake = intake_hox),
-                                                        daily_ei_change = change_in_daily_ei,
+                                                        daily_ei_change = kcal_reduction_without_compensation,
                                                         compensation_factor = 0,
                                                         effect_weighting_df = new_effect_weighting,
                                                         nation = "England", 
-                                                        tags = "MRT - New" )
+                                                        tags = "HFS - Without compensation" )
 
 
 # running model with Scotland data
 policy_impact_scotland = calculate_bmi_from_eichange_hox(df = shes_2019_child %>% rename(baseline_intake = intake_hox),
-                                                         daily_ei_change = change_in_daily_ei,
+                                                         daily_ei_change = kcal_reduction_without_compensation,
                                                          compensation_factor = 0,
                                                          effect_weighting_df = new_effect_weighting,
                                                          nation = "Scotland", 
-                                                         tags = "MRT - New" )
+                                                         tags = "HFS - Without compensation" )
 
 
 # Print reduction in child obesity prevalence:
@@ -57,103 +56,29 @@ calc_percent_reduction(policy_impact_england$bmi_prevalence_table, "obese")
 calc_percent_reduction(policy_impact_scotland$bmi_prevalence_table, "obese")
 
 
-# Model with range of kcal redution:
+# Kcal reduction per person per day with compensation
+kcal_reduction_with_compensation = 64
 
-# Kcal reduction per person per day (with and without compensation) for most restricted scenario
-kcal_reduction_restricted = 64
-
-impact_england_restricted_without_comp = calculate_bmi_from_eichange_hox(
+policy_impact_england_with_comp = calculate_bmi_from_eichange_hox(
   df = hse_2019_child %>% rename(baseline_intake = intake_hox),
-  daily_ei_change = kcal_reduction_restricted,
+  daily_ei_change = kcal_reduction_with_compensation,
   compensation_factor = 0,
   effect_weighting_df = new_effect_weighting,
   nation = "England",
-  tags = "MRT - Restricted Model - England - without compensation" )
+  tags = "HFS - With compensation")
 
 
-impact_england_restricted_with_comp = calculate_bmi_from_eichange_hox(
-  df = hse_2019_child %>% rename(baseline_intake = intake_hox),
-  daily_ei_change = kcal_reduction_restricted,
-  compensation_factor = 0.23,
-  effect_weighting_df = new_effect_weighting,
-  nation = "England",
-  tags = "MRT - Restricted Model - England - with compensation" )
-
-
-impact_scotland_restricted_without_comp = calculate_bmi_from_eichange_hox(
+policy_impact_scotland_with_comp = calculate_bmi_from_eichange_hox(
   df = shes_2019_child %>% rename(baseline_intake = intake_hox),
-  daily_ei_change = kcal_reduction_restricted,
+  daily_ei_change = kcal_reduction_with_compensation,
   compensation_factor = 0,
   effect_weighting_df = new_effect_weighting,
   nation = "Scotland",
-  tags = "MRT - Restricted Model - Scotland - without compensation" )
+  tags = "HFS - With compensation" )
 
-
-impact_scotland_restricted_with_comp = calculate_bmi_from_eichange_hox(
-  df = shes_2019_child %>% rename(baseline_intake = intake_hox),
-  daily_ei_change = kcal_reduction_restricted,
-  compensation_factor = 0.23,
-  effect_weighting_df = new_effect_weighting,
-  nation = "Scotland",
-  tags = "MRT - Restricted Model - Scotland - with compensation" )
-
-# Kcal reduction per person per day (with and without compensation) for most flexible scenario
-kcal_reduction_flexible = 86
-
-impact_england_flexible_without_comp = calculate_bmi_from_eichange_hox(
-  df = hse_2019_child %>% rename(baseline_intake = intake_hox),
-  daily_ei_change = kcal_reduction_flexible,
-  compensation_factor = 0,
-  effect_weighting_df = new_effect_weighting,
-  nation = "England",
-  tags = "MRT - Flexible Model - England - without compensation" )
-
-
-impact_england_flexible_with_comp = calculate_bmi_from_eichange_hox(
-  df = hse_2019_child %>% rename(baseline_intake = intake_hox),
-  daily_ei_change = kcal_reduction_flexible,
-  compensation_factor = 0.23,
-  effect_weighting_df = new_effect_weighting,
-  nation = "England",
-  tags = "MRT - Flexible Model - England - with compensation" )
-
-
-impact_scotland_flexible_without_comp = calculate_bmi_from_eichange_hox(
-  df = shes_2019_child %>% rename(baseline_intake = intake_hox),
-  daily_ei_change = kcal_reduction_flexible,
-  compensation_factor = 0,
-  effect_weighting_df = new_effect_weighting,
-  nation = "Scotland",
-  tags = "MRT - Flexible Model - Scotland - without compensation" )
-
-
-impact_scotland_flexible_with_comp = calculate_bmi_from_eichange_hox(
-  df = shes_2019_child %>% rename(baseline_intake = intake_hox),
-  daily_ei_change = kcal_reduction_flexible,
-  compensation_factor = 0.23,
-  effect_weighting_df = new_effect_weighting,
-  nation = "Scotland",
-  tags = "MRT - Flexible Model - Scotland - with compensation" )
-
-print("% reduction in obesity - England - restricted model with and without compensation:")
-calc_percent_reduction(impact_england_restricted_with_comp$bmi_prevalence_table, "obese")
-calc_percent_reduction(impact_england_restricted_without_comp$bmi_prevalence_table, "obese")
-
-print("% reduction in obesity - Scotland - restricted model with and without compensation:")
-calc_percent_reduction(impact_scotland_restricted_with_comp$bmi_prevalence_table, "obese")
-calc_percent_reduction(impact_scotland_restricted_without_comp$bmi_prevalence_table, "obese")
-
-
-
-print("% reduction in obesity - England - flexible model with and without compensation:")
-calc_percent_reduction(impact_england_flexible_with_comp$bmi_prevalence_table, "obese")
-calc_percent_reduction(impact_england_flexible_without_comp$bmi_prevalence_table, "obese")
-
-
-print("% reduction in obesity - Scotland - flexible model with and without compensation:")
-calc_percent_reduction(impact_scotland_flexible_with_comp$bmi_prevalence_table, "obese")
-calc_percent_reduction(impact_scotland_flexible_without_comp$bmi_prevalence_table, "obese")
-
+print("% reduction in obesity - England - with compensation:")
+calc_percent_reduction(policy_impact_england_with_comp$bmi_prevalence_table, "obese")
+calc_percent_reduction(policy_impact_scotland_with_comp$bmi_prevalence_table, "obese")
 
 
 # additional descriptive plots:
