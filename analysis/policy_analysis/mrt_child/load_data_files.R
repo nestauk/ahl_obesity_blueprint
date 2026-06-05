@@ -26,6 +26,11 @@ shes_2022_child = s3read_using(FUN = arrow::read_parquet,
                                bucket = "ahl-private-data",
                                object = "shes/processed/shes_2022_child.parquet")
 
+# effect weighting updated - anchored on 16 year old instead of 18 year olds
+effect_weighting_16 = s3read_using(FUN = read.csv,
+                                    bucket = "ahl-private-data",
+                                    object = "hse/ref_data/effect_weighting_updated_16.csv")
+
 # effect weighting using new approach:
 new_effect_weighting = s3read_using(FUN = read.csv,
                                     bucket = "ahl-private-data",

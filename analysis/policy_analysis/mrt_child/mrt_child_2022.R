@@ -31,12 +31,17 @@ source(file = "analysis/policy_analysis/mrt_child/load_data_files.R") # all requ
 # Kcal reduction per person per day without compensation:
 kcal_reduction_without_compensation = 83
 
+# Kcal reduction per person per day with compensation
+kcal_reduction_with_compensation = 64
+compensation_factor = 0
+effect_weighting_factors = effect_weighting_16
+
 # main ()
 
 # running model with HSE 2019 data
 policy_impact_england = calculate_bmi_from_eichange_hox(df = hse_2019_child %>% rename(baseline_intake = intake_hox),
                                                         daily_ei_change = kcal_reduction_without_compensation,
-                                                        compensation_factor = 0,
+                                                        compensation_factor = compensation_factor,
                                                         effect_weighting_df = new_effect_weighting,
                                                         nation = "England", 
                                                         tags = "HFS - Without compensation" )
@@ -45,7 +50,7 @@ policy_impact_england = calculate_bmi_from_eichange_hox(df = hse_2019_child %>% 
 # running model with Scotland data
 policy_impact_scotland = calculate_bmi_from_eichange_hox(df = shes_2019_child %>% rename(baseline_intake = intake_hox),
                                                          daily_ei_change = kcal_reduction_without_compensation,
-                                                         compensation_factor = 0,
+                                                         compensation_factor = compensation_factor,
                                                          effect_weighting_df = new_effect_weighting,
                                                          nation = "Scotland", 
                                                          tags = "HFS - Without compensation" )
@@ -56,13 +61,12 @@ calc_percent_reduction(policy_impact_england$bmi_prevalence_table, "obese")
 calc_percent_reduction(policy_impact_scotland$bmi_prevalence_table, "obese")
 
 
-# Kcal reduction per person per day with compensation
-kcal_reduction_with_compensation = 64
+
 
 policy_impact_england_with_comp = calculate_bmi_from_eichange_hox(
   df = hse_2019_child %>% rename(baseline_intake = intake_hox),
   daily_ei_change = kcal_reduction_with_compensation,
-  compensation_factor = 0,
+  compensation_factor = compensation_factor,
   effect_weighting_df = new_effect_weighting,
   nation = "England",
   tags = "HFS - With compensation")
@@ -71,7 +75,7 @@ policy_impact_england_with_comp = calculate_bmi_from_eichange_hox(
 policy_impact_scotland_with_comp = calculate_bmi_from_eichange_hox(
   df = shes_2019_child %>% rename(baseline_intake = intake_hox),
   daily_ei_change = kcal_reduction_with_compensation,
-  compensation_factor = 0,
+  compensation_factor = compensation_factor,
   effect_weighting_df = new_effect_weighting,
   nation = "Scotland",
   tags = "HFS - With compensation" )
