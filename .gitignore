@@ -1,19 +1,23 @@
+# R
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 .RDataTmp
-.xlsx
-.csv
-.png
-.xls
-.txt
-.png
+
+# OS
 .DS_Store
 
+# Data and outputs
+*.xlsx
+*.xls
+*.txt
+*.png
 
-/inputs/
+# Folders
 /outputs/
 
-
-
+# Inputs: only track ref_data
+/inputs/*
+!/inputs/ref_data/
+!/inputs/ref_data/**
