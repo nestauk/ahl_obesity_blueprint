@@ -361,21 +361,41 @@ df_2019_adult_eligibility = df_2019_adult %>%
 # ==========================================================
 df_2019_adult_with_cohorts <- df_2019_adult_eligibility %>%
   mutate(eligibility = case_when(
-    # --- COHORT 1: BMI 40+ ---
-    (bmi >= 40) | (bmi >= 37.5 & ethnicity %in% 2:5) ~ 1,
     
-    # --- COHORT 2: BMI 37.5 - 40 ---
-    (bmi >= 37.5) | (bmi >= 35 & ethnicity %in% 2:5) ~ 2,
+    # Cohort 1: BMI 40+ (or 37.5+ ethnic minority), 2+ comorbidities
+    (bmi >= 40)                         & eligibility_score >= 2 ~ 1,
+    (bmi >= 37.5 & ethnicity %in% 2:5) & eligibility_score >= 2 ~ 1,
     
-    # --- COHORT 3: BMI 35 - 37.5 ---
-    (bmi >= 35) | (bmi >= 32.5 & ethnicity %in% 2:5) ~ 3,
+    # Cohort 2: BMI 40+ (or 37.5+ ethnic minority), 1 comorbidity
+    (bmi >= 40)                         & eligibility_score == 1 ~ 2,
+    (bmi >= 37.5 & ethnicity %in% 2:5) & eligibility_score == 1 ~ 2,
     
-    # --- COHORT 4: BMI 32.5 - 35 ---
-    (bmi >= 32.5) | (bmi >= 30 & ethnicity %in% 2:5) ~ 4,
+    # Cohort 3: BMI 40+ (or 37.5+ ethnic minority), no comorbidities
+    (bmi >= 40)                        ~ 3,
+    (bmi >= 37.5 & ethnicity %in% 2:5) ~ 3,
     
-    # --- COHORT 5: BMI 30 - 32.5 (Final Buffer) ---
-    (bmi >= 30) | (bmi >= 27.5 & ethnicity %in% 2:5) ~ 5,
+    # Cohort 4: BMI 37.5-40 (or 35-37.5 ethnic minority), 2+ comorbidities
+    (bmi >= 37.5)                       & eligibility_score >= 2 ~ 4,
+    (bmi >= 35   & ethnicity %in% 2:5) & eligibility_score >= 2 ~ 4,
     
+    # Cohort 5: BMI 37.5-40 (or 35-37.5 ethnic minority), 1 comorbidity
+    (bmi >= 37.5)                       & eligibility_score == 1 ~ 5,
+    (bmi >= 35   & ethnicity %in% 2:5) & eligibility_score == 1 ~ 5,
+    
+    # Cohort 6: BMI 37.5-40 (or 35-37.5 ethnic minority), no comorbidities
+    (bmi >= 37.5)                      ~ 6,
+    (bmi >= 35   & ethnicity %in% 2:5) ~ 6,
+    
+    # Cohort 7: BMI 35-37.5 (or 32.5-35 ethnic minority), 2+ comorbidities
+    (bmi >= 35)                         & eligibility_score >= 2 ~ 7,
+    (bmi >= 32.5 & ethnicity %in% 2:5) & eligibility_score >= 2 ~ 7,
+    
+    # Cohort 8: BMI 35-37.5 (or 32.5-35 ethnic minority), 1 comorbidity
+    # This is the minimum eligibility threshold — no treatment below this level
+    (bmi >= 35)                         & eligibility_score >= 1 ~ 8,
+    (bmi >= 32.5 & ethnicity %in% 2:5) & eligibility_score >= 1 ~ 8,
+    
+    # Ineligible
     TRUE ~ 0
   ))
 
@@ -481,26 +501,29 @@ print(perc_change_class3)
 # --- Constants from Frontier Economics & User Input ---
 TOTAL_OBESITY_COST_BN <- 107.0      # Total annual economic/societal cost 
 TOTAL_NHS_OBESITY_COST_BN <- 9.3   # Annual financial cost to NHS 
-TOTAL_OBESE_POP_M <- 18.1          # UK population with obesity 
+TOTAL_OBESE_POP_M <- 13          # UK population with obesity based on 2019 HSE 
 BASE_DRUG_COST <- 1677.1      # average cost based off calculation for GLP-1 modelling in blueprint trizepatide modelling 1.1 - cell number N48
 
-# --- Means Testing Constants (Scenario 4.1 and 4.2) ---
-TIER3_SHARE <- 0.35
-ANNUAL_PRESCRIPTION_COST <- 9.9 * 1 * 12  # £118.80
 
-# Net cost per person after Tier 3 prescription recovery
-MEANS_TEST_4_1_COST <- BASE_DRUG_COST - (TIER3_SHARE * ANNUAL_PRESCRIPTION_COST)
-
-# Net cost per person after Tier 3 prescription + 50% wraparound recovery
-# Wraparound per person derived from total GP cost in Scenario 1.1
-WRAPAROUND_PER_PERSON <- 1110628089 / total_treated_pop
-MEANS_TEST_4_2_COST <- MEANS_TEST_4_1_COST - (TIER3_SHARE * WRAPAROUND_PER_PERSON * 0.50)
-
-# 1. Calculate the 'Gross Prizes' (Total value saved by treating 3.4M people)
 actual_cols <- grep("actual_selected_year", names(post_df_adult_updated_weights_bmi), value = TRUE)
 total_treated_pop <- sum(colSums(post_df_adult_updated_weights_bmi[, actual_cols], na.rm = TRUE))
 treated_share <- total_treated_pop / (TOTAL_OBESE_POP_M * 1e6)
 
+# --- Means Testing Constants (Scenario 4.1 and 4.2) ---
+TIER3_SHARE <- 0.35 #proportion of the population accessing via Tier 3 pathway
+ANNUAL_PRESCRIPTION_COST <- 9.9 * 1 * 12  # Annual tier 3 prescription charge of £118.80
+
+# Net cost per person after Tier 3 prescription cost is recovered from the proportion of the population accessing via Tier 3 pathway, reducing the drug cost to the NHS
+# the rest of the population gets the drug & treatment for free
+MEANS_TEST_4_1_COST <- BASE_DRUG_COST - (TIER3_SHARE * ANNUAL_PRESCRIPTION_COST)
+
+# Net cost per person after Tier 3 prescription + 50% cost of wraparound is recovered, reducing both the drug cost and the treatment cost to the NHS 
+# the rest of the population gets the drug & treatment for free
+# Wraparound per person derived from total GP cost in Scenario 1.1 https://docs.google.com/spreadsheets/d/1_98Y71iEGOdEC-hsbsaXqGYrhoh3rL_iM9e1-OxTwdY/edit?usp=sharing
+WRAPAROUND_PER_PERSON <- 1110628089 / total_treated_pop
+MEANS_TEST_4_2_COST <- MEANS_TEST_4_1_COST - (TIER3_SHARE * WRAPAROUND_PER_PERSON * 0.50)
+
+# 1. Calculate the 'Gross Prizes' (Total value saved by treating 1.6M people)
 # Total Gross Benefits (Total value saved before subtracting costs)
 gross_econ_prize_bn <- treated_share * TOTAL_OBESITY_COST_BN
 gross_nhs_prize_bn  <- treated_share * TOTAL_NHS_OBESITY_COST_BN
