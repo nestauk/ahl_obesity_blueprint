@@ -1,0 +1,67 @@
+# Option 1 cohort:
+OP_1:
+  year1:
+    c1: 100000
+  year2:
+    c1: 100000
+  year3:
+    c1: 100000
+  year4:
+    c1: 100000
+  year5:
+    c1: 100000
+
+# Option 2 cohort:
+OP_2:
+  year1:
+    c1: 150000
+  year2:
+    c1: 150000
+  year3:
+    c1: 150000
+  year4:
+    c1: 150000
+  year5:
+    c1: 150000
+
+# Option 3 cohort:
+OP_3:
+  year1:
+    c1: 200000
+  year2:
+    c1: 200000
+  year3:
+    c1: 200000
+  year4:
+    c1: 200000
+  year5:
+    c1: 200000
+
+# Option 4 cohort:
+OP_4:
+  year1:
+    c1: 300000
+  year2:
+    c1: 300000
+  year3:
+    c1: 300000
+  year4:
+    c1: 300000
+  year5:
+    c1: 300000
+
+
+# Option 5 cohort:
+OP_5:
+  year1:
+    c1: 400000
+  year2:
+    c1: 400000
+  year3:
+    c1: 400000
+  year4:
+    c1: 400000
+  year5:
+    c1: 400000
+
+
