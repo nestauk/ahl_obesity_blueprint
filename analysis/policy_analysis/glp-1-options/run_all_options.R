@@ -1,5 +1,5 @@
 # =============================================================================
-# GLP-1 options: run the pipeline across all cohort allocations
+# GLP-1 options: runs across all cohort options
 # =============================================================================
 
 source(file = "post_processing/post_processing.R")
@@ -7,10 +7,6 @@ source(file = "analysis/policy_analysis/glp-1-options/utils.R")
 source(file = "analysis/policy_analysis/glp-1-options/load_data.R")
 source(file = "analysis/policy_analysis/glp-1-options/load_params.R")
 
-
-# -----------------------------------------------------------------------------
-# Cohort-invariant prep (Steps 1-4)
-# -----------------------------------------------------------------------------
 
 # Step 1: cleaned, processed baseline data
 df_2019_adult <- bp_hse_2019_adult
@@ -36,6 +32,7 @@ df_2019_adult_eligibility <- df_2019_adult %>%
   )
 
 # Step 3: assign cohort eligibility flag from BMI
+# those with BMI >= 30 are eligible
 df_2019_adult_with_cohorts <- df_2019_adult_eligibility %>%
   mutate(eligibility = case_when(bmi >= 30 ~ 1, TRUE ~ 0))
 
@@ -44,7 +41,7 @@ df_2019_adult_with_pop <- df_2019_adult_with_cohorts %>%
   mutate(pop_share = wt_int / sum(wt_int)) %>%
   mutate(pop_estimate = round(pop_share * ENGLAND_ADULT_POPULATION, 0))
 
-# Sanity check: blown-up weights vs ONS mid-year 2019 estimate
+# check: blown-up weights vs ONS mid-year 2019 estimate; should be <= 1
 message(
   "Pop check (blown-up - ONS): ",
   sum(df_2019_adult_with_pop$pop_estimate) - ENGLAND_ADULT_POPULATION
@@ -53,7 +50,7 @@ message(
 
 # -----------------------------------------------------------------------------
 # Cohort-dependent pipeline (Steps 5-8)
-# Takes one cohort allocation and returns that option's results.
+# function to run for one cohort:
 # -----------------------------------------------------------------------------
 
 run_cohort <- function(cohort_allocation,
@@ -123,19 +120,13 @@ run_cohort <- function(cohort_allocation,
 
 
 # -----------------------------------------------------------------------------
-# Driver: read all cohort options and run each
+# Run all cohorts in a single run
 # -----------------------------------------------------------------------------
 
-# One read gives a named list: list(OP_1 = ..., OP_2 = ..., ...). The names
-# come along for free as labels, so no need for the per-option get_param() calls.
 cohort_allocations <- yaml::read_yaml(
   "analysis/policy_analysis/glp-1-options/cohorts.yaml"
 )
 
-# NOTE on n_per_draw: this passes a single value to every option. If the draw
-# size is logically tied to each option (e.g. different rollout sizes), move it
-# into cohorts.yaml alongside each allocation and read it per option here so the
-# two can never drift apart.
 results <- purrr::imap(cohort_allocations, function(alloc, op_name) {
   message("Running ", op_name, " ...")
   run_cohort(
@@ -152,10 +143,11 @@ results <- purrr::imap(cohort_allocations, function(alloc, op_name) {
 # Results comparison tables
 # -----------------------------------------------------------------------------
 
-# Headline: pound benefit by class, per option
-pound_benefit_comparison <- purrr::map(results, "pound_benefit") %>%
-  bind_rows(.id = "cohort_option")
-
 # Prevalence by year/category, per option
 prevalence_comparison <- purrr::map(results, "prevalence") %>%
   bind_rows(.id = "cohort_option")
+
+# Pound benefit by class, per option
+pound_benefit_comparison <- purrr::map(results, "pound_benefit") %>%
+  bind_rows(.id = "cohort_option")
+
