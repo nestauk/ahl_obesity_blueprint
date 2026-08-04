@@ -201,6 +201,26 @@ assign_weight_loss <- function(data, bodyweight_var, num_years, weight_loss_perc
 }
 
 
+# 
+# # Function to assign weight loss based on cohort:
+# assign_weight_loss <- function(data, bodyweight_var, num_years, weight_loss_percent, weight_loss_percent_with_diabetes) {
+#   # browser()
+#   data = data %>%
+#     mutate(intervention_status_overall = case_when(intervention_year1 == "Yes" ~ "Yes",
+#                                                    intervention_year2 == "Yes" ~ "Yes",
+#                                                    intervention_year3 == "Yes" ~ "Yes",
+#                                                    intervention_year4 == "Yes" ~ "Yes",
+#                                                    intervention_year5 == "Yes" ~ "Yes",
+#                                                    TRUE ~ "No")) %>%
+#     mutate(weight_loss = case_when(intervention_status_overall == "Yes" &  == 1 ~ -weight_loss_percent_with_diabetes*.data[[bodyweight_var]],
+#                                    intervention_status_overall == "Yes" & cond_diabetes == 0 ~ -weight_loss_percent*.data[[bodyweight_var]],
+#                                    TRUE ~ 0))
+#   
+#   return(data)
+# }
+
+
+
 estimate_new_weights_bmi <- function(df,
                                      new_weight_col_name = "new_weight",
                                      new_bmi_col_name = "new_bmi",

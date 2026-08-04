@@ -1,26 +1,30 @@
+# Load modelling parameters:
 
-# Constants:
-TIRZ_MEAN_EFFECTS <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/treatment_effects.yaml"),
+# Model settings:
+BMI_THRESHOLD_FOR_ELIGIBILITY <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
+                                           "MODEL_SETTINGS")$BMI_THRESHOLD_FOR_ELIGIBILITY
+
+MINIMUM_NUMBER_OF_COMORBIDITIES <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
+                                             "MODEL_SETTINGS")$MINIMUM_NUMBER_OF_COMORBIDITIES
+
+NUMBER_OF_YEARS  <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
+                              "MODEL_SETTINGS")$NUMBER_OF_YEARS
+
+NUMBER_OF_SELECTIONS_PER_DRAW  <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
+                                            "MODEL_SETTINGS")$NUMBER_OF_SELECTIONS_PER_DRAW
+
+
+
+# Effect sizes:
+TIRZ_MEAN_EFFECTS <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
                                "TIRZEPATIDE_EFFECTS")
-TIRZ_EFFICACY <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/treatment_effects.yaml"),
+TIRZ_EFFICACY <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
                            "TIRZEPATIDE_EFFICACY")
 
-OP_1 = get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/cohorts.yaml"),
-                 "OP_1")
+# Cohort allocation/ number of people to be treated per year:
+COHORT_ALLOCATIONS <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
+                                "COHORT_ALLOCATIONS")
 
-OP_2 = get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/cohorts.yaml"),
-                 "OP_2")
-
-
-OP_3 = get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/cohorts.yaml"),
-                 "OP_3")
-
-OP_4 = get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/cohorts.yaml"),
-                 "OP_4")
-
-OP_5 = get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/cohorts.yaml"),
-                 "OP_5")
-
-
-ENGLAND_ADULT_POPULATION =  get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/constants.yaml"),
-                                  "POPULATION_CONSTANTS")$ENGLANG_ADULT_2019_OVER_18
+# England population - Adults (18+) in 2019:
+ENGLAND_ADULT_POPULATION =  get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
+                                      "POPULATION_CONSTANTS")$ENGLANG_ADULT_2019_OVER_18
