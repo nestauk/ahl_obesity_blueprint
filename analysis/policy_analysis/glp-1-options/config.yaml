@@ -1,0 +1,40 @@
+# Config file and inputs for new GLP-1 policy
+# For policy details such as eligibility, effect sizes, patient inflow,
+# please see methods tab GLP-1 Policy (https://docs.google.com/document/d/1HlwxabmrB4mv68lm74skqrQUoXc-bFzji2f57JTcWvA/edit?tab=t.chv3qxr2cnrg)
+
+MODEL_SETTINGS:
+  BMI_THRESHOLD_FOR_ELIGIBILITY: 40
+  BMI_THRESHOLD_FOR_ELIGIBILITY_LOWER: 35
+  MINIMUM_NUMBER_OF_COMORBIDITIES: 1
+  NUMBER_OF_YEARS: 5
+  NUMBER_OF_SELECTIONS_PER_DRAW: 50
+
+# Number of patients treated per year
+COHORT_ALLOCATIONS:
+  PATIENT_INFLOW:
+    year1:
+      c1: 264871
+    year2:
+      c1: 264871
+    year3:
+      c1: 264871
+    year4:
+      c1: 264871
+    year5:
+      c1: 264871
+
+
+TIRZEPATIDE_EFFECTS:
+  WEIGHT_LOSS_WITH_T2D: 0.138
+  WEIGHT_LOSS_WITHOUT_T2D: 0.185
+  WEIGHT_REGAIN_POST_TREATMENT: 0
+
+
+TIRZEPATIDE_EFFICACY:
+  WEIGHT_LOSS_WITH_T2D: 0.146
+  WEIGHT_LOSS_WITHOUT_T2D: 0.20
+  WEIGHT_REGAIN_POST_TREATMENT: 0
+
+
+POPULATION_CONSTANTS:
+  ENGLANG_ADULT_2019_OVER_18: 44263393
