@@ -1,14 +1,17 @@
+# Config file and inputs for new GLP-1 policy
+# For policy details such as eligibility, effect sizes, patient inflow,
+# please see methods tab GLP-1 Policy (https://docs.google.com/document/d/1HlwxabmrB4mv68lm74skqrQUoXc-bFzji2f57JTcWvA/edit?tab=t.chv3qxr2cnrg)
 
 MODEL_SETTINGS:
-  BMI_THRESHOLD_FOR_ELIGIBILITY: 35
+  BMI_THRESHOLD_FOR_ELIGIBILITY: 40
+  BMI_THRESHOLD_FOR_ELIGIBILITY_LOWER: 35
   MINIMUM_NUMBER_OF_COMORBIDITIES: 1
   NUMBER_OF_YEARS: 5
-  NUMBER_OF_SELECTIONS_PER_DRAW: 1
+  NUMBER_OF_SELECTIONS_PER_DRAW: 50
 
 # Number of patients treated per year
-# Option 7 cohort:
 COHORT_ALLOCATIONS:
-  OP_7:
+  PATIENT_INFLOW:
     year1:
       c1: 264871
     year2:

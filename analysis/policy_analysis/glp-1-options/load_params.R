@@ -4,6 +4,9 @@
 BMI_THRESHOLD_FOR_ELIGIBILITY <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
                                            "MODEL_SETTINGS")$BMI_THRESHOLD_FOR_ELIGIBILITY
 
+BMI_THRESHOLD_FOR_ELIGIBILITY_LOWER <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
+                                           "MODEL_SETTINGS")$BMI_THRESHOLD_FOR_ELIGIBILITY_LOWER
+
 MINIMUM_NUMBER_OF_COMORBIDITIES <- get_param(yaml::read_yaml("analysis/policy_analysis/glp-1-options/config.yaml"),
                                              "MODEL_SETTINGS")$MINIMUM_NUMBER_OF_COMORBIDITIES
 

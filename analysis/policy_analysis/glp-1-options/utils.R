@@ -49,20 +49,25 @@ select_intervention_sample_dt <- function(data, cohort_allocations,
     for (cohort in names(year_allocations)) {
       cohort_value <- as.numeric(gsub("c", "", cohort))
       sample_size <- year_allocations[[cohort]]
+      print(paste0("Starting year:", year, "   looking in cohort:", cohort_value ))
       
       # Step 2: Identifying eligible individuals
       cohorts_to_consider <- cohort_value
       eligible_population <- data[get(cohort_var) %in% cohorts_to_consider, sum(remaining_weight)]
-      
+      # browser()
+
       # If population is insufficient, expand the cohort pool, first look in previous cohorts then in later cohorts
       if (is.na(eligible_population) || sample_size > eligible_population) {
         
         cohorts_to_consider <- 1:cohort_value
+        print(paste0("looking in cohort:", cohorts_to_consider))
         eligible_population <- data[get(cohort_var) %in% cohorts_to_consider, sum(remaining_weight)]
-        
+
         if (is.na(eligible_population) || sample_size > eligible_population) {
-          
+          # browser()
           cohorts_to_consider <- 1:(cohort_value + 1)
+          print(paste0("looking in cohort:", cohorts_to_consider))
+          # print(paste0("Insufficient eligible population, so choosing from", cohorts_to_consider))
           
         }
       }
@@ -120,7 +125,7 @@ select_intervention_sample_dt <- function(data, cohort_allocations,
           n_chosen <- sample(50:100, 1)
           
         }
-        
+        # browser()
         # Additional checks on n_chosen to ensure we don't take more than what 
         # is required and stop if a value <=0 is chosen, in this case we resample
         if (current_weight_sum + n_chosen > desired_weight_sum) {
@@ -143,7 +148,7 @@ select_intervention_sample_dt <- function(data, cohort_allocations,
       }
       
       # print status message:
-      print(paste0("completed Year =", year, ", cohort = ", cohort, ", selected = ", current_weight_sum))
+      print(paste0("completed Year =", year, ", selected = ", current_weight_sum))
       
       
     }

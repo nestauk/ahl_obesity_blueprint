@@ -1,27 +1,31 @@
 # =============================================================================
-# GLP-1 policy
+# New GLP-1 policy: Treat ~1.3 million people with highest clinical need with 
+# incretin memetics (GLP-1 drugs) through a digital first wrap around care model
+# For policy details please refer to methods tab GLP-1 Policy:
+# (https://docs.google.com/document/d/1HlwxabmrB4mv68lm74skqrQUoXc-bFzji2f57JTcWvA/edit?tab=t.chv3qxr2cnrg)
 # =============================================================================
 
-# Funtions required for the model:
+# Functions required for the model:
 # Function to assign eligibility criteria for treatment based on BMI and number of comorbidities
 assign_eligibility <- function(data,
-                               bmi_threshold = 35,
-                               score_threshold = 1) 
-  {
+                               bmi_high        = BMI_THRESHOLD_FOR_ELIGIBILITY,
+                               bmi_low         = BMI_THRESHOLD_FOR_ELIGIBILITY_LOWER,
+                               score_threshold = MINIMUM_NUMBER_OF_COMORBIDITIES) {
   data %>% mutate(eligibility = case_when(
-    bmi >= bmi_threshold & eligibility_score >= score_threshold ~ 1,
+    bmi >= bmi_high & eligibility_score >= score_threshold ~ 1,
+    bmi >= bmi_high & eligibility_score <  score_threshold ~ 2,
+    bmi >= bmi_low  & eligibility_score >= score_threshold ~ 3,
     TRUE ~ 0
-    ))
+  ))
 }
 
-# -----------------------------------------------------------------------------
-# Function to run model for one cohort, implements five key steps:
+
+# Function to run model for cohort allocation, implements five key steps:
 # 1. selects intervention sample
 # 2. Assigns weight loss based on type 2 diabetes status
 # 3. Recomputes new BMI and weight based on the weight loss
 # 4. Estimates BMI category wise prevalence
 # 5. Estimates the relative change in BMI category prevalence
-# -----------------------------------------------------------------------------
 run_cohort <- function(cohort_allocation,
                        baseline_df,
                        n_selection_per_draw,
@@ -98,12 +102,11 @@ source(file = "post_processing/post_processing.R")
 
 # Running the model
 glp1_model_results <- purrr::imap(COHORT_ALLOCATIONS, function(alloc, op_name) {
-  message("Running ", op_name, " ...")
+  message("Running model for ", op_name, " ...")
+  str(alloc)
   run_cohort(
     cohort_allocation    = alloc,
-    baseline_df          = assign_eligibility(df_2019_adult_with_pop,
-                                              bmi_threshold = BMI_THRESHOLD_FOR_ELIGIBILITY,
-                                              score_threshold = MINIMUM_NUMBER_OF_COMORBIDITIES),
+    baseline_df          = assign_eligibility(df_2019_adult_with_pop),
     n_selection_per_draw = NUMBER_OF_SELECTIONS_PER_DRAW,
     num_years            = NUMBER_OF_YEARS,
     seed                 = 42
