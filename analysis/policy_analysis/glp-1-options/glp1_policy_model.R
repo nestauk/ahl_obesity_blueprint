@@ -113,3 +113,69 @@ glp1_model_results <- purrr::imap(COHORT_ALLOCATIONS, function(alloc, op_name) {
   )
 })
 
+bmi_change = glp1_model_results$PATIENT_INFLOW$prevalence
+
+bmi_long = bmi_change %>%
+  pivot_longer(
+    cols = c(underweight, normal, overweight, obese, `morbidly obese`),
+    names_to = "BMI",
+    values_to = "freq"
+  ) %>%
+  mutate(BMI = factor(BMI, levels = c("underweight", "normal",
+                                      "overweight", "obese", "morbidly obese")))
+
+
+bmi_long = bmi_change %>%
+  pivot_longer(
+    cols = c(underweight, normal, overweight, obese, `morbidly obese`),
+    names_to = "BMI",
+    values_to = "freq"
+  ) %>%
+  mutate(BMI = factor(BMI,
+                      levels = c("underweight", "normal", "overweight",
+                                 "obese", "morbidly obese"),
+                      labels = c("Underweight", "Normal", "Overweight",
+                                 "Class 1 & 2 Obesity", "Class 3 Obesity")))
+
+
+bmi_long %>%
+  ggplot(aes(x = type, y = freq, fill = BMI)) +
+  geom_col(position = "dodge") +
+  labs(fill = "", x = "", y = "Prevalence - %",
+       subtitle = "Adult | BMI Distribution over time") +
+  theme_minimal(base_size = 8) +
+  theme(legend.position = "top")
+
+
+bmi_long %>%
+  ggplot(aes(x = BMI, y = freq, fill = type)) +
+  geom_col(position = "dodge") +
+  labs(fill = "", x = "", y = "Prevalence - %",
+       subtitle = "Adult | BMI Distribution over time") +
+  scale_fill_brewer(palette = "Blues") +
+  theme_minimal(base_size = 8) +
+  theme(legend.position = "top",
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+bmi_long %>%
+  ggplot(aes(x = BMI, y = freq, fill = type)) +
+  geom_col(position = "dodge") +
+  labs(fill = "", x = "BMI group", y = "Prevalence - %", title = "New GLP-1 policy",
+       subtitle = "Per year distribution by BMI Category") +
+  # scale_fill_brewer(palette = "Blues") +
+  theme_ipsum(base_size = 8, axis_title_size = 10, axis_title_just = "cc") +
+  theme(legend.position = "top",
+        axis.text.x = element_text(angle = 0, hjust = 0.5))
+
+adult_bar_plot = bmi_change %>%
+  ggplot(., aes(y = freq, x = BMI, fill = type)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_ipsum() +
+  labs(fill = "", 
+       title = paste("tags"), 
+       y = "Prevalence - %",
+       subtitle = "Adult | BMI Distribution") +
+  theme_ipsum(base_size = 8, axis_title_size = 8) + #, base_family="Averta"
+  theme(legend.position = "top")
+
+adult_bar_plot
