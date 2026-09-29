@@ -2,7 +2,6 @@ library(here)
 library(tidyverse)
 library(dplyr)
 
-source(file = "config/config.R")
 
 extract_relative_change = function(data){
   
